@@ -1,0 +1,225 @@
+﻿#include "thread.h"
+
+namespace lyramilk{namespace system{namespace threading
+{
+	// threads
+	threads::return_type threads::thread_task(threads* p)
+	{
+		return p->svc();
+	}
+
+	threads::threads()
+	{
+	}
+
+	threads:: ~threads()
+	{
+		void* tmp;
+		vector_type::iterator it = m.begin();
+		for(;it != m.end();++it){
+			pthread_join(*it,&tmp);
+		}
+	}
+
+	void threads::active(std::size_t threadcount)
+	{
+		m.reserve(threadcount);
+
+		for(std::size_t i = 0;i<threadcount;++i){
+			pthread_t thread;
+			if(pthread_create(&thread,NULL,(void* (*)(void*))thread_task,this) == 0){
+				m.push_back(thread);
+			}
+		}
+	}
+
+	void threads::detach()
+	{
+		vector_type::iterator it = m.begin();
+		for(;it != m.end();++it){
+			pthread_detach(*it);
+		}
+		m.clear();
+	}
+
+	// mutex_super
+	mutex_super::~mutex_super()
+	{}
+
+	// mutex_sync
+	mutex_sync::mutex_sync(mutex_super& l):_mutexobj(l)
+	{
+		_mutexobj.lock();
+	}
+
+	mutex_sync::~mutex_sync()
+	{
+		_mutexobj.unlock();
+	}
+
+	// mutex_spin
+	mutex_spin::mutex_spin()
+	{
+		locked = false;
+	}
+
+	mutex_spin::~mutex_spin()
+	{
+	}
+
+	void mutex_spin::lock()
+	{
+		while(!__sync_bool_compare_and_swap(&locked,false,true));
+	}
+
+	void mutex_spin::unlock()
+	{
+		locked = false;
+	}
+
+	bool mutex_spin::try_lock()
+	{
+		return __sync_bool_compare_and_swap(&locked,false,true);
+	}
+
+	bool mutex_spin::test() const
+	{
+		return __sync_bool_compare_and_swap((volatile bool*)&locked,false,false);
+	}
+
+	// mutex
+	mutex_os::mutex_os()
+	{
+		pthread_mutexattr_t attr;
+		pthread_mutexattr_init(&attr);
+		pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+		pthread_mutex_init(&handler,&attr);
+	}
+	mutex_os::~mutex_os()
+	{
+		pthread_mutex_destroy(&handler);
+	}
+
+	void mutex_os::lock()
+	{
+		pthread_mutex_lock(&handler);
+	}
+
+	void mutex_os::unlock()
+	{
+		pthread_mutex_unlock(&handler);
+	}
+
+	bool mutex_os::try_lock()
+	{
+		return pthread_mutex_trylock(&handler) == 0;
+	}
+
+	bool mutex_os::test() const
+	{
+		if(pthread_mutex_trylock((pthread_mutex_t*)&handler) == 0){
+			pthread_mutex_unlock((pthread_mutex_t*)&handler);
+			return true;
+		}
+		return false;
+	}
+
+	// rwlock
+	class rwlock_r:public mutex_super
+	{
+		pthread_rwlock_t* el;
+
+		virtual void lock()
+		{
+			pthread_rwlock_rdlock(el);
+		}
+
+		virtual void unlock()
+		{
+			pthread_rwlock_unlock(el); 
+		}
+
+		virtual bool try_lock()
+		{
+			return 0 == pthread_rwlock_tryrdlock(el);
+		}
+
+		virtual bool test() const
+		{
+			if(((rwlock_r*)this)->try_lock()){
+				return true;
+			}
+			return false;
+		}
+	  public:
+		rwlock_r(pthread_rwlock_t* el)
+		{
+			this->el = el;
+		}
+
+		virtual ~rwlock_r()
+		{}
+	};
+
+	class rwlock_w:public mutex_super
+	{
+		pthread_rwlock_t* el;
+
+		virtual void lock()
+		{
+			pthread_rwlock_wrlock(el);
+		}
+
+		virtual void unlock()
+		{
+			pthread_rwlock_unlock(el); 
+		}
+
+		virtual bool try_lock()
+		{
+			return 0 == pthread_rwlock_trywrlock(el);
+		}
+
+		virtual bool test() const
+		{
+			if(((rwlock_w*)this)->try_lock()){
+				return true;
+			}
+			return false;
+		}
+	  public:
+		rwlock_w(pthread_rwlock_t* el)
+		{
+			this->el = el;
+		}
+
+		virtual ~rwlock_w()
+		{}
+	};
+
+
+	rwlock::rwlock()
+	{
+		pthread_rwlock_init(&lock,NULL);
+		pr = new rwlock_r(&lock);
+		pw = new rwlock_w(&lock);
+	}
+
+	rwlock::~rwlock()
+	{
+		delete pr;
+		delete pw;
+		pthread_rwlock_destroy(&lock);
+	}
+
+	mutex_super& rwlock::r()
+	{
+		return *pr;
+	}
+
+	mutex_super& rwlock::w()
+	{
+		return *pw;
+	}
+
+}}}

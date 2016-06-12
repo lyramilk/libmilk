@@ -1,0 +1,15 @@
+#!/bin/sh
+
+update_version(){
+	tmp1=`awk 'match($0,"set\\\\s*\\\\(version\\\\s*(.*)\\\\)",mr) {print mr[1]}' $1`
+
+	#计算新版本号
+	tmp2=`echo $tmp1 | awk -F '.' '{print $3}'`
+	tmp3=`echo $((tmp2+1))`
+	tmp4=`echo $tmp1 | awk -F '.' '{print $1"."$2"."}'`$tmp3
+	#将新版本号写入$1
+	sed -ri "s,(set\\s*\\(version\\s*)(.*)(\\)),\1$tmp4\3," $1
+	git add $1
+}
+
+update_version libmilk/CMakeLists.txt
