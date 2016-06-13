@@ -444,7 +444,7 @@ var::var(const map& v)
 	assign(v);
 }
 
-var::var(const string& n,void* v)
+var::var(const string& n,const void* v)
 {
 	t = t_invalid;
 	u.a = null;
@@ -599,7 +599,7 @@ bool var::operator ==(const var& v) const throw(type_invalid)
 			return false;
 		}break;
 	  case t_user:{
-			return t_user == v.t && u.o->name == v.u.o->name && u.o->ptr == v.u.o->ptr;
+			return t_user == v.t && *u.o == *v.u.o;
 		}break;
 	  case t_invalid:{
 			return t_invalid == v.t;
@@ -746,8 +746,7 @@ var& var::assign(const var& v)
 	  case t_user:
 		u.o = new _userdata;
 		if(u.o == null) t = t_invalid;
-		u.o->name = v.u.o->name;
-		u.o->ptr = v.u.o->ptr;
+		*u.o = *v.u.o;
 		break;
 	  case t_invalid:
 		u.a = null;
@@ -936,7 +935,7 @@ var& var::assign(const lyramilk::data::var::map& v)
 	return *this;
 }
 
-var& var::assign(const string& n,void* v)
+var& var::assign(const string& n,const void* v)
 {
 	clear();
 	t = t_user;
@@ -945,8 +944,7 @@ var& var::assign(const string& n,void* v)
 		t = t_invalid;
 		return *this;
 	}
-	u.o->name = n;
-	u.o->ptr = v;
+	u.o->operator[](n) = v;
 	return *this;
 }
 
@@ -1582,29 +1580,26 @@ var::operator const lyramilk::data::var::map& () const throw(type_invalid)
 	throw type_invalid(lyramilk::kdict("%s 错误：%s类型无法转换为%s类型","lyramilk::data::var::operator var::map()",type_name(t).c_str(),type_name(t_map).c_str()));
 }
 
-void* lyramilk::data::var::userdata(string &v) const
+void lyramilk::data::var::userdata(string v,const void* p) throw(type_invalid)
 {
-	if(t != t_user || u.o == null) return null;
-	if(v.empty()){
-		v = u.o->name;
-		return u.o->ptr;
-	}else{
-		if(v == u.o->name){
-			return u.o->ptr;
-		}
-	}
-
-	return null;
+	if(t != t_user)	throw type_invalid(lyramilk::kdict("%s 错误：%s类型无法赋予用户数据","lyramilk::data::var::operator var::map()",type_name(t).c_str()));
+	u.o->operator[](v) = p;
 }
 
-void* lyramilk::data::var::userdata(const char* p) const
+const void* lyramilk::data::var::userdata(string v) const
 {
-	if(t != t_user || u.o == null) return null;
-	if(p){
-		if(u.o->name.compare(p) == 0) return u.o->ptr;
-		return null;
-	}
-	return u.o->ptr;
+	if(t != t_user)	return null;
+	_userdata::iterator it = u.o->find(v);
+	if(it == u.o->end()) return null;
+	return it->second;
+}
+
+const void* lyramilk::data::var::userdata() const
+{
+	if(t != t_user)	return null;
+	_userdata::iterator it = u.o->begin();
+	if(it == u.o->end()) return null;
+	return it->second;
 }
 
 var& var::operator[](const char* index)

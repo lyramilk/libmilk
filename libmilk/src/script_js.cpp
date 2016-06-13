@@ -39,6 +39,15 @@ namespace lyramilk{namespace script{namespace js
 		lyramilk::klog("lyramilk.script.js") << lyramilk::kdict("%s(%d)%s",(report->filename ? report->filename : "<no name>"),report->lineno,message) << std::endl;
 	}
 
+	struct pack
+	{
+		engine::class_destoryer dtr;
+		void* pthis;
+
+		pack(engine::class_destoryer da,void* dt):dtr(da),pthis(dt)
+		{}
+	};
+
 	lyramilk::data::var jsval2var(JSContext* cx,jsval jv)
 	{
 		lyramilk::data::var v;
@@ -78,6 +87,15 @@ namespace lyramilk{namespace script{namespace js
 				}
 				v = r;
 			}else{
+				pack *ppack = (pack*)JS_GetPrivate(cx,jo);
+				if(ppack && ppack->pthis){
+					jsid joid;
+					JS_GetObjectId(cx,jo,&joid);
+					v.assign("__script_object_id",(void*)joid);
+					v.userdata("__script_native_object",ppack->pthis);
+					return v;
+				}
+
 				lyramilk::data::var::map m;
 				JSObject *iter = JS_NewPropertyIterator(cx,jo);
 				if(iter){
@@ -154,6 +172,12 @@ namespace lyramilk{namespace script{namespace js
 		  case lyramilk::data::var::t_invalid:
 			return JSVAL_NULL;
 		  case lyramilk::data::var::t_user:
+			const void* up = v.userdata("__script_object_id");
+			if(up){
+				JSObject* jsobj = JSID_TO_OBJECT((jsid)up);
+				return OBJECT_TO_JSVAL(jsobj);
+			}
+
 			assert((((long)(&v))&1) == 0);
 			return PRIVATE_TO_JSVAL(&v);
 //		  default:;
@@ -267,14 +291,6 @@ namespace lyramilk{namespace script{namespace js
 	}
 
 
-	struct pack
-	{
-		engine::class_destoryer dtr;
-		void* pthis;
-
-		pack(engine::class_destoryer da,void* dt):dtr(da),pthis(dt)
-		{}
-	};
 
 
 	JSBool jsctr(JSContext *cx, uintN argc, jsval *vp)
@@ -390,7 +406,7 @@ namespace lyramilk{namespace script{namespace js
 	lyramilk::data::var script_js::pcall(lyramilk::data::var::array args)
 	{
 		bool ret = JS_ExecuteScript(cx,global,script,NULL) != JS_TRUE;
-		JS_GC(cx);
+		gc();
 		return ret;
 	}
 
@@ -404,7 +420,7 @@ namespace lyramilk{namespace script{namespace js
 		}
 		if(JS_TRUE == JS_CallFunctionName(cx,global,func.c_str(),jvs.size(),jvs.data(),&retval)){
 			lyramilk::data::var ret = jsval2var(cx,retval);
-			JS_GC(cx);
+			//JS_GC(cx);
 			return ret;
 		}
 		return lyramilk::data::var::nil;
@@ -417,21 +433,53 @@ namespace lyramilk{namespace script{namespace js
 
 	void script_js::define(lyramilk::data::string classname,functional_map m,class_builder builder,class_destoryer destoryer)
 	{
-		//std::cout << "注册类：" << classname << std::endl;
+		//std::cout << "注册类：" << classname << ",构造:" << (void*)builder << ",释放" << (void*)destoryer << std::endl;
 		JSObject* jo = JS_DefineObject(cx,global,classname.c_str(),&classesClass,NULL,0);
 		assert(jo);
+		jsid joid;
+		JS_GetObjectId(cx,jo,&joid);
+		this->m[classname] = joid;
 
 		js_set_property_ptr(cx,jo,"__new",(void*)builder);
 		js_set_property_ptr(cx,jo,"__delete",(void*)destoryer);
 		functional_map::iterator it = m.begin();
 		for(;it!=m.end();++it){
-			//std::cout << "\t注册函数：" << it->first << "," << it->second << std::endl;
+			//std::cout << "\t注册函数：" << it->first << "," << (void*)it->second << std::endl;
 			JSFunction *f = JS_DefineFunction(cx,jo,it->first.c_str(),js_func_adapter,10,10);
 			assert(f);
 			JSObject *fo = JS_GetFunctionObject(f);
 			assert(fo);
 			js_set_property_ptr(cx,fo,"__function_pointer",(void*)it->second);
 		}
+	}
+
+	lyramilk::data::var script_js::createobject(lyramilk::data::string classname,lyramilk::data::var::array args)
+	{
+		std::map<lyramilk::data::string,jsid>::iterator it = m.find(classname);
+		if(it==m.end()) return lyramilk::data::var::nil;
+
+		JSObject* jsobj = JSID_TO_OBJECT(it->second);
+
+		void *pfuncnew = js_get_property_ptr(cx,jsobj,"__new");
+		void *pfuncdel = js_get_property_ptr(cx,jsobj,"__delete");
+		void *pnewobj = NULL;
+		engine::class_builder pfun = (engine::class_builder)pfuncnew;
+		if(!pfun) return lyramilk::data::var::nil;
+
+		pnewobj = pfun(args);
+		JSObject* jsret = JS_NewObject(cx,&nativeClass,jsobj,JS_GetGlobalObject(cx));
+		JS_SetPrivate(cx,jsret,new pack((engine::class_destoryer)pfuncdel,pnewobj));
+
+		jsid jsretid;
+		JS_GetObjectId(cx,jsret,&jsretid);
+		lyramilk::data::var v("__script_object_id",(const void*)jsretid);
+		v.userdata("__script_native_object",pnewobj);
+		return v;
+	}
+
+	void script_js::gc()
+	{
+		JS_GC(cx);
 	}
 
 }}}

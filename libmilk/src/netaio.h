@@ -123,9 +123,9 @@ namespace lyramilk{namespace system{namespace netio
 
 		/// 模板化会话对象的生成函数
 		template <typename T>
-		static aiosession* __tbuilder()
+		static T* __tbuilder()
 		{
-			aiosession* p = new T();
+			T* p = new T();
 			p->dtr = __tdestoryer<T>;
 			return p;
 		}
@@ -170,12 +170,6 @@ namespace lyramilk{namespace system{namespace netio
 		virtual aiosession* create() = 0;
 
 		/**
-			@brief 释放掉create方法创建的会话。
-			@param s 被释放的会话。
-		*/
-		virtual void destory(aiosession* s) = 0;
-
-		/**
 			@brief 初始化SSL并自动开启SSL。
 			@param certfilename 证书
 			@param keyfilename 私钥
@@ -195,6 +189,7 @@ namespace lyramilk{namespace system{namespace netio
 
 
 		virtual native_filedescriptor_type getfd();
+
 		virtual void ondestory();
 	};
 
@@ -207,11 +202,6 @@ namespace lyramilk{namespace system{namespace netio
 		virtual aiosession* create()
 		{
 			return aiosession::__tbuilder<T>();
-		}
-
-		virtual void destory(aiosession* s)
-		{
-			return aiosession::__tdestoryer<T>(s);
 		}
 	};
 }}}

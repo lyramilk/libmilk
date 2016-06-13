@@ -8,6 +8,18 @@
 namespace lyramilk{namespace script{namespace lua
 {
 
+	void lua_lookup_stack(lua_State *L,int index,const char* flag = NULL)
+	{
+		std::cout << "[" << flag << "]查看Lua堆栈[" << index << "]=" << lua_typename(L,lua_type(L,index)) << std::endl;
+	}
+
+	void lua_lookup_fullstack(lua_State *L,const char* flag = NULL)
+	{
+		for(int i=1;i<=lua_gettop(L);++i){
+			lua_lookup_stack(L,i,flag);
+		}
+	}
+//__lua_native_object
 	static int __var_gc(lua_State *L)
 	{
 		int argc = lua_gettop(L);
@@ -74,6 +86,7 @@ namespace lyramilk{namespace script{namespace lua
 		  case LUA_TSTRING:{
 				return lua_tostring(L,index);
 			}break;
+		  case LUA_TLIGHTUSERDATA:
 		  case LUA_TUSERDATA:{
 				lyramilk::data::var* p = lua_tovar(L,index);
 				if(p){
@@ -154,6 +167,16 @@ namespace lyramilk{namespace script{namespace lua
 			}
 			break;
 		  case lyramilk::data::var::t_user:
+			if(v.userdata("__script_object_id")){
+				const void* pid = v.userdata("__script_object_id");
+				const void* pobj = v.userdata("__script_native_object");
+				lyramilk::data::string* pstr = (lyramilk::data::string*)pid;
+
+				lua_pushlightuserdata(L,(void*)pobj);
+				lua_getglobal(L,pstr->c_str());
+				lua_setmetatable(L,-2);
+				break;
+			}
 			lua_pushvar(L,&v);
 			break;
 		  default:
@@ -221,9 +244,7 @@ namespace lyramilk{namespace script{namespace lua
 
 	lyramilk::data::var script_lua::pcall(lyramilk::data::var::array args)
 	{
-		for(lyramilk::data::var::array::iterator it = args.begin();it!=args.end();++it){
-			vtos(L,args);
-		}
+		vtos(L,args);
 
 		if(lua_pcall(L,args.size(),LUA_MULTRET,0) == 0){
 			lyramilk::data::var sret = lyramilk::data::var::nil;
@@ -231,14 +252,12 @@ namespace lyramilk{namespace script{namespace lua
 				sret = luaget(L,-1);
 			}
 			clear();
-			lua_gc(L,LUA_GCCOLLECT,0);
-			//callstack.clear();
+			//lua_gc(L,LUA_GCCOLLECT,0);
 			return sret;
 		}
 		lyramilk::data::string err = lua_tostring(L, -1);
 		clear();
-		lua_gc(L,LUA_GCCOLLECT,0);
-		//callstack.clear();
+		//lua_gc(L,LUA_GCCOLLECT,0);
 		lyramilk::klog(lyramilk::log::error,"lyramilk.script.lua.engine.pcall") << err << std::endl;
 		return lyramilk::data::var::nil;
 	}
@@ -255,17 +274,6 @@ namespace lyramilk{namespace script{namespace lua
 	}
 
 
-	void lua_lookup_stack(lua_State *L,int index,const char* flag = NULL)
-	{
-		std::cout << "[" << flag << "]查看Lua堆栈[" << index << "]=" << lua_typename(L,lua_type(L,index)) << std::endl;
-	}
-
-	void lua_lookup_fullstack(lua_State *L,const char* flag = NULL)
-	{
-		for(int i=1;i<=lua_gettop(L);++i){
-			lua_lookup_stack(L,i,flag);
-		}
-	}
 
 	static int lua_func_adapter(lua_State *L)
 	{
@@ -280,7 +288,7 @@ namespace lyramilk{namespace script{namespace lua
 		}
 		lua_getfield(L,1,"__lua_metainfo");
 		void* pclass = lua_touserdata(L,-1);
-		void** pthis = (void**)lua_touserdata(L,1);
+		lyramilk::data::var** pthis = (lyramilk::data::var**)lua_touserdata(L,1);
 		if(pclass == NULL) return 0;
 		lua_pop(L,1);
 		lua_remove(L,1);
@@ -289,8 +297,10 @@ namespace lyramilk{namespace script{namespace lua
 		lyramilk::data::var::array params = stov(L);
 		lua_pop(L,lua_gettop(L));
 
+
+
 		lyramilk::data::var::map env;
-		env["this"].assign("this",*pthis);
+		env["this"].assign("this",(*pthis)->userdata("__lua_native_object"));
 		lyramilk::data::var ret = mi->funcmap[funcname](params,env);
 		luaset(L,ret);
 		return 1;
@@ -335,7 +345,6 @@ namespace lyramilk{namespace script{namespace lua
 		lua_pop(L,1);
 		script_lua::metainfo* mi = (script_lua::metainfo*)cls;
 
-
 		lyramilk::data::var::array r;
 		int m=lua_gettop(L);
 		for(int index=2;index<=m;++index){
@@ -344,8 +353,9 @@ namespace lyramilk{namespace script{namespace lua
 		}
 		lua_pop(L,m-1);
 
-		void** p = (void**)lua_newuserdata(L,sizeof(void*));
-		*p = mi->ctr(r);
+		lyramilk::data::var** p = (lyramilk::data::var**)lua_newuserdata(L,sizeof(void*));
+		*p = new lyramilk::data::var;
+		(*p)->assign("__lua_native_object",mi->ctr(r));
 
 		lua_insert(L,1);
 		lua_setmetatable(L,-2);
@@ -362,12 +372,13 @@ namespace lyramilk{namespace script{namespace lua
 		if(cls == NULL) return 0;
 		lua_pop(L,1);
 		script_lua::metainfo* mi = (script_lua::metainfo*)cls;
-		void** p = (void**)lua_touserdata(L,1);
-		mi->dtr(*p);
+		//void** p = (void**)lua_touserdata(L,1);
+		lyramilk::data::var** p = (lyramilk::data::var**)lua_touserdata(L,1);
+		void* pdata = (void*)(*p)->userdata("__lua_native_object");
+		mi->dtr(pdata);
+		delete *p;
 		return 0;
 	}
-
-
 
 	void script_lua::define(lyramilk::data::string classname,functional_map m,class_builder builder,class_destoryer destoryer)
 	{
@@ -401,6 +412,30 @@ namespace lyramilk{namespace script{namespace lua
 
 		lua_setglobal(L,classname.c_str());
 	}
+	
+	lyramilk::data::var script_lua::createobject(lyramilk::data::string classname,lyramilk::data::var::array args)
+	{
+		std::map<lyramilk::data::string,metainfo>::iterator it = minfo.find(classname);
+		if(it==minfo.end()) return lyramilk::data::var::nil;
+
+		lua_getglobal(L,classname.c_str());
+		lua_func_meta_ctr(L);
+		const void* ptr = lua_touserdata(L,-1);
+		/*
+		lyramilk::data::stringstream ss;
+		ss << classname << ptr << std::endl;
+		*/
+
+		lyramilk::data::var v("__script_native_object",ptr);
+		v.userdata("__script_object_id",&it->first);
+		lua_pop(L,1);
+		return v;
+	}
+
+	void script_lua::gc()
+	{
+		lua_gc(L,LUA_GCCOLLECT,0);
+	}
 
 	void script_lua::clear()
 	{
@@ -408,3 +443,10 @@ namespace lyramilk{namespace script{namespace lua
 		lua_pop(L,stacksize);
 	}
 }}}
+
+
+/**
+		lyramilk::data::var v("__script_object_id",(void*)jsretid);
+		v.userdata("__script_native_object",pnewobj);
+
+**/

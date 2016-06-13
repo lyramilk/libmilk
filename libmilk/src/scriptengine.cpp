@@ -3,6 +3,7 @@
 
 namespace lyramilk{namespace script
 {
+	// engine
 	engine::engine()
 	{}
 
@@ -34,7 +35,11 @@ namespace lyramilk{namespace script
 		lyramilk::data::var::array a;
 		return call(func,a);
 	}
+	
+	void engine::gc()
+	{}
 
+	//enginelessee
 	enginelessee::enginelease::enginelease():eng(NULL)
 	{
 	}
@@ -63,6 +68,7 @@ namespace lyramilk{namespace script
 	{
 		if(e && autounlock){
 			e->lock.unlock();
+			e->eng->gc();
 		}
 	}
 
@@ -82,38 +88,27 @@ namespace lyramilk{namespace script
 	}
 
 
-	enginefactory::enginefactory()
+	engines::engines()
 	{}
 
-	enginefactory::~enginefactory()
+	engines::~engines()
 	{}
-
-	enginefactory* enginefactory::instance()
+	
+	void engines::push_back(engine* eng)
 	{
-		static enginefactory _mm;
-		return &_mm;
+		es.push_back(enginelessee::enginelease());
+		es.back().eng = eng;
 	}
 	
-	void enginefactory::regist(lyramilk::data::string name,engine* eng,int engsize,int engcount)
+	void engines::clear()
 	{
-		std::vector<enginelessee::enginelease>& e = es[name];
-		int msz = (int)e.size();
-		e.resize(msz + engcount);
-		for(int i = 0;i<engcount;++i){
-			e[msz + i].eng = (engine*)((char*)eng + engsize);
-		}
+		es.clear();
 	}
 	
-	void enginefactory::unregist(lyramilk::data::string name)
+	enginelessee engines::get()
 	{
-		es.erase(name);
-	}
-	
-	enginelessee enginefactory::get(lyramilk::data::string name)
-	{
-		std::vector<enginelessee::enginelease>& e = es[name];
-		std::vector<enginelessee::enginelease>::iterator it = e.begin();
-		for(;it!=e.end();++it){
+		std::list<enginelessee::enginelease>::iterator it = es.begin();
+		for(;it!=es.end();++it){
 			if(it->lock.try_lock()){
 				return enginelessee(*it);
 			}
@@ -123,50 +118,47 @@ namespace lyramilk{namespace script
 	
 
 
-	bool enginefactory::load_string(lyramilk::data::string script)
+	bool engines::load_string(lyramilk::data::string script)
 	{
-		std::map<lyramilk::data::string,std::vector<enginelessee::enginelease> >::iterator it = es.begin();
+		std::list<enginelessee::enginelease>::iterator it = es.begin();
 		for(;it!=es.end();++it){
-			std::vector<enginelessee::enginelease>::iterator vit = it->second.begin();
-			for(;vit!=it->second.end();++vit){
-				lyramilk::system::threading::mutex_sync _(vit->lock);
-				vit->eng->load_string(script);
-			}
+			lyramilk::system::threading::mutex_sync _(it->lock);
+			it->eng->load_string(script);
 		}
 		return true;
 	}
 
-	lyramilk::data::var enginefactory::pcall(lyramilk::data::var::array args)
+	lyramilk::data::var engines::pcall(lyramilk::data::var::array args)
 	{
 		TODO();
 	}
 
-	lyramilk::data::var enginefactory::call(lyramilk::data::string func,lyramilk::data::var::array args)
+	lyramilk::data::var engines::call(lyramilk::data::string func,lyramilk::data::var::array args)
 	{
 		TODO();
 	}
 
-	void enginefactory::reset()
+	void engines::reset()
 	{
-		std::map<lyramilk::data::string,std::vector<enginelessee::enginelease> >::iterator it = es.begin();
+		std::list<enginelessee::enginelease>::iterator it = es.begin();
 		for(;it!=es.end();++it){
-			std::vector<enginelessee::enginelease>::iterator vit = it->second.begin();
-			for(;vit!=it->second.end();++vit){
-				lyramilk::system::threading::mutex_sync _(vit->lock);
-				vit->eng->reset();
-			}
+			lyramilk::system::threading::mutex_sync _(it->lock);
+			it->eng->reset();
 		}
 	}
 
-	void enginefactory::define(lyramilk::data::string classname,engine::functional_map m,engine::class_builder builder,engine::class_destoryer destoryer)
+	void engines::define(lyramilk::data::string classname,engine::functional_map m,engine::class_builder builder,engine::class_destoryer destoryer)
 	{
-		std::map<lyramilk::data::string,std::vector<enginelessee::enginelease> >::iterator it = es.begin();
+		std::list<enginelessee::enginelease>::iterator it = es.begin();
 		for(;it!=es.end();++it){
-			std::vector<enginelessee::enginelease>::iterator vit = it->second.begin();
-			for(;vit!=it->second.end();++vit){
-				lyramilk::system::threading::mutex_sync _(vit->lock);
-				vit->eng->define(classname,m,builder,destoryer);
-			}
+			lyramilk::system::threading::mutex_sync _(it->lock);
+			it->eng->define(classname,m,builder,destoryer);
 		}
 	}
+
+	lyramilk::data::var engines::createobject(lyramilk::data::string classname,lyramilk::data::var::array args)
+	{
+		TODO();
+	}
+
 }}

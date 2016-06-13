@@ -563,7 +563,6 @@ namespace lyramilk{namespace system{namespace netio
 	
 	void aiolistener::ondestory()
 	{
-		
 	}
 
 }}}

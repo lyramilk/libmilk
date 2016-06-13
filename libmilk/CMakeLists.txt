@@ -1,6 +1,6 @@
 ﻿#定义工程名及版本
 project(milk)
-set(version 1.1.1)
+set(version 1.1.2)
 set(soversion 1.1)
 
 cmake_minimum_required (VERSION 2.8.11) 
@@ -142,19 +142,18 @@ endif()
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "${PROJECT_NAME}")
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${version} SOVERSION 1.1)
 if(UNIX)
-	 target_link_libraries(${PROJECT_NAME} -lpthread ${CMAKE_LIBS_DEPENDS})
+	 target_link_libraries(${PROJECT_NAME} -lpthread -ldl ${CMAKE_LIBS_DEPENDS})
 else()
 	message(FATAL_ERROR "libmilk is works on Linux only!!!")
 endif()
 
 #定义安装目标
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/pkg/lib${PROJECT_NAME}.pc DESTINATION ${install_dir})
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/pkg/lib${PROJECT_NAME}.pc DESTINATION ${install_dir})
 install(FILES ${src_hs} DESTINATION ${install_dir})
 install(TARGETS ${PROJECT_NAME} DESTINATION ${install_dir})
 if(PROJECT_LIBRARY_BOTH)
 	install(TARGETS ${PROJECT_NAME}_static DESTINATION ${install_dir})
-	target_link_libraries(${PROJECT_NAME}_static -lhiredis -lpthread)
+	target_link_libraries(${PROJECT_NAME}_static -lpthread -ldl ${CMAKE_LIBS_DEPENDS})
 endif()
 
 #单元测试，是否开启内存泄露测试

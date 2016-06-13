@@ -152,11 +152,7 @@ namespace lyramilk{namespace data
 	*/
 	class _lyramilk_api_ var
 	{
-		struct _userdata
-		{
-			string name;
-			void* ptr;
-		};
+		typedef lyramilk::data::map<string,const void*> _userdata;
 	  public:
 		typedef class _lyramilk_api_ std::vector<var, allocator<var> > array;
 		typedef class _lyramilk_api_ std::map<var, var, std::less<var>, allocator<var> > map;
@@ -217,7 +213,7 @@ namespace lyramilk{namespace data
 		var(float v);
 		var(const array& v);
 		var(const map& v);
-		var(const string& n,void* v);
+		var(const string& n,const void* v);
 		var(const var& v);
 
 		var operator +(const var& v) const throw(type_invalid);
@@ -343,7 +339,7 @@ namespace lyramilk{namespace data
 			@param v 用户数据的指针。
 			@return 返回自身的引用。
 		*/
-		var& assign(const string& n,void* v);
+		var& assign(const string& n,const void* v);
 
 		operator chunk () const throw(type_invalid);
 		operator string () const throw(type_invalid);
@@ -370,20 +366,24 @@ namespace lyramilk{namespace data
 		THIS_FUNCTION_IS_DEPRECATED(const char* c_str() const throw(type_invalid));
 		THIS_FUNCTION_IS_DEPRECATED(const wchar_t* c_wstr() const throw(type_invalid));
 		/**
-			@brief 取得用户数据的值。
-			@details 取得用户数据的指针和标识。
-			@param v 用户数据的标识。如果不为空串，则仅当v的值和var的数据表标相同时才会返回var内的用户数据指针。如果为空串，则为v赋值为var内的数据标识，并且返回用户数据指针。
-			@return 用户数据的指针。
+			@brief 定义额外的用户数据。
+			@param v 用户数据的标识。
+			@param p 用户数据的指针。
 		*/
-		void* userdata(string &v) const;
+		void userdata(string v,const void* p) throw(type_invalid);
 		/**
 			@brief 取得用户数据的值。
-			@details 取得用户数据的指针和标识。
-			@param v 用户数据的标识。如果不为空指针，则仅当v的值和var的数据表标相同时才会返回var内的用户数据指针。如果为空串，则返回用户数据指针。
+			@details 根据用户数据的标识获取用户数据的指针。
+			@param v 用户数据的标识。
 			@return 用户数据的指针。
 		*/
-		void* userdata(const char* p = NULL) const;
-
+		const void* userdata(string v) const;
+		/**
+			@brief 取得用户数据的值。
+			@details 取得第一个用户数据的指针。
+			@return 用户数据的指针。
+		*/
+		const void* userdata() const;
 		/**
 			@brief 取得var的类型。
 		*/

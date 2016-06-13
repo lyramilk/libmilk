@@ -53,7 +53,7 @@ bool obj::verify() const
 
 bool obj::try_del()
 {
-	if(_rc > 0) return false;
+	if(!__sync_bool_compare_and_swap(&_rc,0,0))return false;
 	ondestory();
 	return true;
 }

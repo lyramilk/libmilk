@@ -101,6 +101,19 @@ namespace lyramilk{namespace script
 		virtual void define(lyramilk::data::string classname,functional_map m,class_builder builder,class_destoryer destoryer) = 0;
 
 		/**
+			@brief 将一个脚本可访问的C++对象装载到一个var对象中以作为参数由C++传递给脚本引擎。
+			@param classname 脚本中对象名字
+			@param args 参数
+			@return 装载了脚本对象的var对象，该var对象只能传递给创建该对象的脚本引擎对象。
+		*/
+		virtual lyramilk::data::var createobject(lyramilk::data::string classname,lyramilk::data::var::array args) = 0;
+
+		/**
+			@brief 对于支持垃圾回收的脚本引擎，主动促使其进行垃圾回收。
+		*/
+		virtual void gc();
+
+		/**
 			@brief 该模板用于适配C++可访问的对象的成员函数到脚本引擎支持的形式。
 			@details 该模板用于适配C++可访问的对象的成员函数到脚本引擎支持的形式。举例，如果number是一个C++类，而number的普通成员函数add函数符合functional_type形式，那么 lyramilk::script::engine::functional<number,&number::add>可以将该函数适配到非成员的functional_type形式。
 		*/
@@ -118,7 +131,7 @@ namespace lyramilk{namespace script
 	*/
 	class _lyramilk_api_ enginelessee
 	{
-		friend class enginefactory;
+		friend class engines;
 		struct enginelease
 		{
 			class engine* eng;
@@ -145,52 +158,26 @@ namespace lyramilk{namespace script
 
 #ifdef WIN32
 	template class _lyramilk_api_ std::map < lyramilk::data::string, std::vector<enginelessee::enginelease> > ;
+	template class _lyramilk_api_ std::list < enginelessee::enginelease > ;
 #endif
-	/**
-		@brief 脚本引擎工厂用于管理具有相同功能的一组脚本引擎。
-		@details 脚本引擎工厂用于管理具有相同功能的一组脚本引擎。
-	*/
-	class _lyramilk_api_ enginefactory : public engine
+
+	class _lyramilk_api_ engines : public engine
 	{
-		std::map<lyramilk::data::string,std::vector<enginelessee::enginelease> > es;
-		void regist(lyramilk::data::string name,engine* eng,int engsize,int engcount);
+		std::list<enginelessee::enginelease> es;
 	  public:
-		enginefactory();
-		virtual ~enginefactory();
+		engines();
+		virtual ~engines();
 
-		static enginefactory* instance();
-		
-		/**
-			@brief 向脚本引擎工厂注册一组脚本引擎对象。
-			@param name 脚本引擎的名字
-			@param eng 脚本引擎数组的头指针
-			@param engcount 注册的脚本引擎数目。
-		*/
-		template<typename T>
-		void regist(lyramilk::data::string name,T* eng,int engcount = 1)
-		{
-			regist(name,eng,sizeof(T),engcount);
-		}
-
-		/**
-			@brief 从脚本引擎工厂移除一个种类的脚本引擎对象。
-			@param name 脚本引擎的名字。
-		*/
-		void unregist(lyramilk::data::string name);
-
-		/**
-			@brief 从指定引擎集合中取得一个未被占用的脚本引擎。
-			@details 从指定引擎集合中取得一个未被占用的脚本引擎。该函数是非阻塞的，如果所有的脚本引擎对象都被占用，则返回的enginelessee对象转换成bool后是false。
-			@param name 脚本引擎的名字。
-			@return 返回一个未被占用的脚本引擎对象，该对象不一定可用。
-		*/
-		enginelessee get(lyramilk::data::string name);
+		void push_back(engine* eng);
+		void clear();
+		enginelessee get();
 
 		virtual bool load_string(lyramilk::data::string script);
 		virtual lyramilk::data::var pcall(lyramilk::data::var::array args);
 		virtual lyramilk::data::var call(lyramilk::data::string func,lyramilk::data::var::array args);
 		virtual void reset();
 		virtual void define(lyramilk::data::string classname,engine::functional_map m,engine::class_builder builder,engine::class_destoryer destoryer);
+		virtual lyramilk::data::var createobject(lyramilk::data::string classname,lyramilk::data::var::array args);
 	};
 
 

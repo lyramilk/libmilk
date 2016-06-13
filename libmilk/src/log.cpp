@@ -121,11 +121,14 @@ int logbuf::sync()
 
 	lyramilk::data::string module = p.module;
 	if(!module.empty()){
-		module += '.' + p.module_suffix;
+		if(!p.module_suffix.empty()){
+			module += '.' + p.module_suffix;
+		}
 	}else{
 		module = p.module_suffix;
 	}
 
+#ifdef __linux__
 	/**/
 	static lyramilk::data::string str;
 	static pid_t pid = getpid();
@@ -141,6 +144,7 @@ int logbuf::sync()
 	/*/
 	p.p->log(time(NULL),p.t,"user","app",module,lyramilk::data::string(pstr,len));
 	/ **/
+#endif
 	p.t = trace;
 	p.module_suffix.clear();
 	setp(buf.data(),buf.data() + buf.size());

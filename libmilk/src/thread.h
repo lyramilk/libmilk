@@ -42,12 +42,6 @@ namespace lyramilk{namespace system{namespace threading
 #else
 		static int thread_task(threads* p);
 #endif
-		/**
-			@brief 线程函数，激活线程时触发。
-			@details 子类中该成员函数将在额外的线程中执行。
-			@return 这个返回值将作为线程的返回值。
-		*/
-		virtual int svc() = 0;
 	  public:
 		/**
 			@brief 线程组构造
@@ -70,6 +64,12 @@ namespace lyramilk{namespace system{namespace threading
 			@details 析构时会等待所有线程结束才会真正退出。
 		*/
 		virtual void detach();
+		/**
+			@brief 线程函数，激活线程时触发。
+			@details 子类中该成员函数将在额外的线程中执行。
+			@return 这个返回值将作为线程的返回值。
+		*/
+		virtual int svc() = 0;
 	};
 
 
