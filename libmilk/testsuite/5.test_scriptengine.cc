@@ -92,48 +92,65 @@ std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 
+class lua_engines:public lyramilk::script::engines
+{
+	virtual lyramilk::script::engine* underflow()
+	{
+		std::cout << "lua 触发了创建对象" << std::endl;
+		lyramilk::script::engine* p = new lyramilk::script::lua::script_lua();
+		{
+			lyramilk::script::engine::functional_map fn;
+			fn["add"] = lyramilk::script::engine::functional<number,&number::add>;
+			fn["sub"] = lyramilk::script::engine::functional<number,&number::sub>;
+			fn["testmap"] = lyramilk::script::engine::functional<number,&number::testmap>;
+			p->define("niuniu",fn,number::ctr,number::dtr);
+		}
 
+		{
+			lyramilk::script::engine::functional_map fn;
+			fn["print"] = lyramilk::script::engine::functional<os,&os::print>;
+			p->define("os",fn,os::ctr,os::dtr);
+		}
+		return p;
+	}
+};
 
+class js_engines:public lyramilk::script::engines
+{
+	virtual lyramilk::script::engine* underflow()
+	{
+		std::cout << "js 触发了创建对象" << std::endl;
+		lyramilk::script::engine* p = new lyramilk::script::js::script_js();
+		{
+			lyramilk::script::engine::functional_map fn;
+			fn["add"] = lyramilk::script::engine::functional<number,&number::add>;
+			fn["sub"] = lyramilk::script::engine::functional<number,&number::sub>;
+			fn["testmap"] = lyramilk::script::engine::functional<number,&number::testmap>;
+			p->define("niuniu",fn,number::ctr,number::dtr);
+		}
+
+		{
+			lyramilk::script::engine::functional_map fn;
+			fn["print"] = lyramilk::script::engine::functional<os,&os::print>;
+			p->define("os",fn,os::ctr,os::dtr);
+		}
+		return p;
+	}
+};
 
 
 
 int main(int argc,const char* argv[])
 {
-	lyramilk::script::lua::script_lua eg1[2];
-	lyramilk::script::js::script_js eg2[2];
-
-	lyramilk::script::engines engs_lua;
-	lyramilk::script::engines engs_js;
-
-
-	engs_lua.push_back(eg1 + 0);
-	engs_lua.push_back(eg1 + 1);
-
-	engs_js.push_back(eg2 + 0);
-	engs_js.push_back(eg2 + 1);
+	lua_engines engs_lua;
+	js_engines engs_js;
 
 	{
-		lyramilk::script::engine::functional_map fn;
-		fn["add"] = lyramilk::script::engine::functional<number,&number::add>;
-		fn["sub"] = lyramilk::script::engine::functional<number,&number::sub>;
-		fn["testmap"] = lyramilk::script::engine::functional<number,&number::testmap>;
-		engs_lua.define("niuniu",fn,number::ctr,number::dtr);
-		engs_js.define("niuniu",fn,number::ctr,number::dtr);
-	}
-
-	{
-		lyramilk::script::engine::functional_map fn;
-		fn["print"] = lyramilk::script::engine::functional<os,&os::print>;
-		engs_lua.define("os",fn,os::ctr,os::dtr);
-		engs_js.define("os",fn,os::ctr,os::dtr);
-	}
-
-	{
-		lyramilk::script::enginelessee eng = engs_lua.get();
-		lyramilk::script::enginelessee eng1 = engs_lua.get();
-		lyramilk::script::enginelessee eng2 = engs_lua.get();
-		lyramilk::script::enginelessee eng3 = engs_lua.get();
-		lyramilk::script::enginelessee eng4 = engs_lua.get();
+		lyramilk::script::engines::ptr eng = engs_lua.get();
+		lyramilk::script::engines::ptr eng1 = engs_lua.get();
+		lyramilk::script::engines::ptr eng2 = engs_lua.get();
+		lyramilk::script::engines::ptr eng3 = engs_lua.get();
+		lyramilk::script::engines::ptr eng4 = engs_lua.get();
 
 		if(eng){
 			std::cout << "取得了eng" << std::endl;
@@ -198,11 +215,11 @@ int main(int argc,const char* argv[])
 		}
 	}
 	{
-		lyramilk::script::enginelessee eng = engs_lua.get();
-		lyramilk::script::enginelessee eng1 = engs_lua.get();
-		lyramilk::script::enginelessee eng2 = engs_lua.get();
-		lyramilk::script::enginelessee eng3 = engs_js.get();
-		lyramilk::script::enginelessee eng4 = engs_js.get();
+		lyramilk::script::engines::ptr eng = engs_lua.get();
+		lyramilk::script::engines::ptr eng1 = engs_lua.get();
+		lyramilk::script::engines::ptr eng2 = engs_lua.get();
+		lyramilk::script::engines::ptr eng3 = engs_js.get();
+		lyramilk::script::engines::ptr eng4 = engs_js.get();
 
 		if(eng){
 			std::cout << "取得了eng" << std::endl;

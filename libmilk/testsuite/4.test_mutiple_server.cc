@@ -3,7 +3,7 @@
 #include "var.h"
 #include "log.h"
 
-class server_session:public lyramilk::system::netio::aiosession
+class server_session:public lyramilk::netio::aiosession
 {
   protected:
 	lyramilk::log::logss log;
@@ -47,14 +47,14 @@ std::cout << std::endl;
 
 int main(int argc,const char* argv[])
 {
-	lyramilk::system::netio::aiopoll aip;
+	lyramilk::netio::aiopoll aip;
 
-	lyramilk::system::netio::aioserver<server_session> ais1;
+	lyramilk::netio::aioserver<server_session> ais1;
 	ais1.open(443);
 	ais1.init_ssl("/root/ssl-keygen/test.crt","/root/ssl-keygen/test.key");
 	aip.add(&ais1);
 
-	lyramilk::system::netio::aioserver<server_session> ais2;
+	lyramilk::netio::aioserver<server_session> ais2;
 	ais2.open(8080);
 	aip.add(&ais2);
 

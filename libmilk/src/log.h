@@ -105,7 +105,7 @@ namespace lyramilk { namespace log
 		logb* p;
 		lyramilk::data::string module;
 		lyramilk::data::string module_suffix;
-		lyramilk::system::threading::mutex_os lock;
+		lyramilk::threading::mutex_os lock;
 		logbuf db;
 		friend class logbuf;
 	  public:

@@ -13,11 +13,11 @@
 #endif
 
 /**
-	@namespace lyramilk::system::netio
+	@namespace lyramilk::netio
 	@brief 网络io
 	@details 该命名空间描述网络io通信
 */
-namespace lyramilk{namespace system{namespace netio
+namespace lyramilk{namespace netio
 {
 #ifdef WIN32
 	typedef SOCKET native_socket_type;
@@ -119,6 +119,6 @@ namespace lyramilk{namespace system{namespace netio
 		virtual bool ssl(bool use_ssl);
 		virtual bool init_ssl(lyramilk::data::string certfilename, lyramilk::data::string keyfilename);
 	};
-}}}
+}}
 
 #endif

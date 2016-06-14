@@ -6,7 +6,7 @@
 int r = 10;
 
 
-class ssss:public lyramilk::system::threading::threads
+class ssss:public lyramilk::threading::threads
 {
 	int svc()
 	{

@@ -39,93 +39,39 @@ namespace lyramilk{namespace script
 	void engine::gc()
 	{}
 
-	//enginelessee
-	enginelessee::enginelease::enginelease():eng(NULL)
-	{
-	}
-	enginelessee::enginelessee():autounlock(false),e(NULL)
-	{
-	}
-	enginelessee::enginelessee(enginelease& o):autounlock(true),e(&o)
-	{
-	}
-	
-
-	enginelessee::enginelessee(const enginelessee& o):autounlock(true),e(o.e)
-	{
-		((enginelessee&)o).autounlock = false;
-	}
-
-	enginelessee& enginelessee::operator =(const enginelessee& o)
-	{
-		autounlock = true;
-		e = ((enginelessee&)o).e;
-		((enginelessee&)o).autounlock = false;
-		return *this;
-	}
-
-	enginelessee::~enginelessee()
-	{
-		if(e && autounlock){
-			e->lock.unlock();
-			e->eng->gc();
-		}
-	}
-
-	engine* enginelessee::operator->()
-	{
-		return (e?e->eng:NULL);
-	}
-
-	engine* enginelessee::operator*()
-	{
-		return (e?e->eng:NULL);
-	}
-
-	enginelessee::operator bool()
-	{
-		return e && e->eng;
-	}
-
-
+	// engines
 	engines::engines()
 	{}
 
 	engines::~engines()
 	{}
 	
-	void engines::push_back(engine* eng)
-	{
-		es.push_back(enginelessee::enginelease());
-		es.back().eng = eng;
-	}
-	
-	void engines::clear()
-	{
-		es.clear();
-	}
-	
-	enginelessee engines::get()
-	{
-		std::list<enginelessee::enginelease>::iterator it = es.begin();
-		for(;it!=es.end();++it){
-			if(it->lock.try_lock()){
-				return enginelessee(*it);
-			}
-		}
-		return enginelessee();
-	}
-	
-
-
 	bool engines::load_string(lyramilk::data::string script)
 	{
-		std::list<enginelessee::enginelease>::iterator it = es.begin();
+		list_type::iterator it = es.begin();
 		for(;it!=es.end();++it){
-			lyramilk::system::threading::mutex_sync _(it->lock);
-			it->eng->load_string(script);
+			lyramilk::threading::mutex_sync _(it->l);
+			it->t->load_string(script);
 		}
 		return true;
+	}
+
+	void engines::reset()
+	{
+		list_type::iterator it = es.begin();
+		for(;it!=es.end();++it){
+			lyramilk::threading::mutex_sync _(it->l);
+			it->t->reset();
+		}
+	}
+
+	void engines::define(lyramilk::data::string classname,engine::functional_map m,engine::class_builder builder,engine::class_destoryer destoryer)
+	{
+		list_type::iterator it = es.begin();
+		for(;it!=es.end();++it){
+			lyramilk::threading::mutex_sync _(it->l);
+			it->t->define(classname,m,builder,destoryer);
+		}
 	}
 
 	lyramilk::data::var engines::pcall(lyramilk::data::var::array args)
@@ -136,24 +82,6 @@ namespace lyramilk{namespace script
 	lyramilk::data::var engines::call(lyramilk::data::string func,lyramilk::data::var::array args)
 	{
 		TODO();
-	}
-
-	void engines::reset()
-	{
-		std::list<enginelessee::enginelease>::iterator it = es.begin();
-		for(;it!=es.end();++it){
-			lyramilk::system::threading::mutex_sync _(it->lock);
-			it->eng->reset();
-		}
-	}
-
-	void engines::define(lyramilk::data::string classname,engine::functional_map m,engine::class_builder builder,engine::class_destoryer destoryer)
-	{
-		std::list<enginelessee::enginelease>::iterator it = es.begin();
-		for(;it!=es.end();++it){
-			lyramilk::system::threading::mutex_sync _(it->lock);
-			it->eng->define(classname,m,builder,destoryer);
-		}
 	}
 
 	lyramilk::data::var engines::createobject(lyramilk::data::string classname,lyramilk::data::var::array args)

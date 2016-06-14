@@ -64,4 +64,13 @@ namespace lyramilk{namespace script{namespace elf
 	{
 		
 	}
+	
+	lyramilk::data::var script_elf::createobject(lyramilk::data::string classname,lyramilk::data::var::array args)
+	{
+		return lyramilk::data::var::nil;
+	}
+	
+	void script_elf::gc()
+	{
+	}
 }}}

@@ -53,7 +53,7 @@
 	static __ssl _ssl;
 #endif
 
-namespace lyramilk{namespace system{namespace netio
+namespace lyramilk{namespace netio
 {
 	// aioselector
 	aioselector::aioselector()
@@ -565,4 +565,4 @@ namespace lyramilk{namespace system{namespace netio
 	{
 	}
 
-}}}
+}}

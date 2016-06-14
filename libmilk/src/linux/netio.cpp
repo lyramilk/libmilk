@@ -56,7 +56,7 @@
 
 
 
-namespace lyramilk{namespace system{namespace netio
+namespace lyramilk{namespace netio
 {
 	netaddress::netaddress(lyramilk::data::string host, lyramilk::data::uint16 port)
 	{
@@ -260,5 +260,5 @@ namespace lyramilk{namespace system{namespace netio
 		TODO();
 	}
 
-}}}
+}}
 

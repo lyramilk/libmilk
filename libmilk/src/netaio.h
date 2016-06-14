@@ -3,7 +3,7 @@
 
 #include "netio.h"
 
-namespace lyramilk{namespace system{namespace netio
+namespace lyramilk{namespace netio
 {
 	typedef int native_epool_type;
 	typedef int native_filedescriptor_type;
@@ -50,7 +50,7 @@ namespace lyramilk{namespace system{namespace netio
 	/**
 		@brief 异步文件句柄容器
 	*/
-	class _lyramilk_api_ aiopoll : public lyramilk::system::threading::threads
+	class _lyramilk_api_ aiopoll : public lyramilk::threading::threads
 	{
 	  protected:
 		friend class aioselector;
@@ -204,6 +204,6 @@ namespace lyramilk{namespace system{namespace netio
 			return aiosession::__tbuilder<T>();
 		}
 	};
-}}}
+}}
 
 #endif

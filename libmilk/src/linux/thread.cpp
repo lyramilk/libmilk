@@ -1,6 +1,6 @@
 ﻿#include "thread.h"
 
-namespace lyramilk{namespace system{namespace threading
+namespace lyramilk{namespace threading
 {
 	// threads
 	threads::return_type threads::thread_task(threads* p)
@@ -222,4 +222,4 @@ namespace lyramilk{namespace system{namespace threading
 		return *pw;
 	}
 
-}}}
+}}

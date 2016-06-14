@@ -115,7 +115,7 @@ logbuf::int_type logbuf::overflow(int_type _Meta)
 
 int logbuf::sync()
 {
-	lyramilk::system::threading::mutex_sync _(p.lock);
+	lyramilk::threading::mutex_sync _(p.lock);
 	const char* pstr = pbase();
 	int len = (int)(pptr() - pbase());
 
@@ -192,14 +192,14 @@ logss& logss::operator()(type ty)
 
 logss& logss::operator()(lyramilk::data::string m)
 {
-	lyramilk::system::threading::mutex_sync _(lock);
+	lyramilk::threading::mutex_sync _(lock);
 	module_suffix = m;
 	return *this;
 }
 
 logss& logss::operator()(type ty,lyramilk::data::string m)
 {
-	lyramilk::system::threading::mutex_sync _(lock);
+	lyramilk::threading::mutex_sync _(lock);
 	module_suffix = m;
 	t = ty;
 	return *this;
@@ -216,4 +216,4 @@ lyramilk::log::logb* logss::rebase(lyramilk::log::logb* ploger)
 	p = ploger;
 	return old;
 }
-//		lyramilk::system::threading::mutex lock;
+//		lyramilk::threading::mutex lock;

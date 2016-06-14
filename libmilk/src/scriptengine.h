@@ -125,63 +125,21 @@ namespace lyramilk{namespace script
 		}
 	};
 
-	/**
-		@brief 脚本引擎的智能指针。
-		@details 该指针指针用于访问enginefactory中的引擎。用于从enginefactory中获取并锁定一个引擎对象。
-	*/
-	class _lyramilk_api_ enginelessee
+	class _lyramilk_api_ engines : public lyramilk::threading::exclusive::list<engine>
 	{
-		friend class engines;
-		struct enginelease
-		{
-			class engine* eng;
-			lyramilk::system::threading::mutex_spin lock;
-			enginelease();
-		};
-
-		bool autounlock;
-		enginelease* e;
-		enginelessee();
-		enginelessee(enginelease& o);
-		enginelessee& operator =(const enginelessee& o);
-	  public:
-		enginelessee(const enginelessee& o);
-		~enginelessee();
-		engine* operator->();
-		engine* operator*();
-		/**
-			@brief 返回是否可用。
-			@details 当该智能指针获取到的引擎对象不可用时，返回false。
-		*/
-		operator bool();
-	};
-
-#ifdef WIN32
-	template class _lyramilk_api_ std::map < lyramilk::data::string, std::vector<enginelessee::enginelease> > ;
-	template class _lyramilk_api_ std::list < enginelessee::enginelease > ;
-#endif
-
-	class _lyramilk_api_ engines : public engine
-	{
-		std::list<enginelessee::enginelease> es;
 	  public:
 		engines();
 		virtual ~engines();
 
-		void push_back(engine* eng);
-		void clear();
-		enginelessee get();
-
+		virtual engine* underflow() = 0;
 		virtual bool load_string(lyramilk::data::string script);
-		virtual lyramilk::data::var pcall(lyramilk::data::var::array args);
-		virtual lyramilk::data::var call(lyramilk::data::string func,lyramilk::data::var::array args);
 		virtual void reset();
 		virtual void define(lyramilk::data::string classname,engine::functional_map m,engine::class_builder builder,engine::class_destoryer destoryer);
+	  private:
+		virtual lyramilk::data::var pcall(lyramilk::data::var::array args);
+		virtual lyramilk::data::var call(lyramilk::data::string func,lyramilk::data::var::array args);
 		virtual lyramilk::data::var createobject(lyramilk::data::string classname,lyramilk::data::var::array args);
 	};
-
-
-
 
 	#define MILK_CHECK_SCRIPT_ARGS_LOG(log,lt,m,params,i,t)  {	\
 		if(params.size() < i + 1){	\
