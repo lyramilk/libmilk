@@ -1,4 +1,4 @@
-var t = new os();
+var t = new os(100000);
 t.print("[js]加载脚本开始。");
 //var w = new niuniu(2002);
 function test(v,w)

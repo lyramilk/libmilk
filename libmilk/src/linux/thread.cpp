@@ -198,26 +198,44 @@ namespace lyramilk{namespace threading
 	};
 
 
-	rwlock::rwlock()
+	mutex_rw::mutex_rw()
 	{
 		pthread_rwlock_init(&lock,NULL);
 		pr = new rwlock_r(&lock);
 		pw = new rwlock_w(&lock);
 	}
 
-	rwlock::~rwlock()
+	mutex_rw::~mutex_rw()
 	{
-		delete pr;
-		delete pw;
+		if(pr)delete pr;
+		if(pw)delete pw;
 		pthread_rwlock_destroy(&lock);
 	}
 
-	mutex_super& rwlock::r()
+	mutex_rw::mutex_rw(const mutex_rw& o)
+	{
+		pthread_rwlock_init(&lock,NULL);
+		pr = new rwlock_r(&lock);
+		pw = new rwlock_w(&lock);
+	}
+
+	mutex_rw& mutex_rw::operator =(const mutex_rw& o)
+	{
+		if(pr)delete pr;
+		if(pw)delete pw;
+		pthread_rwlock_destroy(&lock);
+		pthread_rwlock_init(&lock,NULL);
+		pr = new rwlock_r(&lock);
+		pw = new rwlock_w(&lock);
+		return *this;
+	}
+
+	mutex_super& mutex_rw::r()
 	{
 		return *pr;
 	}
 
-	mutex_super& rwlock::w()
+	mutex_super& mutex_rw::w()
 	{
 		return *pw;
 	}

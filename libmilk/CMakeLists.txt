@@ -1,13 +1,12 @@
 ﻿#定义工程名及版本
 project(milk)
-set(version 1.1.3)
+set(version 1.1.4)
 set(soversion 1.1)
 
 cmake_minimum_required (VERSION 2.8.11) 
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS ON)
 set(CMAKE_USE_RELATIVE_PATHS ON)
 set(CMAKE_INCLUDE_DIRECTORIES_BEFORE ON)
-SET(CMAKE_BUILE_TYPE DEBUG) 
 
 #是否开启内存泄露测试
 set(MEMLEAKTEST 0)
@@ -56,7 +55,9 @@ if(UNIX)
 	pkg_search_module(OPENSSL openssl)
 	pkg_search_module(LZ4 liblz4)
 	pkg_search_module(LUA lua)
+	pkg_search_module(JS24 mozjs-24)
 	pkg_search_module(JS libjs)
+	#set(CMAKE_REQUIRED_INCLUDES /usr/include/)
 	check_include_file_cxx(tr1/unordered_map	Z_HAVE_TR1_UNORDEREDMAP)
 endif()
 
@@ -64,6 +65,7 @@ if(JSON_C_FOUND)
 	list(APPEND BUILD_DEPENDS json-c-devel)
 	list(APPEND RUN_DEPENDS json-c-devel)
 	list(APPEND LIBS_DEPENDS ${JSON_C_LDFLAGS})
+	list(APPEND INCS_DEPENDS ${JSON_C_CFLAGS})
 	list(APPEND CONFIG_MACROS JSON_C_FOUND)
 endif()
 
@@ -71,6 +73,7 @@ if(OPENSSL_FOUND)
 	list(APPEND BUILD_DEPENDS openssl)
 	list(APPEND RUN_DEPENDS openssl-devel)
 	list(APPEND LIBS_DEPENDS ${OPENSSL_LDFLAGS})
+	list(APPEND INCS_DEPENDS ${OPENSSL_CFLAGS})
 	list(APPEND CONFIG_MACROS OPENSSL_FOUND)
 endif()
 
@@ -78,6 +81,7 @@ if(LZ4_FOUND)
 	list(APPEND BUILD_DEPENDS lz4)
 	list(APPEND RUN_DEPENDS lz4-devel)
 	list(APPEND LIBS_DEPENDS ${LZ4_LDFLAGS})
+	list(APPEND INCS_DEPENDS ${LZ4_CFLAGS})
 	list(APPEND CONFIG_MACROS LZ4_FOUND)
 endif()
 
@@ -85,32 +89,40 @@ if(LUA_FOUND)
 	list(APPEND BUILD_DEPENDS lua)
 	list(APPEND RUN_DEPENDS lua-devel)
 	list(APPEND LIBS_DEPENDS ${LUA_LDFLAGS})
+	list(APPEND INCS_DEPENDS ${LUA_CFLAGS})
 	list(APPEND CONFIG_MACROS LUA_FOUND)
 else()
 	list(REMOVE_ITEM src_cpps src/script_lua.cpp)
 	list(REMOVE_ITEM src_hs src/script_lua.h)
 endif()
 
-if(JS_FOUND)
+
+
+
+
+if(JS24_FOUND)
+	list(APPEND BUILD_DEPENDS mozjs24)
+	list(APPEND RUN_DEPENDS mozjs24-devel)
+	list(APPEND LIBS_DEPENDS ${JS24_LDFLAGS})
+	list(APPEND INCS_DEPENDS ${JS24_CFLAGS})
+	list(APPEND CONFIG_MACROS JS24_FOUND)
+	list(REMOVE_ITEM src_cpps src/script_js.cpp)
+elseif(JS_FOUND)
 	list(APPEND BUILD_DEPENDS js)
 	list(APPEND RUN_DEPENDS js-devel)
 	list(APPEND LIBS_DEPENDS ${JS_LDFLAGS})
+	list(APPEND INCS_DEPENDS ${JS_CFLAGS})
 	list(APPEND CONFIG_MACROS JS_FOUND)
+	list(REMOVE_ITEM src_cpps src/script_js24.cpp)
 else()
-	list(REMOVE_ITEM src_cpps src/linux/script_js.cpp)
 	list(REMOVE_ITEM src_hs src/script_js.h)
 endif()
-
 
 if(UNIX)
 	set(LIBRARIES -lpthread)
 else()
 	message(FATAL_ERROR "libmilk is works on Linux only!!!")
 endif()
-
-
-
-
 
 #根据外部依赖的存在与定义一些宏
 foreach(v ${BUILD_DEPENDS})
@@ -119,6 +131,10 @@ endforeach()
 
 foreach(v ${RUN_DEPENDS})
 	set(CMAKE_RUN_DEPENDS "${CMAKE_RUN_DEPENDS} ${v}")
+endforeach()
+
+foreach(v ${INCS_DEPENDS})
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${v}")
 endforeach()
 
 set(CMAKE_LIBS_DEPENDS ${LIBS_DEPENDS})

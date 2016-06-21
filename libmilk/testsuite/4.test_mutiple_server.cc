@@ -47,7 +47,7 @@ std::cout << std::endl;
 
 int main(int argc,const char* argv[])
 {
-	lyramilk::netio::aiopoll aip;
+	lyramilk::io::aiopoll aip;
 
 	lyramilk::netio::aioserver<server_session> ais1;
 	ais1.open(443);

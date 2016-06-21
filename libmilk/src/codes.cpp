@@ -176,6 +176,65 @@ class coding_t:public coding
 	}
 };
 
+class coding_url:public coding
+{
+  public:
+	char char_to_hex(char ch)
+	{
+		if (ch >= '0' && ch <= '9')
+			return (char) (ch - '0');
+		if (ch >= 'a' && ch <= 'f')
+			return (char) (ch - 'a' + 10);
+		if (ch >= 'A' && ch <= 'F')
+			return (char) (ch - 'A' + 10);
+		throw lyramilk::exception(D("错误的URL编码：0x%02x -> (%c)",(unsigned char)ch,ch));
+		return ch;
+	}
+
+
+	virtual string decode(string str)
+	{
+		string dst;
+		dst.reserve(str.size());
+
+		string::iterator it = str.begin();
+		for(;it!=str.end();++it){
+			char& c = *it;
+			if(c == '%'){
+				if(it + 2 < str.end()){
+					try{
+						char ca = char_to_hex(*(it + 1));
+						char cb = char_to_hex(*(it + 2));
+						char cr = (ca << 4) | cb;
+						dst.push_back(cr);
+						it += 2;
+					}catch(lyramilk::exception & e){
+						//log(lyramilk::log::error) << e.what() << std::endl;
+						dst.push_back(c);
+					}
+				}else{
+					dst.push_back(c);
+				}
+			}else if(c == '+'){
+				dst += ' ';
+			}else{
+				dst.push_back(c);
+			}
+		}
+		return dst;
+	}
+	virtual string encode(string str)
+	{
+		return str;
+	}
+	static coding* getter()
+	{
+		static coding_url _mm;
+		return &_mm;
+	}
+
+};
+
 char c_gbk[] = "gbk";
 char c_gb2312[] = "gb2312";
 
@@ -183,6 +242,7 @@ static __attribute__ ((constructor)) void __init()
 {
 	codes::instance()->define("gbk",coding_t<c_gbk>::getter);
 	codes::instance()->define("gb2312",coding_t<c_gb2312>::getter);
+	codes::instance()->define("url",coding_url::getter);
 }
 #else
 bool __init()

@@ -358,7 +358,7 @@ string jsonobject_to_string(json_object* node)
 string json::to_str()
 {
 	struct json_object* jroot = var_to_node(v);
-	if(jroot){
+	if(!jroot){
 		return "";
 	}
 	string retstr = jsonobject_to_string(jroot);

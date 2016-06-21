@@ -45,15 +45,12 @@ namespace lyramilk{namespace script
 
 	engines::~engines()
 	{}
-	
-	bool engines::load_string(lyramilk::data::string script)
+
+
+	void engines::onfire(engine* o)
 	{
-		list_type::iterator it = es.begin();
-		for(;it!=es.end();++it){
-			lyramilk::threading::mutex_sync _(it->l);
-			it->t->load_string(script);
-		}
-		return true;
+		assert(o);
+		o->gc();
 	}
 
 	void engines::reset()
@@ -64,29 +61,4 @@ namespace lyramilk{namespace script
 			it->t->reset();
 		}
 	}
-
-	void engines::define(lyramilk::data::string classname,engine::functional_map m,engine::class_builder builder,engine::class_destoryer destoryer)
-	{
-		list_type::iterator it = es.begin();
-		for(;it!=es.end();++it){
-			lyramilk::threading::mutex_sync _(it->l);
-			it->t->define(classname,m,builder,destoryer);
-		}
-	}
-
-	lyramilk::data::var engines::pcall(lyramilk::data::var::array args)
-	{
-		TODO();
-	}
-
-	lyramilk::data::var engines::call(lyramilk::data::string func,lyramilk::data::var::array args)
-	{
-		TODO();
-	}
-
-	lyramilk::data::var engines::createobject(lyramilk::data::string classname,lyramilk::data::var::array args)
-	{
-		TODO();
-	}
-
 }}

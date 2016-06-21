@@ -13,10 +13,11 @@
 
 class os
 {
+	int i;
   public:
-	static void* ctr(lyramilk::data::var::array)
+	static void* ctr(lyramilk::data::var::array ar)
 	{
-		return new os();
+		return new os(ar[0]);
 	}
 	static void dtr(void* p)
 	{
@@ -29,9 +30,9 @@ class os
 		return true;
 	}
 
-	os()
+	os(int k)
 	{
-std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++构造os " << this << std::endl;
+std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++构造os " << k << "," << this << std::endl;
 	}
 
 	~os()
@@ -46,18 +47,18 @@ class number
 	int i;
 	lyramilk::log::logss log;
   public:
-	static void* ctr(lyramilk::data::var::array)
+	static void* ctr(lyramilk::data::var::array ar)
 	{
-		return new number();
+		return new number(ar[0]);
 	}
 	static void dtr(void* p)
 	{
 		delete (number*)p;
 	}
 
-	number():log(lyramilk::klog,"app.lua.number")
+	number(int k):log(lyramilk::klog,"app.lua.number")
 	{
-		i = 1000000;
+		i = k;
 std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++构造number " << this << ",i=" << i << std::endl;
 	}
 
@@ -123,7 +124,7 @@ int main(int argc,const char* argv[])
 		lyramilk::data::var::array r;
 		r.push_back("Hello World!!!!肚子");
 		lyramilk::data::var::array r2;
-		r2.push_back(2002);
+		r2.push_back(200000);
 		r.push_back(eng->createobject("niuniu",r2));
 		std::cout << "调用script的test函数的结果：" << eng->call("test",r).userdata() << std::endl;
 	}
@@ -151,7 +152,7 @@ int main(int argc,const char* argv[])
 		lyramilk::data::var::array r;
 		r.push_back("Hello World!!!!肚子");
 		lyramilk::data::var::array r2;
-		r2.push_back(2002);
+		r2.push_back(100000);
 		r.push_back(eng->createobject("niuniu",r2));
 		std::cout << "调用script的test函数的结果：" << eng->call("test",r).userdata() << std::endl;
 	}

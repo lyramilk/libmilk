@@ -1,4 +1,4 @@
-local t = os:new();
+local t = os:new(200000);
 t:print("[lua]加载脚本开始");
 
 --local w = niuniu:new();

@@ -301,6 +301,7 @@ namespace lyramilk{namespace script{namespace lua
 
 		lyramilk::data::var::map env;
 		env["this"].assign("this",(*pthis)->userdata("__lua_native_object"));
+		env["env"].assign("env",mi->env);
 		lyramilk::data::var ret = mi->funcmap[funcname](params,env);
 		luaset(L,ret);
 		return 1;
@@ -338,8 +339,8 @@ namespace lyramilk{namespace script{namespace lua
 	static int lua_func_meta_ctr(lua_State *L)
 	{
 		int argc = lua_gettop(L);
-		if(argc != 1) return 0;
-		lua_getfield(L,-1,"__lua_metainfo");
+		if(argc < 1) return 0;
+		lua_getfield(L,1,"__lua_metainfo");
 		void* cls = lua_touserdata(L,-1);
 		if(cls == NULL) return 0;
 		lua_pop(L,1);
@@ -387,6 +388,7 @@ namespace lyramilk{namespace script{namespace lua
 		metainfo& mi = minfo[classname];
 		mi.ctr = builder;
 		mi.dtr = destoryer;
+		mi.env = this;
 		lua_pushstring(L,"__lua_metainfo");
 		lua_pushlightuserdata(L,&mi);
 		lua_settable(L, -3);
@@ -419,13 +421,9 @@ namespace lyramilk{namespace script{namespace lua
 		if(it==minfo.end()) return lyramilk::data::var::nil;
 
 		lua_getglobal(L,classname.c_str());
+		vtos(L,args);
 		lua_func_meta_ctr(L);
 		const void* ptr = lua_touserdata(L,-1);
-		/*
-		lyramilk::data::stringstream ss;
-		ss << classname << ptr << std::endl;
-		*/
-
 		lyramilk::data::var v("__script_native_object",ptr);
 		v.userdata("__script_object_id",&it->first);
 		lua_pop(L,1);

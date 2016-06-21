@@ -132,13 +132,8 @@ namespace lyramilk{namespace script
 		virtual ~engines();
 
 		virtual engine* underflow() = 0;
-		virtual bool load_string(lyramilk::data::string script);
+		virtual void onfire(engine* o);
 		virtual void reset();
-		virtual void define(lyramilk::data::string classname,engine::functional_map m,engine::class_builder builder,engine::class_destoryer destoryer);
-	  private:
-		virtual lyramilk::data::var pcall(lyramilk::data::var::array args);
-		virtual lyramilk::data::var call(lyramilk::data::string func,lyramilk::data::var::array args);
-		virtual lyramilk::data::var createobject(lyramilk::data::string classname,lyramilk::data::var::array args);
 	};
 
 	#define MILK_CHECK_SCRIPT_ARGS_LOG(log,lt,m,params,i,t)  {	\

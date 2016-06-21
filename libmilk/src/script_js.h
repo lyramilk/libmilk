@@ -2,7 +2,11 @@
 #define _lyramilk_script_js_engine_h_
 
 #include "scriptengine.h"
-#include <js/jsapi.h>
+#ifdef JS24_FOUND 
+	#include <mozjs-24/jsapi.h>
+#elif defined JS_FOUND
+	#include <js/jsapi.h>
+#endif
 
 /**
 	@namespace lyramilk::script::js
@@ -15,8 +19,13 @@ namespace lyramilk{namespace script{namespace js
 	{
 		JSRuntime* rt;
 		JSContext* cx;
+#ifdef JS24_FOUND 
+		JSScript* script;
+		JSObject* global;
+#elif defined JS_FOUND
 		JSObject* script;
 		JSObject* global;
+#endif
 
 		std::map<lyramilk::data::string,jsid> m;
 	  public:

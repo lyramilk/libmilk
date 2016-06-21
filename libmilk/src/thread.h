@@ -153,13 +153,16 @@ namespace lyramilk{namespace threading
 		@brief 读写锁
 		@details 在互斥锁的基础上允许读与读操作不互斥。
 	*/
-	class _lyramilk_api_ rwlock
+	class _lyramilk_api_ mutex_rw
 	{
 		mutex_super* pr;
 		mutex_super* pw;
 	  public:
-		rwlock();
-		virtual ~rwlock();
+		mutex_rw();
+		virtual ~mutex_rw();
+
+		mutex_rw(const mutex_rw& o);
+		mutex_rw& operator =(const mutex_rw& o);
 		/**
 			@brief 申请读锁
 			@details 申请读锁，被占用时等待一段时间。
@@ -265,7 +268,7 @@ namespace lyramilk{namespace threading
 		template <typename T>
 		class list
 		{
-			mutex_spin l;
+			mutex_rw l;
 		  public:
 			struct item
 			{
@@ -313,8 +316,8 @@ namespace lyramilk{namespace threading
 					}
 					return true;
 				}
-
 			};
+
 			class ptr
 			{
 				mutable item* q;
@@ -360,22 +363,8 @@ namespace lyramilk{namespace threading
 
 			ptr get()
 			{
-				typename std::list<item>::iterator it = es.begin();
-				for(;it!=es.end();++it){
-					if(it->trylock()){
-						return ptr(&*it);
-					}
-				}
-				T* tmp = underflow();
-				if(tmp){
-					mutex_sync _(l);
-					es.push_back(item(tmp,this));
-					es.back().trylock();
-					return ptr(&es.back());
-				}
-
-				assert(!es.empty());
-				while(true){
+				{
+					mutex_sync _(l.r());
 					typename std::list<item>::iterator it = es.begin();
 					for(;it!=es.end();++it){
 						if(it->trylock()){
@@ -383,6 +372,30 @@ namespace lyramilk{namespace threading
 						}
 					}
 				}
+				{
+					T* tmp = underflow();
+					if(tmp){
+						mutex_sync _(l.w());
+						es.push_back(item(tmp,this));
+						es.back().trylock();
+						return ptr(&es.back());
+					}
+				}
+
+				return ptr(nullptr);
+			}
+
+
+			virtual void clear()
+			{
+				mutex_sync _(l.w());
+				typename std::list<item>::iterator it = es.begin();
+				for(;it!=es.end();++it){
+					it->lock();
+					onremove(it->t);
+				}
+				es.clear();
+				
 			}
 		  protected:
 			virtual T* underflow() = 0;
@@ -390,6 +403,15 @@ namespace lyramilk{namespace threading
 			{}
 			virtual void onfire(T* o)
 			{}
+			virtual void onremove(T* o)
+			{}
+
+			list()
+			{}
+
+			virtual ~list()
+			{}
+
 			typedef std::list<item> list_type;
 			list_type es;
 		};

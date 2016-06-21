@@ -28,6 +28,7 @@ namespace lyramilk{namespace script{namespace lua
 			class_destoryer dtr;
 			std::map<lyramilk::data::string,functional_type> funcmap;
 			void* self;
+			lyramilk::script::engine *env;
 		};
 	  public:
 		script_lua();
