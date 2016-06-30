@@ -201,7 +201,7 @@ namespace lyramilk{namespace script{namespace js
 				return OBJECT_TO_JSVAL(jo);
 			}break;
 		  case lyramilk::data::var::t_invalid:
-			return JSVAL_NULL;
+			return JSVAL_VOID;
 		  case lyramilk::data::var::t_user:
 			const void* up = v.userdata("__script_object_id");
 			if(up){
@@ -321,9 +321,6 @@ namespace lyramilk{namespace script{namespace js
 		return NULL;
 	}
 
-
-
-
 	JSBool jsctr(JSContext *cx, uintN argc, jsval *vp)
 	{
 		JSObject* jsobj = JSVAL_TO_OBJECT(JS_CALLEE(cx,vp));
@@ -390,9 +387,51 @@ namespace lyramilk{namespace script{namespace js
 			lyramilk::data::var::map env;
 			env["this"].assign("this",ppack->pthis);
 			env["env"].assign("env",ppack->env);
-			lyramilk::data::var ret = pfun(params,env);
-			jsval jsret = var2jsval(cx,ret);
-			JS_SET_RVAL(cx,vp,jsret);
+
+			try{
+				lyramilk::data::var ret = pfun(params,env);
+				jsval jsret = var2jsval(cx,ret);
+				JS_SET_RVAL(cx,vp,jsret);
+			}catch(lyramilk::exception& e){
+				jsval args = var2jsval(cx,e.what());
+				jsval exc;
+				//只用一个参数就可以显示js中的错误了。
+				if (JS_CallFunctionName(cx, JS_GetGlobalObject(cx), "Error", 1, &args, &exc)){
+					JS_SetPendingException(cx, exc);
+				}
+				return JS_FALSE;
+			}catch(lyramilk::data::string& str){
+				jsval args = var2jsval(cx,str.c_str());
+				jsval exc;
+				//只用一个参数就可以显示js中的错误了。
+				if (JS_CallFunctionName(cx, JS_GetGlobalObject(cx), "Error", 1, &args, &exc)){
+					JS_SetPendingException(cx, exc);
+				}
+				return JS_FALSE;
+			}catch(const char* cstr){
+				jsval args = var2jsval(cx,cstr);
+				jsval exc;
+				if (JS_CallFunctionName(cx, JS_GetGlobalObject(cx), "Error", 1, &args, &exc)){
+					JS_SetPendingException(cx, exc);
+				}
+				return JS_FALSE;
+			}catch(std::exception& e){
+				jsval args = var2jsval(cx,e.what());
+				jsval exc;
+				//只用一个参数就可以显示js中的错误了。
+				if (JS_CallFunctionName(cx, JS_GetGlobalObject(cx), "Error", 1, &args, &exc)){
+					JS_SetPendingException(cx, exc);
+				}
+				return JS_FALSE;
+			}catch(...){
+				jsval args = var2jsval(cx,"未知异常");
+				jsval exc;
+				//只用一个参数就可以显示js中的错误了。
+				if (JS_CallFunctionName(cx, JS_GetGlobalObject(cx), "Error", 1, &args, &exc)){
+					JS_SetPendingException(cx, exc);
+				}
+				return JS_FALSE;
+			}
 		}
 
 		return JS_TRUE;
@@ -524,6 +563,7 @@ namespace lyramilk{namespace script{namespace js
 	void script_js::gc()
 	{
 		JS_GC(cx);
+COUT << "触发GC" << std::endl;
 	}
 
 }}}

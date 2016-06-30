@@ -108,13 +108,13 @@ namespace lyramilk{namespace io
 				remove(r);
 			}
 			return;
-		}else if(events & EPOLLIN){
-			if(!r->notify_in()){
+		}else if(events & EPOLLOUT){
+			if(!r->notify_out()){
 				remove(r);
 			}
 			return;
-		}else if(events & EPOLLOUT){
-			if(!r->notify_out()){
+		}else if(events & EPOLLIN){
+			if(!r->notify_in()){
 				remove(r);
 			}
 			return;

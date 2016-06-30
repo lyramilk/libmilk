@@ -42,6 +42,8 @@ namespace lyramilk{namespace script
 		engine();
 		virtual ~engine();
 
+		virtual bool init();
+		virtual bool init(lyramilk::data::var::map m);
 		/**
 			@brief 从一个字符串中加载脚本代码
 			@param script 字符串形式的脚本代码
@@ -131,29 +133,32 @@ namespace lyramilk{namespace script
 		engines();
 		virtual ~engines();
 
-		virtual engine* underflow() = 0;
+		virtual engine* underflow(unsigned int used_count) = 0;
 		virtual void onfire(engine* o);
 		virtual void reset();
 	};
 
 	#define MILK_CHECK_SCRIPT_ARGS_LOG(log,lt,m,params,i,t)  {	\
 		if(params.size() < i + 1){	\
-			log(lt,m) << D("参数太少") << std::endl;	\
-			return lyramilk::data::var::nil;	\
+			lyramilk::data::string str = D("参数太少");	\
+			log(lt,m) << str << std::endl;	\
+			throw lyramilk::exception(str);	\
 		}	\
-		if(!params.at(i).type_compat(t)){	\
-			lyramilk::data::var::vt pt = params.at(i).type();	\
-			log(lt,m) << D("参数%d类型不兼容:%s，期待%s",i+1,lyramilk::data::var::type_name(pt).c_str(),lyramilk::data::var::type_name(t).c_str()) << std::endl;	\
-			return lyramilk::data::var::nil;	\
+		lyramilk::data::var& v = params.at(i);	\
+		if(!v.type_compat(t)){	\
+			lyramilk::data::string str = D("参数%d类型不兼容:%s，期待%s",i+1,v.type_name().c_str(),lyramilk::data::var::type_name(t).c_str());	\
+			log(lt,m) << str << std::endl;	\
+			throw lyramilk::exception(str);	\
 		}	\
 	}
 
 	#define MILK_CHECK_SCRIPT_ARGS(params,i,t)  {	\
 		if(params.size() < i + 1){	\
-			return lyramilk::data::var::nil;	\
+			throw lyramilk::exception(D("参数太少"));	\
 		}	\
-		if(!params.at(i).type_compat(t)){	\
-			return lyramilk::data::var::nil;	\
+		lyramilk::data::var& v = params.at(i);	\
+		if(!v.type_compat(t)){	\
+			throw lyramilk::exception(D("参数%d类型不兼容:%s，期待%s",i+1,v.type_name().c_str(),lyramilk::data::var::type_name(t).c_str()));	\
 		}	\
 	}
 

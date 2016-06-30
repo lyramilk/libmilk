@@ -2,6 +2,7 @@
 #include "multilanguage.h"
 #include "ansi_3_64.h"
 #include "log.h"
+#include "clockdiff.h"
 #include <sys/epoll.h>
 #include <sys/poll.h>
 
@@ -45,8 +46,15 @@
 namespace lyramilk{namespace netio
 {
 	// aiosession
+static int session_count = 0;
+lyramilk::debug::timer t;
 	bool aiosession::notify_in()
 	{
+		if(t){
+COUT << "当前会话数量" <<  session_count << std::endl;
+		}
+
+
 		char buff[4096];
 		int i = 0;
 		if(!sendcache){
@@ -130,16 +138,19 @@ namespace lyramilk{namespace netio
 
 	bool aiosession::notify_hup()
 	{
+		lyramilk::klog(lyramilk::log::debug,"lyramilk.system.netio.aiolistener.notify_hup") << lyramilk::kdict("发生了HUP事件%s",strerror(errno)) << std::endl;
 		return false;
 	}
 
 	bool aiosession::notify_err()
 	{
+		lyramilk::klog(lyramilk::log::debug,"lyramilk.system.netio.aiolistener.notify_err") << lyramilk::kdict("发生了ERR事件%s",strerror(errno)) << std::endl;
 		return false;
 	}
 
 	bool aiosession::notify_pri()
 	{
+		lyramilk::klog(lyramilk::log::debug,"lyramilk.system.netio.aiolistener.notify_pri") << lyramilk::kdict("发生了PRI事件%s",strerror(errno)) << std::endl;
 		return false;
 	}
 
@@ -150,13 +161,16 @@ namespace lyramilk{namespace netio
 		dtr(this);
 	}
 
+
 	aiosession::aiosession()
 	{
 		flag = EPOLLIN | EPOLLPRI | EPOLLERR | EPOLLHUP | EPOLLONESHOT;
+		__sync_add_and_fetch(&session_count,1);
 	}
 
 	aiosession::~aiosession()
 	{
+		__sync_sub_and_fetch(&session_count,1);
 		close();
 	}
 

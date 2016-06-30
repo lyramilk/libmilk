@@ -275,7 +275,7 @@ namespace lyramilk{namespace threading
 				mutex_spin l;
 				T* t;
 				list* c;
-				atomic<int> r;
+				int r;
 				item(T* t,list* c)
 				{
 					this->t = t;
@@ -303,14 +303,13 @@ namespace lyramilk{namespace threading
 
 				bool addref()
 				{
-					++r;
+					__sync_add_and_fetch(&r,1);
 					return true;
 				}
 
 				bool release()
 				{
-					--r;
-					if(r < 1){
+					if(__sync_sub_and_fetch(&r,1) < 1){
 						c->onfire(t);
 						l.unlock();
 					}
@@ -343,6 +342,11 @@ namespace lyramilk{namespace threading
 					if(q)q->release();
 				}
 
+				bool good()
+				{
+					return q != NULL;
+				}
+
 				ptr& operator =(const ptr& o) const
 				{
 					o.q->addref();
@@ -373,7 +377,7 @@ namespace lyramilk{namespace threading
 					}
 				}
 				{
-					T* tmp = underflow();
+					T* tmp = underflow(__sync_add_and_fetch(&index,1));
 					if(tmp){
 						mutex_sync _(l.w());
 						es.push_back(item(tmp,this));
@@ -395,10 +399,11 @@ namespace lyramilk{namespace threading
 					onremove(it->t);
 				}
 				es.clear();
+				index = 0;
 				
 			}
 		  protected:
-			virtual T* underflow() = 0;
+			virtual T* underflow(unsigned int used_count) = 0;
 			virtual void onhire(T* o)
 			{}
 			virtual void onfire(T* o)
@@ -406,7 +411,7 @@ namespace lyramilk{namespace threading
 			virtual void onremove(T* o)
 			{}
 
-			list()
+			list():index(0)
 			{}
 
 			virtual ~list()
@@ -414,6 +419,7 @@ namespace lyramilk{namespace threading
 
 			typedef std::list<item> list_type;
 			list_type es;
+			int index;
 		};
 	}
 }}

@@ -1,9 +1,12 @@
 ﻿#ifndef _lyramilk_script_js_engine_h_
 #define _lyramilk_script_js_engine_h_
+#include "config.h"
 
 #include "scriptengine.h"
 #ifdef JS24_FOUND 
 	#include <mozjs-24/jsapi.h>
+#elif defined JS38_FOUND
+	#include <jsapi.h>
 #elif defined JS_FOUND
 	#include <js/jsapi.h>
 #endif
@@ -19,7 +22,10 @@ namespace lyramilk{namespace script{namespace js
 	{
 		JSRuntime* rt;
 		JSContext* cx;
-#ifdef JS24_FOUND 
+#ifdef JS38_FOUND 
+		JSScript* script;
+		JSObject* global;
+#elif defined JS24_FOUND 
 		JSScript* script;
 		JSObject* global;
 #elif defined JS_FOUND

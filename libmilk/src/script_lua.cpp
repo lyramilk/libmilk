@@ -10,14 +10,16 @@ namespace lyramilk{namespace script{namespace lua
 
 	void lua_lookup_stack(lua_State *L,int index,const char* flag = NULL)
 	{
-		std::cout << "[" << flag << "]查看Lua堆栈[" << index << "]=" << lua_typename(L,lua_type(L,index)) << std::endl;
+		std::cout << "[" << flag << "]查看Lua堆栈[" << index << "]=" << lua_type(L,index) << std::endl;
 	}
 
 	void lua_lookup_fullstack(lua_State *L,const char* flag = NULL)
 	{
+		std::cout << "Lookup Lua stack begin (size=" << lua_gettop(L) << ")" << std::endl;
 		for(int i=1;i<=lua_gettop(L);++i){
 			lua_lookup_stack(L,i,flag);
 		}
+		std::cout << "Lookup Lua stack end" << std::endl;
 	}
 //__lua_native_object
 	static int __var_gc(lua_State *L)
@@ -244,6 +246,7 @@ namespace lyramilk{namespace script{namespace lua
 
 	lyramilk::data::var script_lua::pcall(lyramilk::data::var::array args)
 	{
+		//lua_lookup_fullstack(L);
 		vtos(L,args);
 
 		if(lua_pcall(L,args.size(),LUA_MULTRET,0) == 0){
@@ -286,6 +289,8 @@ namespace lyramilk{namespace script{namespace lua
 			funcname = plua->callstack.top();
 			plua->callstack.pop();
 		}
+
+
 		lua_getfield(L,1,"__lua_metainfo");
 		void* pclass = lua_touserdata(L,-1);
 		lyramilk::data::var** pthis = (lyramilk::data::var**)lua_touserdata(L,1);

@@ -10,6 +10,17 @@ namespace lyramilk{namespace script
 	engine::~engine()
 	{}
 
+	bool engine::init()
+	{
+		lyramilk::data::var::map m;
+		return init(m);
+	}
+
+	bool engine::init(lyramilk::data::var::map m)
+	{
+		return true;
+	}
+
 	bool engine::load_file(lyramilk::data::string scriptfile)
 	{
 		lyramilk::data::string str;
@@ -45,7 +56,6 @@ namespace lyramilk{namespace script
 
 	engines::~engines()
 	{}
-
 
 	void engines::onfire(engine* o)
 	{
