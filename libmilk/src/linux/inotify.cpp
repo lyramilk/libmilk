@@ -3,6 +3,7 @@
 #include "log.h"
 #include <sys/inotify.h>
 #include <sys/stat.h>
+#include <sys/epoll.h>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
@@ -94,6 +95,7 @@ namespace lyramilk{namespace data
 		int r = ::read(fd,buff,sizeof(buff));
 		if(r == -1){
 			lyramilk::klog(lyramilk::log::error,"lyramilk.io.notify.onevent") << lyramilk::kdict("读取事件时发生错误%s",strerror(errno)) << std::endl;
+			return container->reset(this,flag());
 			return true;
 		}
 
@@ -104,7 +106,7 @@ namespace lyramilk{namespace data
 			notify_event(ie);
 		}
 
-		return true;
+		return container->reset(this,flag());
 	}
 
 	bool inotify::notify_out()
@@ -134,6 +136,11 @@ namespace lyramilk{namespace data
 
 	void inotify::ondestory()
 	{
+	}
+
+	int inotify::flag()
+	{
+		return EPOLLIN | EPOLLONESHOT;
 	}
 
 	inotify::inotify()

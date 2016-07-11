@@ -20,7 +20,8 @@ namespace lyramilk{namespace script{namespace elf
 		virtual lyramilk::data::var pcall(lyramilk::data::var::array args);
 		virtual lyramilk::data::var call(lyramilk::data::string func,lyramilk::data::var::array args);
 		void reset();
-		void define(lyramilk::data::string classname,functional_map m,class_builder builder,class_destoryer destoryer);
+		virtual void define(lyramilk::data::string classname,functional_map m,class_builder builder,class_destoryer destoryer);
+		virtual void define(lyramilk::data::string funcname,functional_type func);
 		virtual lyramilk::data::var createobject(lyramilk::data::string classname,lyramilk::data::var::array args);
 		virtual void gc();
 	  private:

@@ -1,6 +1,6 @@
 ﻿#定义工程名及版本
 project(milk)
-set(version 1.1.5)
+set(version 1.1.6)
 set(soversion 1.1)
 
 cmake_minimum_required (VERSION 2.8.11) 
@@ -58,6 +58,7 @@ if(UNIX)
 	pkg_search_module(JS38 mozjs-38)
 	pkg_search_module(JS24 mozjs-24)
 	pkg_search_module(JS mozjs185)
+	pkg_search_module(LEVELDB leveldb)
 	#set(CMAKE_REQUIRED_INCLUDES /usr/include/)
 	check_include_file_cxx(tr1/unordered_map	Z_HAVE_TR1_UNORDEREDMAP)
 	check_include_file_cxx(/usr/include/v8.h	Z_HAVE_V8)
@@ -98,7 +99,13 @@ else()
 	list(REMOVE_ITEM src_hs src/script_lua.h)
 endif()
 
-
+if(LEVELDB_FOUND)
+	list(APPEND BUILD_DEPENDS leveldb-devel)
+	list(APPEND RUN_DEPENDS leveldb)
+	list(APPEND LIBS_DEPENDS ${LEVELDB_LDFLAGS})
+	list(APPEND INCS_DEPENDS ${LEVELDB_CFLAGS})
+	list(APPEND CONFIG_MACROS LEVELDB_FOUND)
+endif()
 
 
 if(JS38_FOUND)
@@ -214,7 +221,7 @@ file(GLOB src_test RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} testsuite/*.cc)
 foreach(var ${src_test})
 	string(REGEX REPLACE "testsuite/(.*).cc" "\\1" var2 ${var})
 	add_executable(${var2} ${var})
-	target_link_libraries(${var2} ${PROJECT_NAME})
+	target_link_libraries(${var2} ${PROJECT_NAME} -lhiredis)
 	add_test(NAME ${var2} COMMAND ${unittest} ./${var2})
 endforeach()
 

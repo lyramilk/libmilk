@@ -2,7 +2,7 @@
 #include "multilanguage.h"
 #include "ansi_3_64.h"
 #include "log.h"
-#include "clockdiff.h"
+#include "testing.h"
 #include <sys/epoll.h>
 #include <sys/poll.h>
 

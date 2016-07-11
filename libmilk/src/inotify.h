@@ -26,6 +26,7 @@ namespace lyramilk{namespace data
 
 		virtual void notify_other(inotify_event* ie);
 	  public:
+		static int flag();
 		inotify();
 		virtual ~inotify();
 	

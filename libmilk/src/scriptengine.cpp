@@ -10,16 +10,21 @@ namespace lyramilk{namespace script
 	engine::~engine()
 	{}
 
-	bool engine::init()
+	lyramilk::data::var& engine::get(lyramilk::data::string k)
 	{
-		lyramilk::data::var::map m;
-		return init(m);
+		/*
+		lyramilk::data::var::map::iterator it = _mparams.find(k);
+		if(it == _mparams.end()) return lyramilk::data::var::nil;
+		return it->second;*/
+		return _mparams[k];
 	}
 
-	bool engine::init(lyramilk::data::var::map m)
+	bool engine::set(lyramilk::data::string k,lyramilk::data::var v)
 	{
+		_mparams[k] = v;
 		return true;
 	}
+
 
 	bool engine::load_file(lyramilk::data::string scriptfile)
 	{

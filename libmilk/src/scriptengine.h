@@ -17,6 +17,7 @@ namespace lyramilk{namespace script
 	*/
 	class _lyramilk_api_ engine
 	{
+		lyramilk::data::var::map _mparams;
 	  public:
 
 		/**
@@ -42,8 +43,8 @@ namespace lyramilk{namespace script
 		engine();
 		virtual ~engine();
 
-		virtual bool init();
-		virtual bool init(lyramilk::data::var::map m);
+		virtual lyramilk::data::var& get(lyramilk::data::string k);
+		virtual bool set(lyramilk::data::string k,lyramilk::data::var v);
 		/**
 			@brief 从一个字符串中加载脚本代码
 			@param script 字符串形式的脚本代码
@@ -101,6 +102,13 @@ namespace lyramilk{namespace script
 			@param destoryer 该对象的销毁函数
 		*/
 		virtual void define(lyramilk::data::string classname,functional_map m,class_builder builder,class_destoryer destoryer) = 0;
+
+		/**
+			@brief 将一个脚本可访问的C++函数注入到脚本引擎中。
+			@param funcname 函数名
+			@param func 脚本可访问的C++本地函数
+		*/
+		virtual void define(lyramilk::data::string funcname,functional_type func) = 0;
 
 		/**
 			@brief 将一个脚本可访问的C++对象装载到一个var对象中以作为参数由C++传递给脚本引擎。
