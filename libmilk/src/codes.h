@@ -26,7 +26,7 @@ namespace lyramilk{ namespace data
 		@param from 源串编码
 		@param to 目标串编码
 	*/
-	string _lyramilk_api_ iconv(string str, string from, string to);
+	string _lyramilk_api_ iconv(const string& str, const string& from, const string& to);
 
 	/**
 		@brief 代表一种编码解析器。
@@ -41,13 +41,13 @@ namespace lyramilk{ namespace data
 			@param str 被转换的字符串。
 			@return str转换为原串。
 		*/
-		virtual string decode(string str) = 0;
+		virtual string decode(const string& str) = 0;
 		/**
 			@brief 字符串编码，将字符串或二进制串转换为目标编码或格式。
 			@param str 被转换的字符串。
 			@return 由str编码而来的新字符串。
 		*/
-		virtual string encode(string str) = 0;
+		virtual string encode(const string& str) = 0;
 	};
 
 
@@ -70,11 +70,11 @@ namespace lyramilk{ namespace data
 		/**
 			@brief 定义一种编码及该编码的转换对象。
 		*/
-		bool define(string codingname,getter gtr);
+		bool define(const string& codingname,getter gtr);
 		/**
 			@brief 取消定义一种编码。
 		*/
-		bool undefine(string codingname);
+		bool undefine(const string& codingname);
 
 		/**
 			@brief 将字符串转换为目标编码。
@@ -82,7 +82,7 @@ namespace lyramilk{ namespace data
 			@param codingname 用该名称代表的编码对src进行转换。
 			@return 编码后的新数据。
 		*/
-		string encode(string src,string codingname) throw(lyramilk::exception);
+		string encode(const string& src,const string& codingname) throw(lyramilk::exception);
 
 		/**
 			@brief 将字符串转换为原编码。
@@ -90,7 +90,7 @@ namespace lyramilk{ namespace data
 			@param codingname 编码名称。
 			@return 解码后的原编码。
 		*/
-		string decode(string src,string codingname) throw(lyramilk::exception);
+		string decode(const string& src,const string& codingname) throw(lyramilk::exception);
 
 		/**
 			@brief 以字符串数组形式返回所有支持的编码。

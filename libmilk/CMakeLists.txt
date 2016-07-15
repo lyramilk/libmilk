@@ -1,6 +1,6 @@
 ﻿#定义工程名及版本
 project(milk)
-set(version 1.1.6)
+set(version 1.1.7)
 set(soversion 1.1)
 
 cmake_minimum_required (VERSION 2.8.11) 
@@ -23,8 +23,16 @@ include(UsePkgConfig)
 enable_testing()
 
 #定制编译选项
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall --std=c++0x")
-#set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} -g -Wall")
+
+if(release)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -DNDEBUG -Wall --std=c++0x")
+	set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} -O2 -Wall")
+	message("Build as release")
+else()
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall --std=c++0x")
+	set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} -g -Wall")
+	message("Build as debug")
+endif()
 
 #定义安装目录
 if(NOT install_dir)
@@ -154,6 +162,10 @@ else()
 	list(REMOVE_ITEM src_cpps src/script_js38.cpp)
 	list(REMOVE_ITEM src_hs src/script_v8.h)
 	list(REMOVE_ITEM src_cpps src/script_v8.cpp)
+endif()
+
+if(Z_HAVE_TR1_UNORDEREDMAP)
+	list(APPEND CONFIG_MACROS Z_HAVE_TR1_UNORDEREDMAP)
 endif()
 
 if(UNIX)

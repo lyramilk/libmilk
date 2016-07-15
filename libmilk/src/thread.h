@@ -377,7 +377,7 @@ namespace lyramilk{namespace threading
 					}
 				}
 				{
-					T* tmp = underflow(__sync_add_and_fetch(&index,1));
+					T* tmp = underflow();
 					if(tmp){
 						mutex_sync _(l.w());
 						es.push_back(item(tmp,this));
@@ -399,11 +399,10 @@ namespace lyramilk{namespace threading
 					onremove(it->t);
 				}
 				es.clear();
-				index = 0;
 				
 			}
 		  protected:
-			virtual T* underflow(unsigned int used_count) = 0;
+			virtual T* underflow() = 0;
 			virtual void onhire(T* o)
 			{}
 			virtual void onfire(T* o)
@@ -411,7 +410,7 @@ namespace lyramilk{namespace threading
 			virtual void onremove(T* o)
 			{}
 
-			list():index(0)
+			list()
 			{}
 
 			virtual ~list()
@@ -419,7 +418,6 @@ namespace lyramilk{namespace threading
 
 			typedef std::list<item> list_type;
 			list_type es;
-			int index;
 		};
 	}
 }}

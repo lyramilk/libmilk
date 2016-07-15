@@ -4,6 +4,7 @@
 #include "json.h"
 #include <stdarg.h>
 #include <stdio.h>
+#include <fstream>
 
 lyramilk::data::multilanguage::dict lyramilk::kdict;
 
@@ -36,10 +37,15 @@ namespace lyramilk{namespace data{namespace multilanguage{
 	bool dict::load(lyramilk::data::string filename)
 	{
 		if(p && p->load(filename)) return true;
-		lyramilk::data::json j;
-		if(!j.open(filename)) return false;
-		lyramilk::data::var v = j.path("/dict");
-		m = v.as<lyramilk::data::var::map>();
+
+		lyramilk::data::var v;
+		{
+			std::ifstream ifs(filename.c_str(),std::ifstream::binary|std::ifstream::in);
+			lyramilk::data::json j(v);
+			ifs >> j;
+			ifs.close();
+		}
+		m = v;
 		return true;
 	}
 

@@ -53,7 +53,7 @@ T reverse_order(T t)
 	const int sz = sizeof(T);
 	union{
 		T v;
-		char c[1];
+		char c[0];
 	}s,d;
 	s.v = t;
 	for(int i =0;i < sz;++i){
@@ -710,50 +710,84 @@ var& var::operator =(const var& v)
 var& var::assign(const var& v)
 {
 	if(this == &v) return *this;
-	clear();
-	t = v.t;
-	switch(t){
+	vt newt = v.t;
+	switch(v.t){
 	  case t_bin:
 		if(v.u.p){
-			u.p = new chunk(*v.u.p);
+			chunk* p = new chunk(*v.u.p);
+			clear();
+			u.p = p;
+			if(u.p == null) newt = t_invalid;
+		}else{
+			clear();
+			newt = t_invalid;
 		}
-		if(u.p == null) t = t_invalid;
 		break;
 	  case t_str:
 		if(v.u.s){
-			u.s = new string(*v.u.s);
+			string* p = new string(*v.u.s);
+			clear();
+			u.s = p;
+			if(u.s == null) newt = t_invalid;
+		}else{
+			clear();
+			newt = t_invalid;
 		}
-		if(u.s == null) t = t_invalid;
 		break;
 	  case t_wstr:
 		if(v.u.w){
-			u.w = new wstring(*v.u.w);
+			wstring* p = new wstring(*v.u.w);
+			clear();
+			u.w = p;
+			if(u.w == null) newt = t_invalid;
+		}else{
+			clear();
+			newt = t_invalid;
 		}
-		if(u.w == null) t = t_invalid;
 		break;
 	  case t_array:
 		if(v.u.a){
-			u.a = new array(*v.u.a);
+			array* p = new array(*v.u.a);
+			clear();
+			u.a = p;
+			if(u.a == null) newt = t_invalid;
+		}else{
+			clear();
+			newt = t_invalid;
 		}
-		if(u.a == null) t = t_invalid;
 		break;
 	  case t_map:
 		if(v.u.m){
-			u.m = new map(*v.u.m);
+			map* p = new map(*v.u.m);
+			clear();
+			u.m = p;
+			if(u.m == null) newt = t_invalid;
+		}else{
+			clear();
+			newt = t_invalid;
 		}
-		if(u.m == null) t = t_invalid;
 		break;
 	  case t_user:
-		u.o = new _userdata;
-		if(u.o == null) t = t_invalid;
-		*u.o = *v.u.o;
+		if(v.u.o){
+			_userdata* p = new _userdata;
+			*p = *v.u.o;
+			clear();
+			u.o = p;
+			if(u.o == null) newt = t_invalid;
+		}else{
+			clear();
+			newt = t_invalid;
+		}
 		break;
 	  case t_invalid:
-		u.a = null;
+		clear();
 		break;
 	  default:
-		u = v.u;
+		uint64 tu = v.u.u8;
+		clear();
+		u.u8 = tu;
 	}
+	t = newt;
 	return *this;
 }
 
@@ -1105,9 +1139,11 @@ var::operator string () const throw(type_invalid)
 			return str;
 		}break;
 	  case t_user:{
+			//throw type_invalid(lyramilk::kdict("%s 错误：错误的子类型%s","lyramilk::data::var::operator string()",type_name(t).c_str()));
 			return "";
 		}break;
 	  case t_invalid:{
+			//throw type_invalid(lyramilk::kdict("%s 错误：错误的子类型%s","lyramilk::data::var::operator string()",type_name(t).c_str()));
 			return "";
 		}break;
 	}
@@ -1894,7 +1930,23 @@ lyramilk::data::string var::str() const
 
 void var::clear()
 {
+	if(t == t_invalid){
+		return;
+	}
+
 	switch(t){
+	  case t_bool:
+	  case t_int8:
+	  case t_uint8:
+	  case t_int16:
+	  case t_uint16:
+	  case t_int32:
+	  case t_uint32:
+	  case t_int64:
+	  case t_uint64:
+	  case t_double:
+	  case t_invalid:
+		break;
 	  case t_bin:
 		delete u.p;
 		u.p = null;
@@ -1907,17 +1959,6 @@ void var::clear()
 		delete u.w;
 		u.w = null;
 		break;
-	  case t_bool:
-	  case t_int8:
-	  case t_uint8:
-	  case t_int16:
-	  case t_uint16:
-	  case t_int32:
-	  case t_uint32:
-	  case t_int64:
-	  case t_uint64:
-	  case t_double:
-		break;
 	  case t_array:
 		delete u.a;
 		u.a = null;
@@ -1929,8 +1970,6 @@ void var::clear()
 	  case t_user:
 		delete u.o;
 		u.o = null;
-		break;
-	  case t_invalid:
 		break;
 	}
 	t = t_invalid;
@@ -1954,19 +1993,19 @@ typedef unsigned short array_size_type;
 typedef unsigned int string_size_type;
 
 template <typename T>
-void write(bostream& os,T& t)
+void write(ostream& os,T& t)
 {
-	os.write((const unsigned char*)&t,sizeof(T));
+	os.write((const char*)&t,sizeof(T));
 }
 
 template <typename T>
-bool read(bistream& is,T& t)
+bool read(istream& is,T& t)
 {
-	is.read((unsigned char*)&t,sizeof(T));
+	is.read((char*)&t,sizeof(T));
 	return is.gcount() == sizeof(T);
 }
 
-bool var::_serialize(bostream& os) const throw(type_invalid)
+bool var::_serialize(ostream& os) const throw(type_invalid)
 {
 	if((t&0x7f) != t) throw type_invalid(lyramilk::kdict("%s 错误：不支持的类型%d","lyramilk::data::var::serialize()",(t&0x7f)));
 	unsigned char m;
@@ -1979,7 +2018,7 @@ bool var::_serialize(bostream& os) const throw(type_invalid)
 			string_size_type size = (string_size_type)binstr.size();
 			write(os,m);
 			write(os,size);
-			os.write((const unsigned char*)binstr.c_str(),size);
+			os.write((const char*)binstr.c_str(),size);
 			return true;
 		}break;
 	  case t_str:{
@@ -1988,7 +2027,7 @@ bool var::_serialize(bostream& os) const throw(type_invalid)
 			string_size_type size = (string_size_type)utf8str.size();
 			write(os,m);
 			write(os,size);
-			os.write((const unsigned char*)utf8str.c_str(),size);
+			os.write(utf8str.c_str(),size);
 			return true;
 		}break;
 	  case t_wstr:{
@@ -1996,7 +2035,7 @@ bool var::_serialize(bostream& os) const throw(type_invalid)
 			string_size_type size = (string_size_type)utf8str.size();
 			write(os,m);
 			write(os,size);
-			os.write((const unsigned char*)utf8str.c_str(),size);
+			os.write(utf8str.c_str(),size);
 			return true;
 		}break;
 	  case t_bool:
@@ -2051,7 +2090,7 @@ bool var::_serialize(bostream& os) const throw(type_invalid)
 					unsigned char mstr = (g_igendian<<7)|(t_str&0x7f);
 					write(os,mstr);
 					write(os,size);
-					os.write((const unsigned char*)utf8str.c_str(),size);
+					os.write((const char*)utf8str.c_str(),size);
 				}
 				if(!it->second._serialize(os)) return false;
 			}
@@ -2065,7 +2104,7 @@ bool var::_serialize(bostream& os) const throw(type_invalid)
 	throw type_invalid(lyramilk::kdict("%s 错误：不支持的类型%d","lyramilk::data::var::serialize()",(t&0x7f)));
 }
 
-bool var::_deserialize(bistream& is)
+bool var::_deserialize(istream& is)
 {
 	unsigned char m;
 	if(!read(is,m)) return false;
@@ -2079,7 +2118,7 @@ bool var::_deserialize(bistream& is)
 			if(r) size = reverse_order(size);
 			chunk binstr;
 			binstr.resize(size);
-			is.read((unsigned char*)binstr.c_str(),size);
+			is.read((char*)binstr.c_str(),size);
 			if(is.gcount() == size){
 				assign(binstr);
 				return true;
@@ -2092,7 +2131,7 @@ bool var::_deserialize(bistream& is)
 			if(r) size = reverse_order(size);
 			string utf8str;
 			utf8str.resize(size);
-			is.read((unsigned char*)utf8str.c_str(),size);
+			is.read((char*)utf8str.c_str(),size);
 			if(is.gcount() == size){
 				string localstr = t2a(utf8str);
 				assign(localstr);
@@ -2106,7 +2145,7 @@ bool var::_deserialize(bistream& is)
 			if(r) size = reverse_order(size);
 			string utf8str;
 			utf8str.resize(size);
-			is.read((unsigned char*)utf8str.c_str(),size);
+			is.read((char*)utf8str.c_str(),size);
 			if(is.gcount() == size){
 				string localstr = t2a(utf8str);
 				assign(wstring(a2u(localstr)));
@@ -2189,34 +2228,34 @@ bool var::_deserialize(bistream& is)
 	return false;
 }
 
-bool var::serialize(bostream& os) const throw(type_invalid)
+bool var::serialize(ostream& os) const throw(type_invalid)
 {
-	bostream::streamoff bpos = os.tellp();
+	ostream::streamoff bpos = os.tellp();
 	int32 size = 0;
 	write(os,size);
 	bool ret = _serialize(os);
 	if(ret){
-		bostream::streamoff epos = os.tellp();
-		os.seekp(bpos,bostream::beg);
+		ostream::streamoff epos = os.tellp();
+		os.seekp(bpos,ostream::beg);
 		size = (int32)(epos - bpos - sizeof(size));
 		if(size > 0){
 			size = htonl(size);
 			write(os,size);
-			os.seekp(epos,bostream::beg);
+			os.seekp(epos,ostream::beg);
 			if(os.good()) return true;
 		}
 	}
 	os.clear();
-	os.seekp(bpos,bostream::beg);
+	os.seekp(bpos,ostream::beg);
 	return false;
 }
 
-bool var::deserialize(bistream& is)
+bool var::deserialize(istream& is)
 {
-	bistream::streamoff bpos = is.tellg();
-	is.seekg(0,bistream::end);
-	bistream::streamoff epos = is.tellg();
-	is.seekg(bpos,bistream::beg);
+	istream::streamoff bpos = is.tellg();
+	is.seekg(0,istream::end);
+	istream::streamoff epos = is.tellg();
+	is.seekg(bpos,istream::beg);
 
 	int32 objsize = 0;
 	if(read(is,objsize)){
@@ -2230,18 +2269,8 @@ bool var::deserialize(bistream& is)
 	}
 
 	is.clear();
-	is.seekg(bpos,bistream::beg);
+	is.seekg(bpos,istream::beg);
 	return false;
-}
-
-bool var::serialize(ostream& os) const throw(type_invalid)
-{
-	return serialize((bostream&)os);
-}
-
-bool var::deserialize(istream& is)
-{
-	return deserialize((bistream&)is);
 }
 
 void var::dump(ostream& os) const

@@ -230,7 +230,7 @@ namespace lyramilk{namespace data
 			}else{
 				modifyedstr = pathdirname.substr(0,pos);
 			}
-			lyramilk::klog(lyramilk::log::warning,"lyramilk.io.inotify.add") << lyramilk::kdict("监视的目标[%s]不是一个目录，自动改为监视[%s]",pathdirname.c_str(),modifyedstr.c_str()) << std::endl;
+			//lyramilk::klog(lyramilk::log::warning,"lyramilk.io.inotify.add") << lyramilk::kdict("监视的目标[%s]不是一个目录，自动改为监视[%s]",pathdirname.c_str(),modifyedstr.c_str()) << std::endl;
 			pathdirname = modifyedstr;
 		}
 
@@ -238,7 +238,7 @@ namespace lyramilk{namespace data
 
 		lyramilk::data::map<lyramilk::io::native_filedescriptor_type,lyramilk::data::string>::iterator it = wm.find(wfd);
 		if(it!=wm.end()){
-			lyramilk::klog(lyramilk::log::warning,"lyramilk.io.inotify.add") << lyramilk::kdict("己监视目录[%s]，不需要重复监视。",pathdirname.c_str()) << std::endl;
+			//lyramilk::klog(lyramilk::log::warning,"lyramilk.io.inotify.add") << lyramilk::kdict("己监视目录[%s]，不需要重复监视。",pathdirname.c_str()) << std::endl;
 			return 0;
 		}else{
 			lyramilk::klog(lyramilk::log::debug,"lyramilk.io.inotify.add") << lyramilk::kdict("成功监视目录[%s]。",pathdirname.c_str()) << std::endl;

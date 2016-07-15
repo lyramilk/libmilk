@@ -141,7 +141,7 @@ namespace lyramilk{namespace script
 		engines();
 		virtual ~engines();
 
-		virtual engine* underflow(unsigned int used_count) = 0;
+		virtual engine* underflow() = 0;
 		virtual void onfire(engine* o);
 		virtual void reset();
 	};

@@ -1,6 +1,7 @@
 ﻿#ifndef _lyramilk_data_var_h_
 #define _lyramilk_data_var_h_
 
+#include "config.h"
 #include <stddef.h>
 
 #include <string>
@@ -10,10 +11,6 @@
 #include <iostream>
 #include <sstream>
 #include <exception>
-#ifdef Z_HAVE_TR1_UNORDEREDMAP
-	#include <tr1/unordered_map>
-#endif
-#include "config.h"
 
 /**
 	@namespace lyramilk::data
@@ -273,12 +270,6 @@ namespace lyramilk{namespace data
 
 		var& operator =(const var& v);
 
-		template <typename T>
-		var& operator =(const T& v)
-		{
-			return assign(v);
-		}
-
 		var& at(lyramilk::data::uint32 index) throw(type_invalid)
 		{
 			if(t == t_map){
@@ -463,20 +454,6 @@ namespace lyramilk{namespace data
 			@details 将该var对象序列化到os流中。
 			@return 成功时返回true
 		*/
-		bool serialize(bostream& os) const throw(type_invalid);
-
-		/**
-			@brief 反序列化
-			@details 将该var对象序列化到os流中。
-			@return 成功时返回true
-		*/
-		bool deserialize(bistream& is);
-
-		/**
-			@brief 序列化
-			@details 将该var对象序列化到os流中。
-			@return 成功时返回true
-		*/
 		bool serialize(ostream& os) const throw(type_invalid);
 
 		/**
@@ -522,41 +499,41 @@ namespace lyramilk{namespace data
 			_userdata *o;
 		}u;
 		vt t;
-		bool _serialize(bostream& os) const throw(type_invalid);
-		bool _deserialize(bistream& is);
+		bool _serialize(ostream& os) const throw(type_invalid);
+		bool _deserialize(istream& is);
 	};
 }}
+/*
 #ifdef Z_HAVE_TR1_UNORDEREDMAP
 namespace std{namespace tr1{
-
-	template<>
+	template <>
 	inline size_t hash<lyramilk::data::string>::operator()(lyramilk::data::string d) const
 	{
 		return 0;
 	}
 
-	template<>
+	template <>
 	inline size_t hash<const lyramilk::data::string&>::operator()(const lyramilk::data::string& d) const
 	{
 		return 0;
 	}
 
-	template<>
+	template <>
 	inline size_t hash<lyramilk::data::var>::operator()(lyramilk::data::var d) const
 	{
 		return 0;
 	}
 
-	template<>
+	template <>
 	inline size_t hash<const lyramilk::data::var&>::operator()(const lyramilk::data::var& d) const
 	{
 		return 0;
 	}
 }}
 #endif
-
+*/
 _lyramilk_api_ std::ostream& operator << (std::ostream& os, const lyramilk::data::var& t);
-_lyramilk_api_ std::istream&  operator >> (std::istream& is, lyramilk::data::var& t);
+_lyramilk_api_ std::istream& operator >> (std::istream& is, lyramilk::data::var& t);
 
 _lyramilk_api_ lyramilk::data::bostream& operator << (lyramilk::data::bostream& os, char c);
 _lyramilk_api_ lyramilk::data::bostream& operator << (lyramilk::data::bostream& os, signed char c);
