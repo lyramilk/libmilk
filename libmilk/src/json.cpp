@@ -1,4 +1,5 @@
 ﻿#include "json.h"
+#include "log.h"
 //#include "stringutil.h"
 #include <fstream>
 extern "C" {
@@ -183,96 +184,16 @@ namespace lyramilk{namespace data
 		}
 		throw var::type_invalid("json::var类型错误");
 	}
-/*
-	json::json()
+
+	inline string tabs(int i)
 	{
-	}
-
-	json::json(string filename)
-	{
-		open(filename);
-	}
-
-	json::~json()
-	{
-		clear();
-	}
-
-
-	bool json::open(string filename)
-	{
-		std::ifstream fs(filename.c_str(),std::ifstream::binary| std::ifstream::in);
-		if(!fs.good()) return false;
-		fs.seekg(0,std::ifstream::end);
-		int size = (int)fs.tellg();
-		if(size == 0 || size == -1) return false;
-		fs.seekg(0,std::ifstream::beg);
-		std::vector<char> buf;
-		buf.resize(size);
-		fs.read(&buf.at(0),buf.size());
-		fs.close();
-
-		string str(&buf.at(0),(int)fs.gcount());
-		return from_str(str);
-
-	}
-
-	bool json::save(string filename)
-	{
-		std::ofstream fs(filename.c_str(),std::ofstream::binary| std::ofstream::out);
-		string str = to_str();
-		fs.write(str.c_str(),str.size());
-		fs.close();
-		return true;
-	}
-
-	bool json::from_str(string buffer)
-	{
-		struct json_object* jroot = json_tokener_parse(buffer.c_str());
-		if(jroot){
-			return false;
-		}
-		node_to_var(jroot,v);
-		json_object_put(jroot);
-		return true;
-	}
-*/
-
-	string tabs(int i)
-	{
-		string ret;
-		for(int k=0;k<i;k++){
-			ret += "\t";
-		}
-		return ret;
+		return string(i,'\t');
 	}
 
 	string jsonobject_to_string(json_object* node,int dep)
 	{
 		json_type type = json_object_get_type(node);
 		switch(type){
-		  case json_type_null:{
-				return "null";
-			}
-			break;
-		  case json_type_boolean:{
-				return var(json_object_get_boolean(node) != 0);
-			}
-			break;
-		  case json_type_double:{
-				return var(json_object_get_double(node));
-			}
-			break;
-		  case json_type_int:{
-				return var(json_object_get_int(node));
-			}
-			break;
-		  case json_type_string:{
-				int len = json_object_get_string_len(node);
-				const char* p = json_object_get_string(node);
-				return string("\"") + string(p,len) + "\"";
-			}
-			break;
 		  case json_type_object:{
 				string tabstr = tabs(dep);
 				string result;
@@ -294,10 +215,11 @@ namespace lyramilk{namespace data
 						result += tabs(dep) + "\"" + it.key + "\" : " + jsonobject_to_string(it.val,dep + 1) + ",\r\n";
 					}
 				}
-				/*  删除容器中最后一个元素的逗号
+				/*  删除容器中最后一个元素的逗号*/
 				if(*(result.end() - 3) == ','){
 					result.erase(result.end() - 3);
-				}*/
+				}
+				/**/
 				return result;
 			}
 			break;
@@ -323,17 +245,20 @@ namespace lyramilk{namespace data
 						result += tabs(dep) + jsonobject_to_string(obj,dep + 1) + ",\r\n";
 					}
 				}
-				/*  删除容器中最后一个元素的逗号
+
+
+				/*  删除容器中最后一个元素的逗号*/
 				if(*(result.end() - 3) == ','){
 					result.erase(result.end() - 3);
-				}*/
+				}
+				/**/
 				return result;
 			}
 			break;
 		  default:{
+				return json_object_to_json_string(node);
 			}
 		}
-		return "";
 	}
 
 	string jsonobject_to_string(json_object* node)
@@ -352,36 +277,6 @@ namespace lyramilk{namespace data
 		}
 		return str;
 	}
-/*
-	string json::to_str()
-	{
-		struct json_object* jroot = var_to_node(v);
-		if(!jroot){
-			return "";
-		}
-		string retstr = jsonobject_to_string(jroot);
-		json_object_put(jroot);
-
-		if(retstr.size()){
-			return retstr;
-		}
-		return string();
-	}
-
-	void json::clear()
-	{
-		v.clear();
-	}
-
-	var& json::path(string path) throw(var::type_invalid)
-	{
-		return v.path(path);
-	}
-	var& json::get_var()
-	{
-		return v;
-	}
-*/
 
 	json::json(lyramilk::data::var& o) : v(o)
 	{
@@ -396,16 +291,6 @@ namespace lyramilk{namespace data
 		v = o;
 		return *this;
 	}
-/*
-	json::operator lyramilk::data::var&()
-	{
-		return v;
-	}
-
-	json::operator const lyramilk::data::var&() const
-	{
-		return v;
-	}*/
 
 	lyramilk::data::string json::str() const
 	{
@@ -414,6 +299,7 @@ namespace lyramilk{namespace data
 			return "";
 		}
 		lyramilk::data::string retstr = jsonobject_to_string(jroot);
+		//lyramilk::data::string retstr = json_object_to_json_string(jroot);
 		json_object_put(jroot);
 		return retstr;
 	}
@@ -443,6 +329,7 @@ namespace lyramilk{namespace data
 		myjsontoken qt;
 		struct json_object* jroot = json_tokener_parse_ex(qt.token,s.c_str(),s.size());
 		if(!jroot){
+			lyramilk::klog(lyramilk::log::warning,"lyramilk.data.json.parse") << qt.err() << std::endl;
 			return false;
 		}
 		node_to_var(jroot,v);

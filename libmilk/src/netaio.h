@@ -26,9 +26,15 @@ namespace lyramilk{namespace netio
 		virtual bool notify_hup();
 		virtual bool notify_err();
 		virtual bool notify_pri();
-		lyramilk::data::stringstream sendcache;
+		lyramilk::data::stringstream scache;
 		int flag;
 		virtual void ondestory();
+	protected:
+		virtual int cache_read(char* buf,int bufsize);
+		virtual void cache_skip(int offset);
+		virtual bool cache_empty();
+		virtual bool cache_ok();
+		virtual void cache_clear();
 	public:
 		aiosession();
 		virtual ~aiosession();

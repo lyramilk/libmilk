@@ -54,12 +54,10 @@ lyramilk::debug::timer t;
 COUT << "当前会话数量" <<  session_count << std::endl;
 		}
 
-
 		char buff[4096];
 		int i = 0;
-		if(!sendcache){
-			sendcache.str("");
-			sendcache.clear();
+		if(cache_ok()){
+			cache_clear();
 		}
 		do{
 #ifdef OPENSSL_FOUND
@@ -79,7 +77,7 @@ COUT << "当前会话数量" <<  session_count << std::endl;
 			}
 			assert(i > 0);
 
-			if(!onrequest(buff,i,sendcache)){
+			if(!onrequest(buff,i,scache)){
 				flag &= ~EPOLLIN;
 				return notify_out();
 			}
@@ -91,9 +89,8 @@ COUT << "当前会话数量" <<  session_count << std::endl;
 	bool aiosession::notify_out()
 	{
 		char buff[4096];
-		while(sendcache){
-			sendcache.read(buff,4096);
-			int sendcount = sendcache.gcount();
+		while(cache_ok()){
+			int sendcount = cache_read(buff,4096);
 			if(sendcount == 0){
 				break;
 			}
@@ -110,7 +107,7 @@ COUT << "当前会话数量" <<  session_count << std::endl;
 			if(rt == 0) return false;
 			if(rt == -1){
 				if(errno == EAGAIN || errno == EINTR){
-					sendcache.seekg( 0 - sendcount,std::stringstream::cur);
+					cache_skip( 0 - sendcount);
 					break;
 				}
 				return false;
@@ -119,21 +116,50 @@ COUT << "当前会话数量" <<  session_count << std::endl;
 			if(rt < sendcount){
 				int rc = rt - sendcount;
 				assert(rc < 0);
-				sendcache.seekg(rc,std::stringstream::cur);
+				cache_skip(rc);
 				break;
 			}
 		}
-		if(sendcache && sendcache.rdbuf()->in_avail()){
+		if(!cache_empty()){
 			return container->reset(this,EPOLLOUT | flag);
 		}else{
-			sendcache.str("");
-			sendcache.clear();
+			cache_clear();
 		}
 
 		if(flag & EPOLLIN){
 			return container->reset(this,flag);
 		}
 		return false;
+	}
+
+	int aiosession::cache_read(char* buff,int bufsize)
+	{
+		scache.read(buff,4096);
+		return scache.gcount();
+	}
+
+	void aiosession::cache_skip(int offset)
+	{
+		scache.seekg(offset,std::stringstream::cur);
+	}
+
+	bool aiosession::cache_empty()
+	{
+		if(scache){
+			return scache.rdbuf()->in_avail() == 0;
+		}
+		return true;
+	}
+
+	bool aiosession::cache_ok()
+	{
+		return scache.good();
+	}
+
+	void aiosession::cache_clear()
+	{
+		scache.str("");
+		scache.clear();
 	}
 
 	bool aiosession::notify_hup()
@@ -156,7 +182,7 @@ COUT << "当前会话数量" <<  session_count << std::endl;
 
 	void aiosession::ondestory()
 	{
-		onfinally(sendcache);
+		onfinally(scache);
 		assert(dtr);
 		dtr(this);
 	}
@@ -307,7 +333,7 @@ COUT << "当前会话数量" <<  session_count << std::endl;
 #ifdef OPENSSL_FOUND
 			s->sslobj = sslptr;
 #endif
-			if(s->oninit(s->sendcache)){
+			if(s->oninit(s->scache)){
 				/*非阻塞模式*/
 				unsigned int argp = 1;
 				ioctl(acceptfd,FIONBIO,&argp);

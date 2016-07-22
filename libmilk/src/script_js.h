@@ -9,6 +9,8 @@
 	#include <jsapi.h>
 #elif defined JS_FOUND
 	#include <js/jsapi.h>
+#elif defined JS17_FOUND
+	#include <jsapi.h>
 #endif
 
 /**
@@ -28,6 +30,8 @@ namespace lyramilk{namespace script{namespace js
 #elif defined JS24_FOUND 
 		JSScript* script;
 		JSObject* global;
+#elif defined JS17_FOUND 
+		JSScript* script;
 #elif defined JS_FOUND
 		JSObject* script;
 		JSObject* global;
