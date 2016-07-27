@@ -20,6 +20,39 @@ namespace lyramilk{namespace script
 		lyramilk::data::var::map _mparams;
 	  public:
 
+		// 脚本向C++传递对象id时使用。
+		static lyramilk::data::string s_user_objectid()
+		{
+			return "__script_object_id";
+		}
+		// 脚本向C++传递对象指针时使用。
+		static lyramilk::data::string s_user_nativeobject()
+		{
+			return "__script_native_object";
+		}
+		// 脚本向C++传递函数id时使用。
+		static lyramilk::data::string s_user_functionid()
+		{
+			return "__script_function_id";
+		}
+
+		// 环境变量：this指针。
+		static lyramilk::data::string s_env_this()
+		{
+			return "__this";
+		}
+		// 环境变量：脚本引擎对象指针。
+		static lyramilk::data::string s_env_engine()
+		{
+			return "__engine";
+		}
+
+		// 环境变量：脚本引擎对象指针的var用户变量名。
+		static lyramilk::data::string s_user_engineptr()
+		{
+			return "__engine";
+		}
+
 		/**
 			@brief 函数指针：适配脚本可访问的C++对象中的函数
 		*/
@@ -60,34 +93,19 @@ namespace lyramilk{namespace script
 		virtual bool load_file(lyramilk::data::string scriptfile);
 
 		/**
-			@brief 无参数执行脚本
-			@return 脚本的返回值
-		*/
-		virtual lyramilk::data::var pcall();
-
-		/**
-			@brief 执行脚本
-			@param args 参数
-			@return 脚本的返回值
-		*/
-		virtual lyramilk::data::var pcall(lyramilk::data::var::array args) = 0;
-
-		/**
 			@brief 执行脚本函数。
-			@details 执行脚本函数前，需要先用pcall执行一次完整脚本以初始化并加载脚本中的函数。
 			@param func 脚本函数名
 			@return 脚本的返回值
 		*/
-		virtual lyramilk::data::var call(lyramilk::data::string func);
+		virtual lyramilk::data::var call(lyramilk::data::var func);
 
 		/**
 			@brief 执行脚本函数。
-			@details 执行脚本函数前，需要先用pcall执行一次完整脚本以初始化并加载脚本中的函数。
 			@param func 脚本函数名
 			@param args 参数
 			@return 脚本的返回值
 		*/
-		virtual lyramilk::data::var call(lyramilk::data::string func,lyramilk::data::var::array args) = 0;
+		virtual lyramilk::data::var call(lyramilk::data::var func,lyramilk::data::var::array args) = 0;
 
 		/**
 			@brief 重置脚本引擎。
@@ -130,7 +148,7 @@ namespace lyramilk{namespace script
 		template <typename T,lyramilk::data::var (T::*Q)(lyramilk::data::var::array ,lyramilk::data::var::map )>
 		static lyramilk::data::var functional(lyramilk::data::var::array params,lyramilk::data::var::map env)
 		{
-			T* pthis = (T*)env["this"].userdata("this");
+			T* pthis = (T*)env[engine::s_env_this()].userdata(engine::s_user_nativeobject());
 			return (pthis->*(Q))(params,env);
 		}
 	};

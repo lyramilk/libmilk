@@ -11,11 +11,27 @@ namespace lyramilk{namespace io
 	// aioselector
 	aioselector::aioselector()
 	{
-		container = NULL;
+		pool = nullptr;
 	}
 
 	aioselector::~aioselector()
 	{}
+
+	bool aioselector::notify_attach(aiopoll* container)
+	{
+		this->pool = container;
+		return this->pool != nullptr;
+	}
+
+	bool aioselector::notify_detach(aiopoll* container)
+	{
+		assert(this->pool == container);
+		if(this->pool == container){
+			this->pool = NULL;
+			return true;
+		}
+		return false;
+	}
 
 	// aiopoll
 	bool aiopoll::transmessage()
@@ -52,7 +68,7 @@ namespace lyramilk{namespace io
 		epoll_event ee;
 		ee.data.ptr = r;
 		ee.events = mask;
-		r->container = this;
+		if(!r->notify_attach(this)) return false;
 		if (epoll_ctl(epfd, EPOLL_CTL_ADD, r->getfd(), &ee) == -1) {
 			lyramilk::klog(lyramilk::log::error,"lyramilk.aio.epoll.add") << lyramilk::kdict("向epoll中添加套接字%d时发生错误%s",r->getfd(),strerror(errno)) << std::endl;
 			r->ondestory();
@@ -86,6 +102,7 @@ namespace lyramilk{namespace io
 		if (epoll_ctl(epfd, EPOLL_CTL_DEL, r->getfd(), &ee) == -1) {
 			lyramilk::klog(lyramilk::log::error,"lyramilk.aio.epoll.remove") << lyramilk::kdict("从epoll中移除套接字%d时发生错误%s",r->getfd(),strerror(errno)) << std::endl;
 		}
+		r->notify_detach(this);
 		r->ondestory();
 		return true;
 	}

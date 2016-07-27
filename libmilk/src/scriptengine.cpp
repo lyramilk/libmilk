@@ -41,12 +41,7 @@ namespace lyramilk{namespace script
 		return load_string(str);
 	}
 
-	lyramilk::data::var engine::pcall()
-	{
-		lyramilk::data::var::array a;
-		return pcall(a);
-	}
-	lyramilk::data::var engine::call(lyramilk::data::string func)
+	lyramilk::data::var engine::call(lyramilk::data::var func)
 	{
 		lyramilk::data::var::array a;
 		return call(func,a);

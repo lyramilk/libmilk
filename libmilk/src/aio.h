@@ -17,13 +17,13 @@ namespace lyramilk{namespace io
 	{
 	  protected:
 		friend class aiopoll;
-		aiopoll* container;
+		aiopoll* pool;
 		virtual void ondestory() = 0;
 	  protected:
 		/**
 			@brief 文件可读时发生该通知。
 		*/
-		virtual bool notify_in () = 0;
+		virtual bool notify_in() = 0;
 		/**
 			@brief 文件可写时发生该通知。
 		*/
@@ -40,6 +40,14 @@ namespace lyramilk{namespace io
 			@brief 文件中有可读的私有数据时发生该通知。
 		*/
 		virtual bool notify_pri() = 0;
+		/**
+			@brief 加入容器时发生该通知。
+		*/
+		virtual bool notify_attach(aiopoll* container);
+		/**
+			@brief 从容器中移除时发生该通知。
+		*/
+		virtual bool notify_detach(aiopoll* container);
 
 		virtual native_filedescriptor_type getfd() = 0;
 	  public:

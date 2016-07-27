@@ -17,7 +17,7 @@ Prefix:		/
 %build
 	mkdir -p %{?_builddir}/%{?name}
 	cd %{?_builddir}/%{?name}
-	cmake -D install_dir=%{?_builddir}/%{?name}/output -D share_type=BOTH %{CMakeListPath}
+	cmake -D install_dir=%{?_builddir}/%{?name}/output -D release=1 share_type=BOTH %{CMakeListPath}
 	make
 	make install
 	tree %{?_builddir}/%{?name}/output

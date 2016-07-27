@@ -35,8 +35,7 @@ namespace lyramilk{namespace script{namespace lua
 		virtual ~script_lua();
 		virtual bool load_string(lyramilk::data::string script);
 		virtual bool load_file(lyramilk::data::string scriptfile);
-		virtual lyramilk::data::var pcall(lyramilk::data::var::array args);
-		virtual lyramilk::data::var call(lyramilk::data::string func,lyramilk::data::var::array args);
+		virtual lyramilk::data::var call(lyramilk::data::var func,lyramilk::data::var::array args);
 		virtual void reset();
 		virtual void define(lyramilk::data::string classname,functional_map m,class_builder builder,class_destoryer destoryer);
 		virtual lyramilk::data::var createobject(lyramilk::data::string classname,lyramilk::data::var::array args);

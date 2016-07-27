@@ -121,13 +121,13 @@ COUT << "当前会话数量" <<  session_count << std::endl;
 			}
 		}
 		if(!cache_empty()){
-			return container->reset(this,EPOLLOUT | flag);
+			return pool->reset(this,EPOLLOUT | flag);
 		}else{
 			cache_clear();
 		}
 
 		if(flag & EPOLLIN){
-			return container->reset(this,flag);
+			return pool->reset(this,flag);
 		}
 		return false;
 	}
@@ -337,8 +337,8 @@ COUT << "当前会话数量" <<  session_count << std::endl;
 				/*非阻塞模式*/
 				unsigned int argp = 1;
 				ioctl(acceptfd,FIONBIO,&argp);
-				assert(container);
-				container->add(s,s->flag);
+				assert(pool);
+				pool->add(s,s->flag);
 			}else{
 				s->ondestory();
 			}

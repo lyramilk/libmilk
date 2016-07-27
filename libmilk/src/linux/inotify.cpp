@@ -95,7 +95,7 @@ namespace lyramilk{namespace data
 		int r = ::read(fd,buff,sizeof(buff));
 		if(r == -1){
 			lyramilk::klog(lyramilk::log::error,"lyramilk.io.notify.onevent") << lyramilk::kdict("读取事件时发生错误%s",strerror(errno)) << std::endl;
-			return container->reset(this,flag());
+			return pool->reset(this,flag());
 			return true;
 		}
 
@@ -106,7 +106,7 @@ namespace lyramilk{namespace data
 			notify_event(ie);
 		}
 
-		return container->reset(this,flag());
+		return pool->reset(this,flag());
 	}
 
 	bool inotify::notify_out()

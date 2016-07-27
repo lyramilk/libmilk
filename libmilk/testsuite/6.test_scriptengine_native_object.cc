@@ -114,7 +114,6 @@ int main(int argc,const char* argv[])
 	}
 	{
 		eng->load_file(TESTJS);
-		eng->pcall();
 		std::cout << "加载" << TESTJS << "完成" << std::endl;
 
 		lyramilk::data::var::array r;

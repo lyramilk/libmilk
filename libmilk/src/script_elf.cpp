@@ -37,14 +37,9 @@ namespace lyramilk{namespace script{namespace elf
 		return true;
 	}
 
-	lyramilk::data::var script_elf::pcall(lyramilk::data::var::array args)
+	lyramilk::data::var script_elf::call(lyramilk::data::var func,lyramilk::data::var::array args)
 	{
-		return lyramilk::data::var::nil;
-	}
-
-	lyramilk::data::var script_elf::call(lyramilk::data::string func,lyramilk::data::var::array args)
-	{
-		int (*pfunc)(void*) = (int (*)(void*))dlsym(handle,func.c_str());
+		int (*pfunc)(void*) = (int (*)(void*))dlsym(handle,func.str().c_str());
 		if(!pfunc){
 			lyramilk::klog(lyramilk::log::error,"lyramilk.script.elf") << D("%s中找不到符号：%s",elffilename.c_str(),func.c_str(),dlerror()) << std::endl;
 		}
