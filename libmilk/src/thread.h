@@ -269,6 +269,7 @@ namespace lyramilk{namespace threading
 		class list
 		{
 			mutex_rw l;
+			mutex_os l2;
 		  public:
 			struct item
 			{
@@ -367,8 +368,8 @@ namespace lyramilk{namespace threading
 
 			ptr get()
 			{
+				mutex_sync _(l.r());
 				{
-					mutex_sync _(l.r());
 					typename std::list<item>::iterator it = es.begin();
 					for(;it!=es.end();++it){
 						if(it->trylock()){
@@ -379,7 +380,7 @@ namespace lyramilk{namespace threading
 				{
 					T* tmp = underflow();
 					if(tmp){
-						mutex_sync _(l.w());
+						mutex_sync _(l2);
 						es.push_back(item(tmp,this));
 						es.back().trylock();
 						return ptr(&es.back());
