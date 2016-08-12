@@ -4,6 +4,7 @@
 #include <sys/inotify.h>
 #include <sys/stat.h>
 #include <sys/epoll.h>
+#include <sys/poll.h>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
@@ -258,4 +259,97 @@ namespace lyramilk{namespace data
 		inotify_rm_watch(fd,childfd);
 	}
 
+
+	inotify_file::inotify_file(lyramilk::data::string pathdirname)
+	{
+		fd = inotify_init();
+
+		struct stat st = {0};
+		if(stat(pathdirname.c_str(),&st) == -1/* && errno != ENOENT*/){
+			if(errno == ENOENT){
+				lyramilk::klog(lyramilk::log::warning,"lyramilk.io.inotify_file.add") << lyramilk::kdict("监视的目标[%s]不存在，自动监视其父目录。",pathdirname.c_str()) << std::endl;
+			}else{
+				lyramilk::klog(lyramilk::log::error,"lyramilk.io.inotify_file.add") << lyramilk::kdict("添加监视时出错：%s",strerror(errno)) << std::endl;
+				return;
+			}
+		}
+
+		if((st.st_mode&S_IFDIR) == 0){
+			lyramilk::data::string modifyedstr;
+			std::size_t pos = pathdirname.rfind("/");
+			if(pos == pathdirname.npos){
+				modifyedstr = ".";
+				filename = pathdirname;
+			}else{
+				modifyedstr = pathdirname.substr(0,pos);
+				filename = pathdirname.substr(pos + 1);
+			}
+			//lyramilk::klog(lyramilk::log::warning,"lyramilk.io.inotify_file.add") << lyramilk::kdict("监视的目标[%s]不是一个目录，自动改为监视[%s]",pathdirname.c_str(),modifyedstr.c_str()) << std::endl;
+			pathdirname = modifyedstr;
+		}
+
+		wfd = inotify_add_watch(fd,pathdirname.c_str(),IN_CREATE|IN_MODIFY|IN_MOVED_FROM|IN_MOVED_TO|IN_DELETE|IN_DELETE_SELF|IN_MOVE_SELF);
+		lyramilk::klog(lyramilk::log::debug,"lyramilk.io.inotify_file.add") << lyramilk::kdict("成功监视目录[%s]。",pathdirname.c_str()) << std::endl;
+		dirname = pathdirname;
+	}
+
+	inotify_file::~inotify_file()
+	{
+		::close(fd);
+	}
+
+	inotify_file::status inotify_file::check()
+	{
+		status t = s_keep;
+		pollfd pfd;
+		pfd.fd = fd;
+		pfd.events = POLLIN;
+		pfd.revents = 0;
+		if(::poll(&pfd,1,0) != 1){
+			return t;
+		}
+		if(pfd.revents != POLLIN){
+			return t;
+		}
+
+		char buff[4096];
+		int r = ::read(fd,buff,sizeof(buff));
+		if(r == -1){
+			lyramilk::klog(lyramilk::log::error,"lyramilk.io.notify.onevent") << lyramilk::kdict("读取事件时发生错误%s",strerror(errno)) << std::endl;
+			return t;
+		}
+
+		char* p = buff;
+		for(int i=0;p<buff + r;++i){
+			inotify_event* ie = (inotify_event*)p;
+			p = ie->name + ie->len;
+			
+
+			lyramilk::data::string dstfilename;
+			if(ie->len > 0){
+				dstfilename = ie->name;
+			}
+
+			if(dstfilename != filename){
+				continue;
+			}
+
+			uint32 event = ie->mask;
+
+			if(event & (IN_CREATE|IN_MOVED_TO)){
+				t = s_add;
+			}
+			if(event & (IN_MODIFY)){
+				t = s_modify;
+			}
+			if(event & (IN_DELETE|IN_DELETE_SELF|IN_MOVED_FROM|IN_MOVE_SELF)){
+				if(access((dirname + "/" + filename).c_str(),F_OK) == 0){
+					t = s_modify;
+				}else{
+					t = s_remove;
+				}
+			}
+		}
+		return t;
+	}
 }}

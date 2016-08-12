@@ -34,5 +34,26 @@ namespace lyramilk{namespace data
 		lyramilk::io::native_filedescriptor_type add(lyramilk::data::string filename,lyramilk::io::uint32 inotify_mask);
 		void remove(lyramilk::io::native_filedescriptor_type childfd);
 	};
+
+
+	class inotify_file
+	{
+		lyramilk::io::native_filedescriptor_type fd;
+		lyramilk::io::native_filedescriptor_type wfd;
+		lyramilk::data::string filename;
+		lyramilk::data::string dirname;
+	  public:
+		inotify_file(lyramilk::data::string pathdirname);
+		virtual ~inotify_file();
+
+		enum status
+		{
+			s_keep,
+			s_modify,
+			s_remove,
+			s_add,
+		};
+		status check();
+	};
 }}
 #endif

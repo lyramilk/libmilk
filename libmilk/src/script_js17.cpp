@@ -117,15 +117,15 @@ namespace lyramilk{namespace script{namespace js
 			JSObject *jo = JSVAL_TO_OBJECT(jv);
 			if(JS_IsArrayObject(cx,jo)){
 				lyramilk::data::var::array r;
-				JSObject *iter = JS_NewPropertyIterator(cx,jo);
-				if(iter){
-					jsid jid;
-					while(JS_NextProperty(cx,iter,&jid) && !JSID_IS_VOID(jid)){
-						jsval jv;
-						JS_LookupPropertyById(cx,jo,jid,&jv);
-						lyramilk::data::var cval = j2v(cx,jv);
-						r.push_back(cval);
-					}
+				uint32_t len = 0;
+				if(!JS_GetArrayLength(cx,jo,&len)){
+					return lyramilk::data::var::nil;
+				}
+				for(uint32_t i=0;i<len;++i){
+					jsval jv;
+					JS_LookupElement(cx,jo,i,&jv);
+					lyramilk::data::var cval = j2v(cx,jv);
+					r.push_back(cval);
 				}
 				v = r;
 			}else{
@@ -173,6 +173,7 @@ namespace lyramilk{namespace script{namespace js
 		}else{
 			JSType jt = JS_TypeOfValue(cx,jv);
 			const char* tn = JS_GetTypeName(cx,jt);
+			COUT << tn << std::endl;
 			TODO();
 		}
 		return v;
@@ -283,7 +284,49 @@ namespace lyramilk{namespace script{namespace js
 					params.push_back(v);
 				}
 			}
-			pnewobj = pfun(params);
+
+			try{
+				pnewobj = pfun(params);
+				if(pnewobj == nullptr){
+					jsval args = v2j(cx,D("创建对象失败"));
+					jsval exc;
+					if (JS_CallFunctionName(cx, JS_GetGlobalObject(cx), "Error", 1, &args, &exc)){
+						JS_SetPendingException(cx, exc);
+					}
+					return JS_FALSE;
+				}
+			}catch(lyramilk::data::string& str){
+				jsval args = v2j(cx,str.c_str());
+				jsval exc;
+				//只用一个参数就可以显示js中的错误了。
+				if (JS_CallFunctionName(cx, JS_GetGlobalObject(cx), "Error", 1, &args, &exc)){
+					JS_SetPendingException(cx, exc);
+				}
+				return JS_FALSE;
+			}catch(const char* cstr){
+				jsval args = v2j(cx,cstr);
+				jsval exc;
+				if (JS_CallFunctionName(cx, JS_GetGlobalObject(cx), "Error", 1, &args, &exc)){
+					JS_SetPendingException(cx, exc);
+				}
+				return JS_FALSE;
+			}catch(std::exception& e){
+				jsval args = v2j(cx,e.what());
+				jsval exc;
+				//只用一个参数就可以显示js中的错误了。
+				if (JS_CallFunctionName(cx, JS_GetGlobalObject(cx), "Error", 1, &args, &exc)){
+					JS_SetPendingException(cx, exc);
+				}
+				return JS_FALSE;
+			}catch(...){
+				jsval args = v2j(cx,"未知异常");
+				jsval exc;
+				//只用一个参数就可以显示js中的错误了。
+				if (JS_CallFunctionName(cx, JS_GetGlobalObject(cx), "Error", 1, &args, &exc)){
+					JS_SetPendingException(cx, exc);
+				}
+				return JS_FALSE;
+			}
 		}
 
 		JSObject* jsret = JS_NewObject(cx,&nativeClass,callee,JS_GetGlobalObject(cx));
@@ -457,7 +500,7 @@ namespace lyramilk{namespace script{namespace js
 		return JS_TRUE;
 	}
 
-	script_js::script_js():rt(NULL),cx(NULL),script(NULL)
+	script_js::script_js():rt(NULL),cx(NULL)
 	{
 		rt = JS_Init(8L*1024L*1024L);
 		cx = JS_NewContext(rt, 8192);
@@ -491,7 +534,7 @@ namespace lyramilk{namespace script{namespace js
 	{
 		JS_SetRuntimeThread(rt);
 		JS::RootedObject global(cx,JS_GetGlobalObject(cx));
-		script = JS_CompileScript(cx,global,scriptstring.c_str(),scriptstring.size(),NULL,1);
+		JSScript* script = JS_CompileScript(cx,global,scriptstring.c_str(),scriptstring.size(),NULL,1);
 		if(script){
 			bool ret = JS_ExecuteScript(cx,global,script,NULL) == JS_TRUE;
 			gc();
@@ -516,7 +559,7 @@ namespace lyramilk{namespace script{namespace js
 		}
 		ifs.close();
 
-		script = JS_CompileScript(cx,global,scriptstring.c_str(),scriptstring.size(),scriptfile.c_str(),1);
+		JSScript* script = JS_CompileScript(cx,global,scriptstring.c_str(),scriptstring.size(),scriptfile.c_str(),1);
 		if(script){
 			bool ret = JS_ExecuteScript(cx,global,script,NULL) == JS_TRUE;
 			gc();
@@ -538,7 +581,7 @@ namespace lyramilk{namespace script{namespace js
 				lyramilk::data::var& v = *it;
 				jvs.push_back(v2j(cx,v));
 			}
-			if(JS_TRUE == JS_CallFunctionName(cx,global,func.c_str(),jvs.size(),jvs.data(),&retval)){
+			if(JS_TRUE == JS_CallFunctionName(cx,global,func.str().c_str(),jvs.size(),jvs.data(),&retval)){
 				lyramilk::data::var ret = j2v(cx,retval);
 				gc();
 				return ret;
@@ -549,24 +592,22 @@ namespace lyramilk{namespace script{namespace js
 			jsval jv;
 			JS_IdToValue(cx,jid,&jv);
 			JSFunction *fun = JS_ValueToFunction(cx,jv);
-			//JSObject* jo = JS_GetParent(fun);
 
 			std::vector<jsval> jvs;
 			for(lyramilk::data::var::array::iterator it = args.begin();it!=args.end();++it){
 				lyramilk::data::var& v = *it;
 				jvs.push_back(v2j(cx,v));
 			}
-			JS_CallFunction(cx,global,fun,jvs.size(),jvs.data(),&retval);
-			return j2v(cx,retval);
+
+			if(JS_TRUE == JS_CallFunction(cx,global,fun,jvs.size(),jvs.data(),&retval)){
+				lyramilk::data::var ret = j2v(cx,retval);
+				gc();
+				return ret;
+			}
 		}
+		gc();
 		return lyramilk::data::var::nil;
 	}
-/*
-JS_CallFunction(JSContext *cx, JSObject *obj, JSFunction *fun, unsigned argc,
-                jsval *argv, jsval *rval);
-
-*/
-
 
 	void script_js::reset()
 	{
@@ -634,6 +675,7 @@ JS_CallFunction(JSContext *cx, JSObject *obj, JSFunction *fun, unsigned argc,
 		jsval jv = PRIVATE_TO_JSVAL(ppack);
 		if(JS_TRUE != JS_SetProperty(cx,jsret,"__script_native",&jv)){
 			delete ppack;
+			return lyramilk::data::var::nil;
 		}
 
 		jsid jsretid;

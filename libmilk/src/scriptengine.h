@@ -56,7 +56,7 @@ namespace lyramilk{namespace script
 		/**
 			@brief 函数指针：适配脚本可访问的C++对象中的函数
 		*/
-		typedef lyramilk::data::var (*functional_type)(lyramilk::data::var::array params,lyramilk::data::var::map env);
+		typedef lyramilk::data::var (*functional_type)(lyramilk::data::var::array argv,lyramilk::data::var::map env);
 
 		/**
 			@brief functional_type的map

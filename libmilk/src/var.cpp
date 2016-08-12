@@ -2162,7 +2162,6 @@ bool var::_deserialize(istream& is)
 		}break;
 	  case t_int16:
 	  case t_uint16:{
-			if(!read(is,m)) return false;
 			if(!read(is,u.u2)) return false;
 			if(r) u.u2 = reverse_order(u.u2);
 			t = ts;

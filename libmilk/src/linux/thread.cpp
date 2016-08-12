@@ -1,11 +1,16 @@
 ﻿#include "thread.h"
+#include <sys/sysinfo.h>
 
 namespace lyramilk{namespace threading
 {
 	// threads
 	threads::return_type threads::thread_task(threads* p)
 	{
-		return p->svc();
+		threads::return_type ret = 0;
+		__sync_add_and_fetch(&p->c,1);
+		ret = p->svc();
+		__sync_sub_and_fetch(&p->c,1);
+		return ret;
 	}
 
 	threads::threads()
@@ -33,6 +38,21 @@ namespace lyramilk{namespace threading
 		}
 	}
 
+	void threads::active()
+	{
+		std::size_t t = get_nprocs();
+		if(t < 1){
+			t = 1;
+		}else if(t > 1000){
+			t = 20;
+		}else{
+			std::size_t e = t;
+			t <<= 1;
+			t |= e;
+		}
+		active(t);
+	}
+
 	void threads::detach()
 	{
 		vector_type::iterator it = m.begin();
@@ -40,6 +60,11 @@ namespace lyramilk{namespace threading
 			pthread_detach(*it);
 		}
 		m.clear();
+	}
+
+	std::size_t threads::size()
+	{
+		return c;
 	}
 
 	// mutex_super

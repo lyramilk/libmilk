@@ -35,6 +35,7 @@ namespace lyramilk{namespace threading
 	{
 	  protected:
 		typedef int return_type;
+		std::size_t c;
 
 		typedef std::vector<pthread_t> vector_type;
 
@@ -60,12 +61,25 @@ namespace lyramilk{namespace threading
 			@details 激活时将启动多个线程执行svc
 			@param threadcount 激活的线程数。
 		*/
-		virtual void active(std::size_t threadcount = 10);
+		virtual void active(std::size_t threadcount);
+
+		/**
+			@brief 激活线程组
+			@details 激活时将启动多个线程执行svc，启动的线程数目根据cpu核心数决定。
+		*/
+		virtual void active();
+
 		/**
 			@brief 线程组析构
 			@details 析构时会等待所有线程结束才会真正退出。
 		*/
 		virtual void detach();
+
+		/**
+			@brief 激活的线程数
+		*/
+		virtual std::size_t size();
+
 		/**
 			@brief 线程函数，激活线程时触发。
 			@details 子类中该成员函数将在额外的线程中执行。

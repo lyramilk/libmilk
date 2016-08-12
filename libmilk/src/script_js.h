@@ -3,13 +3,7 @@
 #include "config.h"
 
 #include "scriptengine.h"
-#if defined JS_FOUND
-	#include <js/jsapi.h>
-#elif defined JS170_FOUND
-	#include <jsapi.h>
-#elif defined JS17_FOUND
-	#include <jsapi.h>
-#endif
+#include <jsapi.h>
 /**
 	@namespace lyramilk::script::js
 	@brief 该命名空间用来封装脚本，但并不要求对每种脚本提供统一的定义形式。
@@ -21,15 +15,6 @@ namespace lyramilk{namespace script{namespace js
 	{
 		JSRuntime* rt;
 		JSContext* cx;
-#if defined JS_FOUND
-		JSObject* global;
-		JSObject* script;
-#elif defined JS170_FOUND
-		JSObject* global;
-		JSScript* script;
-#elif defined JS17_FOUND
-		JSScript* script;
-#endif
 
 		std::map<lyramilk::data::string,jsid> m;
 	  public:

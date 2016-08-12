@@ -18,42 +18,19 @@
 	#include <openssl/err.h>
 #endif
 
-#ifdef OPENSSL_FOUND
-	struct __ssl
-	{
-		__ssl()
-		{
-			SSL_library_init();
-			SSL_load_error_strings();
-			ERR_load_BIO_strings();
-			OpenSSL_add_all_algorithms();
-		}
-		~__ssl()
-		{
-		}
 
-		lyramilk::data::string err()
-		{
-			char buff[4096] = {0};
-			ERR_error_string(ERR_get_error(),buff);
-			return buff;
-		}
-	};
-
-	static __ssl _ssl;
-#endif
+lyramilk::data::string inline ssl_err()
+{
+	char buff[4096] = {0};
+	ERR_error_string(ERR_get_error(),buff);
+	return buff;
+}
 
 namespace lyramilk{namespace netio
 {
 	// aiosession
-static int session_count = 0;
-lyramilk::debug::timer t;
 	bool aiosession::notify_in()
 	{
-		if(t){
-COUT << "当前会话数量" <<  session_count << std::endl;
-		}
-
 		char buff[4096];
 		int i = 0;
 		if(cache_ok()){
@@ -191,12 +168,10 @@ COUT << "当前会话数量" <<  session_count << std::endl;
 	aiosession::aiosession()
 	{
 		flag = EPOLLIN | EPOLLPRI | EPOLLERR | EPOLLHUP | EPOLLONESHOT;
-		__sync_add_and_fetch(&session_count,1);
 	}
 
 	aiosession::~aiosession()
 	{
-		__sync_sub_and_fetch(&session_count,1);
 		close();
 	}
 
@@ -277,11 +252,11 @@ COUT << "当前会话数量" <<  session_count << std::endl;
 					SSL_free(sslptr);
 					sslptr = nullptr;
 					if(!ssl_self_adaptive){
-						lyramilk::klog(lyramilk::log::warning,"lyramilk.system.netio.aiolistener.EPOLLIN.ssl") << lyramilk::kdict("绑定套接字失败:%s",_ssl.err().c_str()) << std::endl;
+						lyramilk::klog(lyramilk::log::warning,"lyramilk.system.netio.aiolistener.EPOLLIN.ssl") << lyramilk::kdict("绑定套接字失败:%s",ssl_err().c_str()) << std::endl;
 						::close(acceptfd);
 						return true;
 					}else{
-						lyramilk::klog(lyramilk::log::warning,"lyramilk.system.netio.aiolistener.EPOLLIN.ssl") << lyramilk::kdict("在自适应模式中绑定套接字失败:%s",_ssl.err().c_str()) << std::endl;
+						lyramilk::klog(lyramilk::log::warning,"lyramilk.system.netio.aiolistener.EPOLLIN.ssl") << lyramilk::kdict("在自适应模式中绑定套接字失败:%s",ssl_err().c_str()) << std::endl;
 					}
 				}
 				if(ssl_self_adaptive){
@@ -292,7 +267,7 @@ COUT << "当前会话数量" <<  session_count << std::endl;
 							if(::recv(acceptfd,buff,6,MSG_PEEK)>0){
 								if(buff[0] == 0x16 && buff[5] == 0x01){
 									if(SSL_do_handshake(sslptr) != 1) {
-										lyramilk::klog(lyramilk::log::warning,"lyramilk.system.netio.aiolistener.EPOLLIN.ssl.handshake") << lyramilk::kdict("在自适应模式中握手失败:%s",_ssl.err().c_str()) << std::endl;
+										lyramilk::klog(lyramilk::log::warning,"lyramilk.system.netio.aiolistener.EPOLLIN.ssl.handshake") << lyramilk::kdict("在自适应模式中握手失败:%s",ssl_err().c_str()) << std::endl;
 										SSL_shutdown(sslptr);
 										SSL_free(sslptr);
 										::close(acceptfd);
@@ -314,7 +289,7 @@ COUT << "当前会话数量" <<  session_count << std::endl;
 				}else{
 					SSL_set_accept_state(sslptr);
 					if(SSL_do_handshake(sslptr) != 1) {
-						lyramilk::klog(lyramilk::log::warning,"lyramilk.system.netio.aiolistener.EPOLLIN.ssl.handshake") << lyramilk::kdict("在自适应模式中握手失败:%s",_ssl.err().c_str()) << std::endl;
+						lyramilk::klog(lyramilk::log::warning,"lyramilk.system.netio.aiolistener.EPOLLIN.ssl.handshake") << lyramilk::kdict("在自适应模式中握手失败:%s",ssl_err().c_str()) << std::endl;
 						SSL_shutdown(sslptr);
 						SSL_free(sslptr);
 						::close(acceptfd);
@@ -428,21 +403,21 @@ COUT << "当前会话数量" <<  session_count << std::endl;
 		if(!certfilename.empty()){
 			r = SSL_CTX_use_certificate_file((SSL_CTX*)sslctx, certfilename.c_str(), SSL_FILETYPE_PEM);
 			if(r != 1) {
-				lyramilk::klog(lyramilk::log::warning,"lyramilk.system.netio.aiolistener.ssl.init_ssl") << lyramilk::kdict("设置公钥失败:%s",_ssl.err().c_str()) << std::endl;
+				lyramilk::klog(lyramilk::log::warning,"lyramilk.system.netio.aiolistener.ssl.init_ssl") << lyramilk::kdict("设置公钥失败:%s",ssl_err().c_str()) << std::endl;
 				return false;
 			}
 		}
 		if(!keyfilename.empty()){
 			r = SSL_CTX_use_PrivateKey_file((SSL_CTX*)sslctx, keyfilename.c_str(), SSL_FILETYPE_PEM);
 			if(r != 1) {
-				lyramilk::klog(lyramilk::log::warning,"lyramilk.system.netio.aiolistener.ssl.init_ssl") << lyramilk::kdict("设置私钥失败:%s",_ssl.err().c_str()) << std::endl;
+				lyramilk::klog(lyramilk::log::warning,"lyramilk.system.netio.aiolistener.ssl.init_ssl") << lyramilk::kdict("设置私钥失败:%s",ssl_err().c_str()) << std::endl;
 				return false;
 			}
 		}
 		if(!certfilename.empty() && !keyfilename.empty()){
 			r = SSL_CTX_check_private_key((SSL_CTX*)sslctx);
 			if(r != 1) {
-				lyramilk::klog(lyramilk::log::warning,"lyramilk.system.netio.aiolistener.ssl.init_ssl") << lyramilk::kdict("验证密钥失败:%s",_ssl.err().c_str()) << std::endl;
+				lyramilk::klog(lyramilk::log::warning,"lyramilk.system.netio.aiolistener.ssl.init_ssl") << lyramilk::kdict("验证密钥失败:%s",ssl_err().c_str()) << std::endl;
 				return false;
 			}
 		}

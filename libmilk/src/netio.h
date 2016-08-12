@@ -98,10 +98,10 @@ namespace lyramilk{namespace netio
 		//关闭套接字
 		virtual bool close();
 
-		/// 取得本地ip
+		/// 取得本端ip
 		virtual netaddress source() const;
 
-		/// 取得服务器端ip
+		/// 取得对端ip
 		virtual netaddress dest() const;
 	};
 

@@ -41,7 +41,7 @@ namespace lyramilk{namespace script{namespace elf
 	{
 		int (*pfunc)(void*) = (int (*)(void*))dlsym(handle,func.str().c_str());
 		if(!pfunc){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.script.elf") << D("%s中找不到符号：%s",elffilename.c_str(),func.c_str(),dlerror()) << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.script.elf") << D("%s中找不到符号：%s",elffilename.c_str(),func.str().c_str(),dlerror()) << std::endl;
 		}
 
 		return pfunc(&args);
