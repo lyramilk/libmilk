@@ -1,6 +1,6 @@
 ﻿#定义工程名及版本
 project(milk)
-set(version 1.1.11)
+set(version 1.1.12)
 set(soversion 1.1)
 
 cmake_minimum_required (VERSION 2.8.11) 
@@ -67,7 +67,6 @@ if(UNIX)
 	pkg_search_module(LEVELDB leveldb)
 	#set(CMAKE_REQUIRED_INCLUDES /usr/include/)
 	check_include_file_cxx(tr1/unordered_map	Z_HAVE_TR1_UNORDEREDMAP)
-	check_include_file_cxx(/usr/include/v8.h	Z_HAVE_V8)
 endif()
 
 if(JSON_C_FOUND)

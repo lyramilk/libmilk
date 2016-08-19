@@ -38,8 +38,9 @@ namespace lyramilk{namespace netio
 		netaddress(lyramilk::data::string host, lyramilk::data::uint16 port);
 		netaddress(lyramilk::data::uint32 ipv4, lyramilk::data::uint16 port);
 		netaddress(lyramilk::data::uint16 port);
+		netaddress(lyramilk::data::string hostandport);
 		netaddress();
-		lyramilk::data::string ip_str();
+		lyramilk::data::string ip_str() const;
 	};
 
 	class _lyramilk_api_ socket
@@ -109,15 +110,16 @@ namespace lyramilk{namespace netio
 	class _lyramilk_api_ client : public socket
 	{
 		ssl_ctx_type sslctx;
+		bool use_ssl;
 	public:
 		client();
 		virtual ~client();
 
-		virtual bool open(netaddress addr);
+		virtual bool open(const netaddress& addr);
 		virtual bool open(lyramilk::data::string host,lyramilk::data::uint16 port);
 
-		virtual bool ssl(bool use_ssl);
-		virtual bool init_ssl(lyramilk::data::string certfilename, lyramilk::data::string keyfilename);
+		virtual void ssl(bool use_ssl);
+		virtual bool init_ssl(lyramilk::data::string certfilename = "", lyramilk::data::string keyfilename = "");
 	};
 }}
 

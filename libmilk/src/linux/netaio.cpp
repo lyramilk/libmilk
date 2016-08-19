@@ -141,19 +141,19 @@ namespace lyramilk{namespace netio
 
 	bool aiosession::notify_hup()
 	{
-		lyramilk::klog(lyramilk::log::debug,"lyramilk.system.netio.aiolistener.notify_hup") << lyramilk::kdict("发生了HUP事件%s",strerror(errno)) << std::endl;
+		lyramilk::klog(lyramilk::log::debug,"lyramilk.netio.aiolistener.notify_hup") << lyramilk::kdict("发生了HUP事件%s",strerror(errno)) << std::endl;
 		return false;
 	}
 
 	bool aiosession::notify_err()
 	{
-		lyramilk::klog(lyramilk::log::debug,"lyramilk.system.netio.aiolistener.notify_err") << lyramilk::kdict("发生了ERR事件%s",strerror(errno)) << std::endl;
+		lyramilk::klog(lyramilk::log::debug,"lyramilk.netio.aiolistener.notify_err") << lyramilk::kdict("发生了ERR事件%s",strerror(errno)) << std::endl;
 		return false;
 	}
 
 	bool aiosession::notify_pri()
 	{
-		lyramilk::klog(lyramilk::log::debug,"lyramilk.system.netio.aiolistener.notify_pri") << lyramilk::kdict("发生了PRI事件%s",strerror(errno)) << std::endl;
+		lyramilk::klog(lyramilk::log::debug,"lyramilk.netio.aiolistener.notify_pri") << lyramilk::kdict("发生了PRI事件%s",strerror(errno)) << std::endl;
 		return false;
 	}
 
@@ -163,7 +163,6 @@ namespace lyramilk{namespace netio
 		assert(dtr);
 		dtr(this);
 	}
-
 
 	aiosession::aiosession()
 	{
@@ -191,31 +190,31 @@ namespace lyramilk{namespace netio
 
 	bool aiosession::read(void* buf, lyramilk::data::uint32 len,lyramilk::data::uint32 delay)
 	{
-		lyramilk::klog(lyramilk::log::error,"lyramilk.system.netio.aiosession.read") << lyramilk::kdict("不该调用此方法。") << std::endl;
+		lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiosession.read") << lyramilk::kdict("不该调用此方法。") << std::endl;
 		TODO();
 	}
 
 	bool aiosession::write(const void* buf, lyramilk::data::uint32 len,lyramilk::data::uint32 delay)
 	{
-		lyramilk::klog(lyramilk::log::error,"lyramilk.system.netio.aiosession.write") << lyramilk::kdict("不该调用此方法。") << std::endl;
+		lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiosession.write") << lyramilk::kdict("不该调用此方法。") << std::endl;
 		TODO();
 	}
 
 	bool aiosession::check_read(lyramilk::data::uint32 delay)
 	{
-		lyramilk::klog(lyramilk::log::error,"lyramilk.system.netio.aiosession.check_read") << lyramilk::kdict("不该调用此方法。") << std::endl;
+		lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiosession.check_read") << lyramilk::kdict("不该调用此方法。") << std::endl;
 		TODO();
 	}
 
 	bool aiosession::check_write(lyramilk::data::uint32 delay)
 	{
-		lyramilk::klog(lyramilk::log::error,"lyramilk.system.netio.aiosession.check_write") << lyramilk::kdict("不该调用此方法。") << std::endl;
+		lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiosession.check_write") << lyramilk::kdict("不该调用此方法。") << std::endl;
 		TODO();
 	}
 
 	bool aiosession::check_error()
 	{
-		lyramilk::klog(lyramilk::log::error,"lyramilk.system.netio.aiosession.check_error") << lyramilk::kdict("不该调用此方法。") << std::endl;
+		lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiosession.check_error") << lyramilk::kdict("不该调用此方法。") << std::endl;
 		TODO();
 	}
 
@@ -245,18 +244,18 @@ namespace lyramilk{namespace netio
 		if(acceptfd > 0){
 #ifdef OPENSSL_FOUND
 			SSL* sslptr = nullptr;
-			if(ssl() && sslctx){
+			if(use_ssl && sslctx){
 				sslptr = SSL_new((SSL_CTX*)sslctx);
 				if(SSL_set_fd(sslptr,acceptfd) != 1) {
 					SSL_shutdown(sslptr);
 					SSL_free(sslptr);
 					sslptr = nullptr;
 					if(!ssl_self_adaptive){
-						lyramilk::klog(lyramilk::log::warning,"lyramilk.system.netio.aiolistener.EPOLLIN.ssl") << lyramilk::kdict("绑定套接字失败:%s",ssl_err().c_str()) << std::endl;
+						lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.aiolistener.EPOLLIN.ssl") << lyramilk::kdict("绑定套接字失败:%s",ssl_err().c_str()) << std::endl;
 						::close(acceptfd);
 						return true;
 					}else{
-						lyramilk::klog(lyramilk::log::warning,"lyramilk.system.netio.aiolistener.EPOLLIN.ssl") << lyramilk::kdict("在自适应模式中绑定套接字失败:%s",ssl_err().c_str()) << std::endl;
+						lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.aiolistener.EPOLLIN.ssl") << lyramilk::kdict("在自适应模式中绑定套接字失败:%s",ssl_err().c_str()) << std::endl;
 					}
 				}
 				if(ssl_self_adaptive){
@@ -267,7 +266,7 @@ namespace lyramilk{namespace netio
 							if(::recv(acceptfd,buff,6,MSG_PEEK)>0){
 								if(buff[0] == 0x16 && buff[5] == 0x01){
 									if(SSL_do_handshake(sslptr) != 1) {
-										lyramilk::klog(lyramilk::log::warning,"lyramilk.system.netio.aiolistener.EPOLLIN.ssl.handshake") << lyramilk::kdict("在自适应模式中握手失败:%s",ssl_err().c_str()) << std::endl;
+										lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.aiolistener.EPOLLIN.ssl.handshake") << lyramilk::kdict("在自适应模式中握手失败:%s",ssl_err().c_str()) << std::endl;
 										SSL_shutdown(sslptr);
 										SSL_free(sslptr);
 										::close(acceptfd);
@@ -280,16 +279,16 @@ namespace lyramilk{namespace netio
 								}
 							}
 						}else{
-							lyramilk::klog(lyramilk::log::warning,"lyramilk.system.netio.aiolistener.EPOLLIN.ssl.handshake") << lyramilk::kdict("在自适应模式中握手失败:%s","握手超时。") << std::endl;
+							lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.aiolistener.EPOLLIN.ssl.handshake") << lyramilk::kdict("在自适应模式中握手失败:%s","握手超时。") << std::endl;
 							SSL_shutdown(sslptr);
 							SSL_free(sslptr);
-							sslptr = NULL;
+							sslptr = nullptr;
 						}
 					}
 				}else{
 					SSL_set_accept_state(sslptr);
 					if(SSL_do_handshake(sslptr) != 1) {
-						lyramilk::klog(lyramilk::log::warning,"lyramilk.system.netio.aiolistener.EPOLLIN.ssl.handshake") << lyramilk::kdict("在自适应模式中握手失败:%s",ssl_err().c_str()) << std::endl;
+						lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.aiolistener.EPOLLIN.ssl.handshake") << lyramilk::kdict("在自适应模式中握手失败:%s",ssl_err().c_str()) << std::endl;
 						SSL_shutdown(sslptr);
 						SSL_free(sslptr);
 						::close(acceptfd);
@@ -300,7 +299,7 @@ namespace lyramilk{namespace netio
 #endif
 			aiosession* s = create();
 			if(s == nullptr){
-				lyramilk::klog(lyramilk::log::warning,"lyramilk.system.netio.aiolistener.EPOLLIN") << lyramilk::kdict("创建会话失败") << std::endl;
+				lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.aiolistener.EPOLLIN") << lyramilk::kdict("创建会话失败") << std::endl;
 				::close(acceptfd);
 				return true;
 			}
@@ -359,13 +358,13 @@ namespace lyramilk{namespace netio
 	bool aiolistener::open(lyramilk::data::uint16 port)
 	{
 		if(sock){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.system.netio.aiolistener.open") << lyramilk::kdict("打开监听套件字失败，因为该套接字己打开。") << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiolistener.open") << lyramilk::kdict("打开监听套件字失败，因为该套接字己打开。") << std::endl;
 			return false;
 		}
 
 		sock = ::socket(AF_INET,SOCK_STREAM, IPPROTO_IP);
 		if(!sock){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.system.netio.aiolistener.open") << lyramilk::kdict("监听时发生错误：%s",strerror(errno)) << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiolistener.open") << lyramilk::kdict("监听时发生错误：%s",strerror(errno)) << std::endl;
 			return false;
 		}
 
@@ -377,7 +376,7 @@ namespace lyramilk{namespace netio
 		setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,&opt,sizeof(opt));
 		if(::bind(sock,(const sockaddr*)&addr,sizeof(addr))){
 			close();
-			lyramilk::klog(lyramilk::log::error,"lyramilk.system.netio.aiolistener.open") << lyramilk::kdict("绑定地址(%s:%d)时发生错误：%s",inet_ntoa(addr.sin_addr),port,strerror(errno)) << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiolistener.open") << lyramilk::kdict("绑定地址(%s:%d)时发生错误：%s",inet_ntoa(addr.sin_addr),port,strerror(errno)) << std::endl;
 			return false;
 		}
 		unsigned int argp = 1;
@@ -386,7 +385,7 @@ namespace lyramilk{namespace netio
 
 		int ret = listen(sock,5);
 		if(ret == 0){
-			lyramilk::klog(lyramilk::log::debug,"lyramilk.system.netio.aiolistener.open") << lyramilk::kdict("监听：%d",port) << std::endl;
+			lyramilk::klog(lyramilk::log::debug,"lyramilk.netio.aiolistener.open") << lyramilk::kdict("监听：%d",port) << std::endl;
 			//signal(SIGPIPE, SIG_IGN);
 			return true;
 		}
@@ -403,21 +402,21 @@ namespace lyramilk{namespace netio
 		if(!certfilename.empty()){
 			r = SSL_CTX_use_certificate_file((SSL_CTX*)sslctx, certfilename.c_str(), SSL_FILETYPE_PEM);
 			if(r != 1) {
-				lyramilk::klog(lyramilk::log::warning,"lyramilk.system.netio.aiolistener.ssl.init_ssl") << lyramilk::kdict("设置公钥失败:%s",ssl_err().c_str()) << std::endl;
+				lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.aiolistener.ssl.init_ssl") << lyramilk::kdict("设置公钥失败:%s",ssl_err().c_str()) << std::endl;
 				return false;
 			}
 		}
 		if(!keyfilename.empty()){
 			r = SSL_CTX_use_PrivateKey_file((SSL_CTX*)sslctx, keyfilename.c_str(), SSL_FILETYPE_PEM);
 			if(r != 1) {
-				lyramilk::klog(lyramilk::log::warning,"lyramilk.system.netio.aiolistener.ssl.init_ssl") << lyramilk::kdict("设置私钥失败:%s",ssl_err().c_str()) << std::endl;
+				lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.aiolistener.ssl.init_ssl") << lyramilk::kdict("设置私钥失败:%s",ssl_err().c_str()) << std::endl;
 				return false;
 			}
 		}
 		if(!certfilename.empty() && !keyfilename.empty()){
 			r = SSL_CTX_check_private_key((SSL_CTX*)sslctx);
 			if(r != 1) {
-				lyramilk::klog(lyramilk::log::warning,"lyramilk.system.netio.aiolistener.ssl.init_ssl") << lyramilk::kdict("验证密钥失败:%s",ssl_err().c_str()) << std::endl;
+				lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.aiolistener.ssl.init_ssl") << lyramilk::kdict("验证密钥失败:%s",ssl_err().c_str()) << std::endl;
 				return false;
 			}
 		}
@@ -426,7 +425,7 @@ namespace lyramilk{namespace netio
 		ssl(true);
 		return true;
 #else
-		lyramilk::klog(lyramilk::log::error,"lyramilk.system.netio.aiolistener.ssl.init_ssl") << lyramilk::kdict("不支持SSL") << std::endl;
+		lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiolistener.ssl.init_ssl") << lyramilk::kdict("不支持SSL") << std::endl;
 		return false;
 #endif
 	}
@@ -439,7 +438,7 @@ namespace lyramilk{namespace netio
 
 	bool aiolistener::ssl()
 	{
-		return use_ssl && sslctx;
+		return use_ssl && sslobj;
 	}
 
 	native_filedescriptor_type aiolistener::getfd()

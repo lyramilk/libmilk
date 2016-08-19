@@ -100,7 +100,7 @@ namespace lyramilk{namespace script{namespace js
 			v.assign(JSVAL_TO_INT(jv));
 		}else if(JSVAL_IS_VOID(jv)){
 		}else if(JSVAL_IS_BOOLEAN(jv)){
-			v.assign(JSVAL_TO_BOOLEAN(jv));
+			v.assign(JSVAL_TO_BOOLEAN(jv) == JS_TRUE);
 		}else if(JSVAL_IS_STRING(jv)){
 			JSString* jstr = JSVAL_TO_STRING(jv);
 			size_t len = 0;
