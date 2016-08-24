@@ -25,10 +25,15 @@ logb::~logb()
 
 lyramilk::data::string logb::strtime(time_t ti)
 {
+	static lyramilk::threading::mutex_rw lock;
 	static time_t last_time = 0;
 	static lyramilk::data::string last_time_str;
-	if(last_time == ti && !last_time_str.empty()){
-		return last_time_str;
+
+	{
+		lyramilk::threading::mutex_sync _(lock.r());
+		if(last_time == ti && !last_time_str.empty()){
+			return last_time_str;
+		}
 	}
 
 #ifdef __GNUC__
@@ -40,12 +45,14 @@ lyramilk::data::string logb::strtime(time_t ti)
 #endif
 	if (t == NULL){
 		last_time = 0;
+		lyramilk::threading::mutex_sync _(lock.w());
 		last_time_str.clear();
 		return "";
 	}
 	last_time = ti;
 	lyramilk::data::stringstream ss;
 	ss << std::setfill('0') << std::setw(4) << (1900 + t->tm_year) <<"-" << std::setw(2) << 1+t->tm_mon << "-" << std::setw(2) << t->tm_mday << " " << std::setw(2) << t->tm_hour << ":" << std::setw(2) << t->tm_min << ":" << std::setw(2) << t->tm_sec;
+	lyramilk::threading::mutex_sync _(lock.w());
 	last_time_str = ss.str();
 	return last_time_str;
 }

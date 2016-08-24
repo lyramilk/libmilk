@@ -10,7 +10,8 @@ namespace lyramilk{namespace script{namespace js
 	JSBool jsctr(JSContext *cx, unsigned argc, jsval *vp);
 	void jsdtr(JSFreeOp *fop, JSObject *obj);
 	void jsdtrvar(JSFreeOp *fop, JSObject *obj);
-	
+	JSBool jsinstanceof(JSContext *cx, JSHandleObject obj, const jsval *v, JSBool *bp);
+
 	static JSClass globalClass = { "global", JSCLASS_GLOBAL_FLAGS,
 			JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
             JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub};
@@ -18,7 +19,7 @@ namespace lyramilk{namespace script{namespace js
 	static JSClass classesClass = { "classes", 0,
 			JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
 			JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
-			NULL,NULL,NULL,NULL,jsctr};
+			NULL,NULL,NULL,jsinstanceof,jsctr};
 
 	static JSClass nativeClass = { "native", 0,
 			JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
@@ -364,6 +365,25 @@ namespace lyramilk{namespace script{namespace js
 			}
 		}
 	}
+
+	JSBool jsinstanceof(JSContext *cx, JSHandleObject obj, const jsval *v, JSBool *bp)
+	{
+		//支持 instanceof操作符
+		JSObject *joproto = JS_GetPrototype(JSVAL_TO_OBJECT(*v)); 
+		jsid joid;
+		JS_GetObjectId(cx,joproto,&joid);
+
+		jsid joid2;
+		JS_GetObjectId(cx,obj,&joid2);
+
+		if(joid == joid2){
+			*bp = JS_TRUE;
+		}else{
+			*bp = JS_FALSE;
+		}
+		return JS_TRUE;
+	}
+
 	void jsdtrvar(JSFreeOp *fop, JSObject *obj)
 	{
 		JSRuntime* rt = fop->runtime();
@@ -670,6 +690,7 @@ namespace lyramilk{namespace script{namespace js
 
 		pnewobj = pfun(args);
 		JSObject* jsret = JS_NewObject(cx,&nativeClass,jsobj,global);
+
 		pack *ppack = new pack((engine::class_destoryer)pfuncdel,this,pnewobj);
 		//JS_SetPrivate(jsret,ppack);
 		jsval jv = PRIVATE_TO_JSVAL(ppack);

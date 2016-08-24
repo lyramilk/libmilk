@@ -77,7 +77,6 @@ struct timespec
 	clocktester::clocktester(timediff& _td):td(_td),outer(std::cout)
 	{
 		printable = true;
-		str = "耗时：%lld";
 		td.mark();
 	}
 	clocktester::clocktester(timediff& _td,lyramilk::data::string msg):td(_td),outer(std::cout)
@@ -96,7 +95,7 @@ struct timespec
 	{
 		if(printable){
 			long long des = td.diff();
-			outer << D(str.c_str(),des) << std::endl;
+			outer << str << D("耗时：%lld(纳秒)",des) << std::endl;
 		}
 	}
 
