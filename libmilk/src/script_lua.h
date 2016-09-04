@@ -20,6 +20,7 @@ namespace lyramilk{namespace script{namespace lua
 	class script_lua : public lyramilk::script::engine
 	{
 		lua_State *L;
+		lyramilk::data::string scriptfilename;
 	  public:
 		std::stack<lyramilk::data::string> callstack;
 		struct metainfo
@@ -40,6 +41,8 @@ namespace lyramilk{namespace script{namespace lua
 		virtual void define(lyramilk::data::string classname,functional_map m,class_builder builder,class_destoryer destoryer);
 		virtual lyramilk::data::var createobject(lyramilk::data::string classname,lyramilk::data::var::array args);
 		virtual void gc();
+		virtual lyramilk::data::string name();
+		virtual lyramilk::data::string filename();
 	  private:
 		std::map<lyramilk::data::string,metainfo> minfo;
 		void clear();

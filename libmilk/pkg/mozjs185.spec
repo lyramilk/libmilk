@@ -8,7 +8,7 @@ License:	MPL
 
 BuildRequires:	gcc-c++ >= 4.4.6 nspr-devel autoconf213 zip
 Requires:	nspr
-Prefix:		/
+Prefix:		/usr
 
 %description
 
@@ -71,7 +71,7 @@ Prefix:		/
 Summary:	Development files for %{?name} 
 Group:		Development/Libraries
 Requires:       %{name} = %{?version}
-Prefix:		/
+Prefix:		/usr
 %description devel
 
 %files devel

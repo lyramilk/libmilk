@@ -1,28 +1,24 @@
-Name:		mozjs17
-Version:	17.0.0
+Name:		ffmpeg
+Version:	3.0.git
 Release:	1%{?dist}
-Summary:	Spider Monkey
+Summary:	ffmpeg
 URL:		https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey
 Group:		Development/Libraries
-License:	MPL
+License:	GPL
 
-BuildRequires:	gcc-c++ >= 4.4.6 nspr-devel autoconf213
-Requires:	nspr
+BuildRequires:	gcc-c++ >= 4.4.6 yasm
 Prefix:		/usr
 
 %description
 
 %build
 	mkdir -p %{?_sourcedir}/%{?name}
-	cd %{?_sourcedir}/%{?name}/js/src/
-	autoconf-2.13
-	mkdir -p build_OPT.OBJ
-	cd build_OPT.OBJ/
-	../configure --enable-jemalloc --enable-release --enable-optimize=-O2 --disable-tests --enable-threadsafe --with-system-nspr --prefix=%{?_builddir}/%{?name}
+	cd %{?_sourcedir}/%{?name}
+	./configure --disable-debug --disable-static --enable-shared --disable-doc --prefix=%{?_builddir}/%{?name}
 	make
 	make install
 	cd %{?_builddir}/%{?name}/lib
-	strip *.a *.so
+	strip *.so
 %install
 	rm %{?buildroot} -rf
 	mkdir -p %{?buildroot}
@@ -63,6 +59,7 @@ Prefix:		/usr
 
 %files devel
 	%defattr(-,root,root,-)
-	%{?_libdir}/*.a
-	%{?_includedir}/js-17.0/*
+	%{?_includedir}/*
+	%{?_libdir}/*.so.*
+	%{?_datarootdir}/*
 	%{_libdir}/pkgconfig/*.pc

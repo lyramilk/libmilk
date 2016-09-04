@@ -73,4 +73,14 @@ namespace lyramilk{namespace script{namespace elf
 	void script_elf::gc()
 	{
 	}
+
+	lyramilk::data::string script_elf::name()
+	{
+		return "elf";
+	}
+
+	lyramilk::data::string script_elf::filename()
+	{
+		return elffilename;
+	}
 }}}

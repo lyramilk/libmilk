@@ -23,6 +23,8 @@ namespace lyramilk{namespace script{namespace elf
 		virtual void define(lyramilk::data::string funcname,functional_type func);
 		virtual lyramilk::data::var createobject(lyramilk::data::string classname,lyramilk::data::var::array args);
 		virtual void gc();
+		virtual lyramilk::data::string name();
+		virtual lyramilk::data::string filename();
 	  private:
 		lyramilk::data::string elffilename;
 		void* handle;

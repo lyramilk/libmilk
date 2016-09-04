@@ -30,3 +30,5 @@ function test(v,w)
 }
 
 t.print("[js]加载脚本完成。");
+//t2 = null;
+//q2 = null;

@@ -250,6 +250,11 @@ namespace lyramilk{namespace script{namespace lua
 
 	bool script_lua::load_file(lyramilk::data::string scriptfile)
 	{
+		bool mainfile = false;
+		if(scriptfilename.empty()){
+			scriptfilename = scriptfile;
+			mainfile = true;
+		}
 		if(luaL_loadfile(L, scriptfile.c_str()) == 0){
 			if(lua_pcall(L,0,LUA_MULTRET,0) == 0){
 				lyramilk::data::var sret = lyramilk::data::var::nil;
@@ -258,17 +263,17 @@ namespace lyramilk{namespace script{namespace lua
 				}
 				clear();
 				//lua_gc(L,LUA_GCCOLLECT,0);
-				return sret;
 			}
 			lyramilk::data::string err = lua_tostring(L, -1);
 			clear();
 			//lua_gc(L,LUA_GCCOLLECT,0);
 			lyramilk::klog(lyramilk::log::error,"lyramilk.script.lua.engine.load_file") << err << std::endl;
-			return lyramilk::data::var::nil;
-			return true;
+			if(mainfile) scriptfilename.clear();
+			return false;
 		}
 		lyramilk::data::string err = lua_tostring(L, -1);
 		lyramilk::klog(lyramilk::log::error,"lyramilk.script.lua.engine.load_file") << err << std::endl;
+		if(mainfile) scriptfilename.clear();
 		return false;
 	}
 
@@ -467,6 +472,18 @@ namespace lyramilk{namespace script{namespace lua
 		int stacksize = lua_gettop(L);
 		lua_pop(L,stacksize);
 	}
+
+
+	lyramilk::data::string script_lua::name()
+	{
+		return "lua";
+	}
+
+	lyramilk::data::string script_lua::filename()
+	{
+		return scriptfilename;
+	}
+
 }}}
 
 

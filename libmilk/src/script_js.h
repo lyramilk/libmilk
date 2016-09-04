@@ -17,6 +17,7 @@ namespace lyramilk{namespace script{namespace js
 		JSContext* cx;
 
 		std::map<lyramilk::data::string,jsid> m;
+		lyramilk::data::string scriptfilename;
 	  public:
 		script_js();
 		virtual ~script_js();
@@ -28,6 +29,8 @@ namespace lyramilk{namespace script{namespace js
 		virtual void define(lyramilk::data::string funcname,functional_type func);
 		virtual lyramilk::data::var createobject(lyramilk::data::string classname,lyramilk::data::var::array args);
 		virtual void gc();
+		virtual lyramilk::data::string name();
+		virtual lyramilk::data::string filename();
 	};
 
 }}}

@@ -9,7 +9,7 @@ License:	ASL 2.0
 
 BuildRequires:	gcc-c++ >= 4.4.6 ${CMAKE_BUILD_DEPENDS}
 Requires:	 ${CMAKE_RUN_DEPENDS}
-Prefix:		/
+Prefix:		/usr
 
 %description
 
@@ -17,7 +17,7 @@ Prefix:		/
 %build
 	mkdir -p %{?_builddir}/%{?name}
 	cd %{?_builddir}/%{?name}
-	cmake -D install_dir=%{?_builddir}/%{?name}/output -D release=1 share_type=BOTH %{CMakeListPath}
+	cmake -D install_dir=%{?_builddir}/%{?name}/output -D release=1 share_type=SHARED %{CMakeListPath}
 	make
 	make install
 	tree %{?_builddir}/%{?name}/output
@@ -31,7 +31,7 @@ Prefix:		/
 	mkdir -p %{?buildroot}%{?_mandir}
 
 	mv %{?_builddir}/%{?name}/output/*.h %{?buildroot}%{?_includedir}/%{?name}
-	mv %{?_builddir}/%{?name}/output/*.a %{?buildroot}%{?_libdir}
+#	mv %{?_builddir}/%{?name}/output/*.a %{?buildroot}%{?_libdir}
 	mv %{?_builddir}/%{?name}/output/*.so %{?buildroot}%{?_libdir}
 	mv %{?_builddir}/%{?name}/output/*.so.* %{?buildroot}%{?_libdir}
 	mv %{?_builddir}/%{?name}/output/*.pc %{?buildroot}%{?_libdir}/pkgconfig
@@ -71,7 +71,7 @@ Prefix:		/
 Summary:	Development files for %{?name} 
 Group:		Development/Libraries
 Requires:       %{name} = %{?version}
-Prefix:		/
+Prefix:		/usr
 %description devel
 
 %files devel
@@ -79,6 +79,6 @@ Prefix:		/
 	%exclude %{?_libdir}/%{?name}.so.%{?version}
 	%{?_includedir}/%{?name}/*.h
 	%{?_libdir}/*.so
-	%{?_libdir}/*.a
+#	%{?_libdir}/*.a
 	%{_libdir}/pkgconfig/*.pc
 #	%{?_mandir}/man3/*

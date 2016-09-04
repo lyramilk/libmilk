@@ -55,14 +55,6 @@ namespace lyramilk{namespace data{namespace multilanguage{
 			p->notify(str);
 			return ;
 		}
-		/*
-		if(str.compare("无法翻译\"%s\"") == 0){
-			lyramilk::klog(lyramilk::log::warning,"lyramilk.multilanguage.dict") << "translate \"" << str << "\" failed." << std::endl;
-		}else{
-			lyramilk::klog(lyramilk::log::warning,"lyramilk.multilanguage.dict") << trans("无法翻译\"%s\"",str.c_str()) << std::endl;
-		}
-		*/
-
 	}
 
 	lyramilk::data::string dict::translate(lyramilk::data::string src)

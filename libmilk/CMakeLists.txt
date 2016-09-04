@@ -1,6 +1,6 @@
 ﻿#定义工程名及版本
 project(milk)
-set(version 1.1.13)
+set(version 1.1.14)
 set(soversion 1.1)
 
 cmake_minimum_required (VERSION 2.8.11) 
@@ -42,7 +42,6 @@ endif()
 #定义输出目标的类型
 if(NOT share_type)
 	set(share_type SHARED)
-	#set(share_type STATIC)
 endif()
 
 #搜索源代码
@@ -193,7 +192,7 @@ file(GLOB src_test RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} testsuite/*.cc)
 foreach(var ${src_test})
 	string(REGEX REPLACE "testsuite/(.*).cc" "\\1" var2 ${var})
 	add_executable(${var2} ${var})
-	target_link_libraries(${var2} ${PROJECT_NAME})
+	target_link_libraries(${var2} ${PROJECT_NAME} -lhiredis)
 	add_test(NAME ${var2} COMMAND ${unittest} ./${var2})
 endforeach()
 

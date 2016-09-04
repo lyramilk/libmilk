@@ -567,7 +567,24 @@ namespace lyramilk{namespace script{namespace js
 	{
 		JS_SetRuntimeThread(rt);
 		JS::RootedObject global(cx,JS_GetGlobalObject(cx));
+		JSScript* script = JS_CompileUTF8File(cx,global,scriptfile.c_str());
+		if(script){
+			bool ret = false;
+			if(scriptfilename.empty()){
+				scriptfilename = scriptfile;
+				ret = JS_ExecuteScript(cx,global,script,NULL) == JS_TRUE;
+				if(!ret){
+					scriptfilename.clear();
+				}
+			}else{
+				ret = JS_ExecuteScript(cx,global,script,NULL) == JS_TRUE;
+			}
+			gc();
+			return ret;
+		}
+		return false;
 
+/*
 		lyramilk::data::string scriptstring;
 		std::ifstream ifs;
 		ifs.open(scriptfile.c_str(),std::ifstream::binary | std::ifstream::in);
@@ -578,13 +595,12 @@ namespace lyramilk{namespace script{namespace js
 			scriptstring.append(buff,ifs.gcount());
 		}
 		ifs.close();
-
 		JSScript* script = JS_CompileScript(cx,global,scriptstring.c_str(),scriptstring.size(),scriptfile.c_str(),1);
 		if(script){
 			bool ret = JS_ExecuteScript(cx,global,script,NULL) == JS_TRUE;
 			gc();
 			return ret;
-		}
+		}*/
 		return false;
 	}
 
@@ -712,4 +728,13 @@ namespace lyramilk{namespace script{namespace js
 		JS_GC(rt);
 	}
 
+	lyramilk::data::string script_js::name()
+	{
+		return "js";
+	}
+
+	lyramilk::data::string script_js::filename()
+	{
+		return scriptfilename;
+	}
 }}}
