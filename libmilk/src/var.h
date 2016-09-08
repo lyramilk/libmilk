@@ -11,6 +11,11 @@
 #include <iostream>
 #include <sstream>
 #include <exception>
+#ifdef Z_HAVE_UNORDEREDMAP
+	#include <unordered_map>
+#elif defined Z_HAVE_TR1_UNORDEREDMAP
+	#include <tr1/unordered_map>
+#endif
 
 /**
 	@namespace lyramilk::data
@@ -24,6 +29,13 @@ namespace lyramilk{namespace data
 	using std::map;
 	using std::pair;
 	using std::multimap;
+#ifdef Z_HAVE_UNORDEREDMAP
+	using std::unordered_map;
+	using std::hash;
+#elif defined Z_HAVE_TR1_UNORDEREDMAP
+	using std::tr1::unordered_map;
+	using std::tr1::hash;
+#endif
 	using std::list;
 
 	typedef char int8;
@@ -142,19 +154,23 @@ namespace lyramilk{namespace data
 	typedef class _lyramilk_api_ std::basic_ostream<unsigned char> bostream;
 	typedef class _lyramilk_api_ std::basic_ostream<wchar_t> wostream;
 
-	//template class _lyramilk_api_ lyramilk::data::vector<char, lyramilk::data::allocator<char> >;
-
 	/**
 		@brief 这是一个超级变量，封装了对整数、小数、字符串、数组、映射表的表达，它尽可能在各种类型间进行转换。
 	*/
 	class _lyramilk_api_ var
 	{
+#ifdef Z_HAVE_TR1_UNORDEREDMAP
+		typedef lyramilk::data::unordered_map<string,const void*> _userdata;
+#else
 		typedef lyramilk::data::map<string,const void*> _userdata;
+#endif
 	  public:
-		typedef class _lyramilk_api_ std::vector<var, allocator<var> > array;
-		typedef class _lyramilk_api_ std::map<var, var, std::less<var>, allocator<var> > map;
-		//typedef unordered_map<lyramilk::data::var,lyramilk::data::var,hash_var, std::equal_to<lyramilk::data::var> ,lyramilk::data::allocator<std::pair<lyramilk::data::var,lyramilk::data::var> > > map;
-
+		typedef class _lyramilk_api_ std::vector<lyramilk::data::var, allocator<lyramilk::data::var> > array;
+#ifdef Z_HAVE_TR1_UNORDEREDMAP
+		typedef lyramilk::data::unordered_map<lyramilk::data::string,lyramilk::data::var,hash<lyramilk::data::string>, std::equal_to<lyramilk::data::string> ,lyramilk::data::allocator<std::pair<lyramilk::data::string,lyramilk::data::var> > > map;
+#else
+		typedef class _lyramilk_api_ std::map<lyramilk::data::string, lyramilk::data::var, std::less<lyramilk::data::string>, allocator<lyramilk::data::string> > map;
+#endif
 		class type_invalid:public std::exception
 		{
 			string p;
@@ -271,10 +287,10 @@ namespace lyramilk{namespace data
 		var& operator =(const var& v);
 
 		var& at(lyramilk::data::uint32 index) throw(type_invalid)
-		{
+		{/*
 			if(t == t_map){
 				return u.m->operator[](var(index));
-			}
+			}*/
 			if(t == t_array){
 				return u.a->at(index);
 			}
@@ -503,35 +519,63 @@ namespace lyramilk{namespace data
 		bool _deserialize(istream& is);
 	};
 }}
-/*
-#ifdef Z_HAVE_TR1_UNORDEREDMAP
+
+#ifdef Z_HAVE_UNORDEREDMAP
+namespace std{
+#elif defined Z_HAVE_TR1_UNORDEREDMAP
 namespace std{namespace tr1{
+#endif
 	template <>
 	inline size_t hash<lyramilk::data::string>::operator()(lyramilk::data::string d) const
 	{
-		return 0;
-	}
+	/*
+		size_t l = d.size();
+		std::size_t r = 0;
+		if(l > 8){
+			r = *(std::size_t*)d.c_str();
+		}else{
+			const char* p = d.c_str();
+			for(;l > 0;--l){
+				r |=  0xff&(std::size_t)*p++;
+				r <<= 8;
+			}
+		}
+		return r;*/
+/*
+		const char* p = d.c_str();
+		size_t l = d.size();
+		if(l > 8) l = 8;
+		std::size_t r = static_cast<std::size_t>(14695981039346656037ULL);
+		for(;l > 0;--l){
+			r ^=  (std::size_t)*p++;
+			r *= 1099511628211ULL;
+		}
+		return r;*/
 
-	template <>
-	inline size_t hash<const lyramilk::data::string&>::operator()(const lyramilk::data::string& d) const
-	{
-		return 0;
+		const char* p = d.c_str();
+		size_t l = d.size();
+		if(l > 128) l = 128;
+		std::size_t r = static_cast<std::size_t>(2166136261UL);
+		for(;l > 0;--l){
+			r ^=  (std::size_t)*p++;
+			r *= 16777619UL;
+		}
+		return r;
+/*
+		const char* p = d.c_str();
+		size_t l = d.size();
+		if(l > 64) l = 64;
+		size_t r = 0;
+		for (; l > 0; --l)
+		  r = r*131 + *p++;
+		return r;*/
 	}
-
-	template <>
-	inline size_t hash<lyramilk::data::var>::operator()(lyramilk::data::var d) const
-	{
-		return 0;
-	}
-
-	template <>
-	inline size_t hash<const lyramilk::data::var&>::operator()(const lyramilk::data::var& d) const
-	{
-		return 0;
-	}
+#ifdef Z_HAVE_UNORDEREDMAP
+}
+#elif defined Z_HAVE_TR1_UNORDEREDMAP
 }}
 #endif
-*/
+
 _lyramilk_api_ std::ostream& operator << (std::ostream& os, const lyramilk::data::var& t);
 _lyramilk_api_ std::istream& operator >> (std::istream& is, lyramilk::data::var& t);
 

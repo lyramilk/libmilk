@@ -1,6 +1,6 @@
 ﻿#定义工程名及版本
 project(milk)
-set(version 1.1.14)
+set(version 1.1.15)
 set(soversion 1.1)
 
 cmake_minimum_required (VERSION 2.8.11) 
@@ -25,12 +25,12 @@ enable_testing()
 #定制编译选项
 
 if(release)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -DNDEBUG -Wall --std=c++0x")
-	set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} -O2 -Wall")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O4 -DNDEBUG -Wall --std=c++0x ")
+	set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} -O4 -Wall ")
 	message("Build as release")
 else()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall --std=c++0x")
-	set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} -g -Wall")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall --std=c++0x -fstack-protector ")
+	set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} -g -Wall -fstack-protector ")
 	message("Build as debug")
 endif()
 
@@ -65,6 +65,7 @@ if(UNIX)
 	pkg_check_modules(JS17 mozjs-17.0)
 	pkg_search_module(LEVELDB leveldb)
 	#set(CMAKE_REQUIRED_INCLUDES /usr/include/)
+	#check_include_file_cxx(unordered_map	Z_HAVE_UNORDEREDMAP)
 	check_include_file_cxx(tr1/unordered_map	Z_HAVE_TR1_UNORDEREDMAP)
 endif()
 
@@ -123,7 +124,9 @@ else()
 	list(REMOVE_ITEM src_cpps src/script_js17.cpp)
 endif()
 
-if(Z_HAVE_TR1_UNORDEREDMAP)
+if(Z_HAVE_UNORDEREDMAP)
+	list(APPEND CONFIG_MACROS Z_HAVE_UNORDEREDMAP)
+elseif(Z_HAVE_TR1_UNORDEREDMAP)
 	list(APPEND CONFIG_MACROS Z_HAVE_TR1_UNORDEREDMAP)
 endif()
 

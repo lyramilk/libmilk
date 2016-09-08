@@ -19,6 +19,7 @@ namespace lyramilk{namespace script{namespace js
 		std::map<lyramilk::data::string,jsid> m;
 		lyramilk::data::string scriptfilename;
 	  public:
+		lyramilk::data::var::map info;
 		script_js();
 		virtual ~script_js();
 		virtual bool load_string(lyramilk::data::string script);

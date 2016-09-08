@@ -599,7 +599,7 @@ bool var::operator ==(const var& v) const throw(type_invalid)
 			return false;
 		}break;
 	  case t_user:{
-			return t_user == v.t && *u.o == *v.u.o;
+			return false;
 		}break;
 	  case t_invalid:{
 			return t_invalid == v.t;

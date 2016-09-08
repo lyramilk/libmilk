@@ -81,14 +81,17 @@ namespace lyramilk{namespace script{namespace js
 		return joid;
 	}
 
-	struct pack
+	struct js_obj_pack
 	{
 		engine::class_destoryer dtr;
 		void* pthis;
 		engine* env;
+		lyramilk::data::var::map info;
 
-		pack(engine::class_destoryer da,engine* _env,void* dt):dtr(da),pthis(dt),env(_env)
+		js_obj_pack(engine::class_destoryer da,engine* _env,void* dt):dtr(da),pthis(dt),env(_env)
 		{
+			info[engine::s_env_this()].assign(engine::s_user_nativeobject(),pthis);
+			info[engine::s_env_engine()].assign(engine::s_user_engineptr(),env);
 		}
 	};
 
@@ -130,7 +133,7 @@ namespace lyramilk{namespace script{namespace js
 				}
 				v = r;
 			}else{
-				pack *ppack = (pack*)js_get_property_ptr(cx,jo,"__script_native");
+				js_obj_pack *ppack = (js_obj_pack*)js_get_property_ptr(cx,jo,"__script_native");
 				if(ppack && ppack->pthis){
 					jsid joid;
 					JS_GetObjectId(cx,jo,&joid);
@@ -332,7 +335,7 @@ namespace lyramilk{namespace script{namespace js
 
 		JSObject* jsret = JS_NewObject(cx,&nativeClass,callee,JS_GetGlobalObject(cx));
 
-		pack *ppack = new pack((engine::class_destoryer)pfuncdel,(engine*)penv,pnewobj);
+		js_obj_pack *ppack = new js_obj_pack((engine::class_destoryer)pfuncdel,(engine*)penv,pnewobj);
 		jsval jv = PRIVATE_TO_JSVAL(ppack);
 		if(JS_TRUE != JS_SetProperty(cx,jsret,"__script_native",&jv)){
 			delete ppack;
@@ -357,7 +360,7 @@ namespace lyramilk{namespace script{namespace js
 		if(JS_TRUE == JS_GetProperty(cx,obj,"__script_native",&jv)){
 			if(!JSVAL_IS_VOID(jv)){
 				void* p = JSVAL_TO_PRIVATE(jv);
-				pack *ppack = (pack*)p;
+				js_obj_pack *ppack = (js_obj_pack*)p;
 				if(ppack && ppack->pthis && ppack->dtr){
 					ppack->dtr(ppack->pthis);
 					delete ppack;
@@ -404,7 +407,7 @@ namespace lyramilk{namespace script{namespace js
 		JS::RootedObject jsobj(cx,JS_THIS_OBJECT(cx,vp));
 
 		void* pfunc = js_get_property_ptr(cx,callee,"__function_pointer");
-		pack *ppack = (pack*)js_get_property_ptr(cx,jsobj,"__script_native");
+		js_obj_pack *ppack = (js_obj_pack*)js_get_property_ptr(cx,jsobj,"__script_native");
 		jsval* jv = JS_ARGV(cx,vp);
 
 		engine::functional_type pfun = (engine::functional_type)pfunc;
@@ -414,12 +417,8 @@ namespace lyramilk{namespace script{namespace js
 				lyramilk::data::var v = j2v(cx,jv[i]);
 				params.push_back(v);
 			}
-			lyramilk::data::var::map env;
-			env[engine::s_env_this()].assign(engine::s_user_nativeobject(),ppack->pthis);
-			env[engine::s_env_engine()].assign(engine::s_user_engineptr(),ppack->env);
-
 			try{
-				lyramilk::data::var ret = pfun(params,env);
+				lyramilk::data::var ret = pfun(params,ppack->info);
 				jsval jsret = v2j(cx,ret);
 				JS_SET_RVAL(cx,vp,jsret);
 			}catch(lyramilk::data::string& str){
@@ -465,7 +464,7 @@ namespace lyramilk{namespace script{namespace js
 		//JSObject *jsobj = JS_THIS_OBJECT(cx,vp);
 
 		void* pfunc = js_get_property_ptr(cx,callee,"__function_pointer");
-		//pack *ppack = (pack*)JS_GetPrivate(cx,jsobj);
+		//js_obj_pack *ppack = (js_obj_pack*)JS_GetPrivate(cx,jsobj);
 		script_js *penv = (script_js*)js_get_property_ptr(cx,callee,"__env_pointer");
 		jsval* jv = JS_ARGV(cx,vp);
 
@@ -476,11 +475,9 @@ namespace lyramilk{namespace script{namespace js
 				lyramilk::data::var v = j2v(cx,jv[i]);
 				params.push_back(v);
 			}
-			lyramilk::data::var::map env;
-			env[engine::s_env_engine()].assign(engine::s_user_engineptr(),penv);
 
 			try{
-				lyramilk::data::var ret = pfun(params,env);
+				lyramilk::data::var ret = pfun(params,penv->info);
 				jsval jsret = v2j(cx,ret);
 				JS_SET_RVAL(cx,vp,jsret);
 			}catch(lyramilk::data::string& str){
@@ -522,7 +519,7 @@ namespace lyramilk{namespace script{namespace js
 
 	script_js::script_js():rt(NULL),cx(NULL)
 	{
-		rt = JS_Init(8L*1024L*1024L);
+		rt = JS_Init(128*1024L*1024L);
 		cx = JS_NewContext(rt, 8192);
 
 		JS_SetRuntimePrivate(rt,cx);
@@ -539,6 +536,8 @@ namespace lyramilk{namespace script{namespace js
 
 		JS::RootedObject global(cx, glob);
 		JS_InitStandardClasses(cx,global);
+
+		info[engine::s_env_engine()].assign(engine::s_user_engineptr(),this);
 	}
 
 	script_js::~script_js()
@@ -582,25 +581,6 @@ namespace lyramilk{namespace script{namespace js
 			gc();
 			return ret;
 		}
-		return false;
-
-/*
-		lyramilk::data::string scriptstring;
-		std::ifstream ifs;
-		ifs.open(scriptfile.c_str(),std::ifstream::binary | std::ifstream::in);
-
-		while(ifs){
-			char buff[4096];
-			ifs.read(buff,4096);
-			scriptstring.append(buff,ifs.gcount());
-		}
-		ifs.close();
-		JSScript* script = JS_CompileScript(cx,global,scriptstring.c_str(),scriptstring.size(),scriptfile.c_str(),1);
-		if(script){
-			bool ret = JS_ExecuteScript(cx,global,script,NULL) == JS_TRUE;
-			gc();
-			return ret;
-		}*/
 		return false;
 	}
 
@@ -707,7 +687,7 @@ namespace lyramilk{namespace script{namespace js
 		pnewobj = pfun(args);
 		JSObject* jsret = JS_NewObject(cx,&nativeClass,jsobj,global);
 
-		pack *ppack = new pack((engine::class_destoryer)pfuncdel,this,pnewobj);
+		js_obj_pack *ppack = new js_obj_pack((engine::class_destoryer)pfuncdel,this,pnewobj);
 		//JS_SetPrivate(jsret,ppack);
 		jsval jv = PRIVATE_TO_JSVAL(ppack);
 		if(JS_TRUE != JS_SetProperty(cx,jsret,"__script_native",&jv)){
