@@ -53,7 +53,7 @@ T reverse_order(T t)
 	const int sz = sizeof(T);
 	union{
 		T v;
-		char c[0];
+		char c[sizeof(T)];
 	}s,d;
 	s.v = t;
 	for(int i =0;i < sz;++i){

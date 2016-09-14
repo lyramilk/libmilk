@@ -18,6 +18,7 @@ namespace lyramilk{namespace script{namespace js
 
 		std::map<lyramilk::data::string,jsid> m;
 		lyramilk::data::string scriptfilename;
+		bool isinited;
 	  public:
 		lyramilk::data::var::map info;
 		script_js();
@@ -32,6 +33,8 @@ namespace lyramilk{namespace script{namespace js
 		virtual void gc();
 		virtual lyramilk::data::string name();
 		virtual lyramilk::data::string filename();
+
+		void init();
 	};
 
 }}}

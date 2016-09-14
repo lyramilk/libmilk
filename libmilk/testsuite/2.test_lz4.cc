@@ -73,7 +73,7 @@ void test_c(const lyramilk::data::string& str,lyramilk::data::string alg)
 	d2 = nd.diff();
 
 	std::cout << "变换算法" << alg << "，en=" << deststr.size() << "(" << d1 << "),de=" << str2.size() << "(" << d2 << ")" << std::endl;
-	for(int i = 0;i<str.size() && i < str2.size();++i){
+	for(unsigned int i = 0;i<str.size() && i < str2.size();++i){
 		if(str[i] != str2[i]){
 			std::cout << "从" << i << "开始不一样" << (int)(str[i]&0xff) << "!=" << (int)(str2[i]&0xff) << "," << (int)(str2[i+1]&0xff) << std::endl;
 			return;

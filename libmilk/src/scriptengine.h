@@ -152,6 +152,16 @@ namespace lyramilk{namespace script
 		virtual lyramilk::data::string filename() = 0;
 
 		/**
+			@brief 从快照中恢复虚拟机状态。
+		*/
+		virtual bool snaphot_from(lyramilk::data::string bytecodefilepath);
+
+		/**
+			@brief 为当前虚拟机环境制作快照（只保存函数定义）。
+		*/
+		virtual bool snaphot_to(lyramilk::data::string bytecodefilepath);
+
+		/**
 			@brief 该模板用于适配C++可访问的对象的成员函数到脚本引擎支持的形式。
 			@details 该模板用于适配C++可访问的对象的成员函数到脚本引擎支持的形式。举例，如果number是一个C++类，而number的普通成员函数add函数符合functional_type形式，那么 lyramilk::script::engine::functional<number,&number::add>可以将该函数适配到非成员的functional_type形式。
 		*/

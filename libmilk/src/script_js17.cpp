@@ -1,9 +1,13 @@
 ﻿#include "script_js.h"
 #include "multilanguage.h"
 #include "log.h"
+//#include "testing.h"
+#include <gc/Root.h>
 #include <fstream>
 #include <cassert>
-#include <gc/Root.h>
+#include <sys/stat.h>
+#include <utime.h>
+#include <math.h>
 //script_js
 namespace lyramilk{namespace script{namespace js
 {
@@ -98,15 +102,17 @@ namespace lyramilk{namespace script{namespace js
 	lyramilk::data::var j2v(JSContext* cx,jsval jv)
 	{
 		lyramilk::data::var v;
-		if(JSVAL_IS_DOUBLE(jv)){
-			v.assign(JSVAL_TO_DOUBLE(jv));
-		}else if(JSVAL_IS_INT(jv)){
-			v.assign(JSVAL_TO_INT(jv));
-		}else if(JSVAL_IS_VOID(jv)){
-		}else if(JSVAL_IS_BOOLEAN(jv)){
-			v.assign(JSVAL_TO_BOOLEAN(jv) == JS_TRUE);
-		}else if(JSVAL_IS_STRING(jv)){
-			JSString* jstr = JSVAL_TO_STRING(jv);
+		if(jv.isNullOrUndefined()){
+		}else if(jv.isInt32()){
+			v.assign(jv.toInt32());
+		}else if(jv.isDouble()){
+			v.assign(jv.toDouble());
+		}else if(jv.isNumber()){
+			v.assign(jv.toNumber());
+		}else if(jv.isBoolean()){
+			v.assign(jv.toBoolean());
+		}else if(jv.isString()){
+			JSString* jstr = jv.toString();
 			size_t len = 0;
 			const jschar* cstr = JS_GetStringCharsZAndLength(cx,jstr,&len);
 
@@ -116,9 +122,8 @@ namespace lyramilk{namespace script{namespace js
 				str.push_back(c);
 			}
 			v.assign(str);
-		}else if(JSVAL_IS_NULL(jv)){
-		}else if(jv.isObjectOrNull()){
-			JSObject *jo = JSVAL_TO_OBJECT(jv);
+		}else if(jv.isObject()){
+			JSObject *jo = jv.toObjectOrNull();
 			if(JS_IsArrayObject(cx,jo)){
 				lyramilk::data::var::array r;
 				uint32_t len = 0;
@@ -143,7 +148,7 @@ namespace lyramilk{namespace script{namespace js
 				}
 				jsval jv;
 				if(JS_TRUE == JS_GetProperty(cx,jo,"__script_var",&jv)){
-					if(!JSVAL_IS_VOID(jv)){
+					if(!jv.isNullOrUndefined()){
 						void* p = JSVAL_TO_PRIVATE(jv);
 						if(p){
 							return *(lyramilk::data::var*)p;
@@ -196,7 +201,14 @@ namespace lyramilk{namespace script{namespace js
 		  case lyramilk::data::var::t_uint32:
 			return INT_TO_JSVAL(v);
 		  case lyramilk::data::var::t_int64:
-		  case lyramilk::data::var::t_uint64:
+		  case lyramilk::data::var::t_uint64:{
+				double dv = v;
+				if(floor(v) == dv){
+					if(dv > JSVAL_INT_MIN && dv < JSVAL_INT_MAX){
+						return INT_TO_JSVAL(v);
+					}
+				}
+			}
 		  case lyramilk::data::var::t_double:
 			return DOUBLE_TO_JSVAL(v);
 		  case lyramilk::data::var::t_bin:{
@@ -531,12 +543,7 @@ namespace lyramilk{namespace script{namespace js
 
 		JS_SetErrorReporter(cx, script_js_error_report);
 
-		JS_SetRuntimeThread(rt);
-		JSObject * glob = JS_NewGlobalObject(cx, &globalClass, NULL);
-
-		JS::RootedObject global(cx, glob);
-		JS_InitStandardClasses(cx,global);
-
+		isinited = false;
 		info[engine::s_env_engine()].assign(engine::s_user_engineptr(),this);
 	}
 
@@ -551,6 +558,7 @@ namespace lyramilk{namespace script{namespace js
 
 	bool script_js::load_string(lyramilk::data::string scriptstring)
 	{
+		init();
 		JS_SetRuntimeThread(rt);
 		JS::RootedObject global(cx,JS_GetGlobalObject(cx));
 		JSScript* script = JS_CompileScript(cx,global,scriptstring.c_str(),scriptstring.size(),NULL,1);
@@ -562,21 +570,104 @@ namespace lyramilk{namespace script{namespace js
 		return false;
 	}
 
+	//lyramilk::debug::nsecdiff td;
+	/*
+	lyramilk::debug::clocktester _d(td,log(lyramilk::log::debug),k);
+	*/
+
+	void fsync(lyramilk::data::string file1,lyramilk::data::string file2,bool* file1exist,bool* file2exist,bool* issync)
+	{
+		struct stat statbuf[2];
+		if (stat (file1.c_str(), &statbuf[0]) == -1){
+			*file1exist = false;
+		}else{
+			*file1exist = true;
+		}
+		if (stat (file2.c_str(), &statbuf[1]) == -1){
+			*file2exist = false;
+		}else{
+			*file2exist = true;
+		}
+		if(*file1exist && *file2exist){
+			*issync = statbuf[0].st_mtime == statbuf[1].st_mtime;
+		}else{
+			*issync = false;
+		}
+	}
+
+
 	bool script_js::load_file(lyramilk::data::string scriptfile)
 	{
+		init();
 		JS_SetRuntimeThread(rt);
 		JS::RootedObject global(cx,JS_GetGlobalObject(cx));
-		JSScript* script = JS_CompileUTF8File(cx,global,scriptfile.c_str());
+
+		lyramilk::data::string precompliefile = scriptfile;
+		if(precompliefile.size() > 3){
+			if(precompliefile.compare(precompliefile.size() - 3,3,".js",3) == 0){
+				precompliefile.push_back('c');
+			}else{
+				precompliefile.append(".jsc");
+			}
+		}
+
+		bool isprecomplie = false;
+		JSScript* script = nullptr;
+
+		bool f1,f2,fs;
+		fsync(scriptfile,precompliefile,&f1,&f2,&fs);
+		if(f1 && f2 && fs){
+			/*
+lyramilk::data::string str = "从字节码编译" + scriptfile;
+lyramilk::debug::clocktester _d(td,std::cout,str);*/
+			lyramilk::data::string jsbuff;
+			std::ifstream ifs;
+			ifs.open(precompliefile.c_str(),std::ifstream::binary|std::ifstream::in);
+			char buff[65536];
+			while(ifs){
+				ifs.read(buff,65536);
+				jsbuff.append(buff,ifs.gcount());
+			}
+			ifs.close();
+			if(!jsbuff.empty()){
+				script = JS_DecodeScript(cx,jsbuff.c_str(),jsbuff.size(),nullptr,nullptr);
+				if(script){
+					isprecomplie = true;
+				}
+			}
+		}
+		if(!isprecomplie){
+			/*
+lyramilk::data::string str = "完整编译" + scriptfile;
+lyramilk::debug::clocktester _d(td,std::cout,str);*/
+			script = JS_CompileUTF8File(cx,global,scriptfile.c_str());
+		}
+
 		if(script){
 			bool ret = false;
 			if(scriptfilename.empty()){
 				scriptfilename = scriptfile;
-				ret = JS_ExecuteScript(cx,global,script,NULL) == JS_TRUE;
+				ret = JS_ExecuteScript(cx,global,script,nullptr) == JS_TRUE;
 				if(!ret){
 					scriptfilename.clear();
 				}
 			}else{
-				ret = JS_ExecuteScript(cx,global,script,NULL) == JS_TRUE;
+				ret = JS_ExecuteScript(cx,global,script,nullptr) == JS_TRUE;
+			}
+			if(ret && !isprecomplie){
+				uint32_t l = 0;
+				void* p = JS_EncodeScript(cx,script,&l);
+				std::ofstream ofs;
+				ofs.open(precompliefile.c_str(),std::ofstream::binary|std::ofstream::out);
+				ofs.write((const char*)p,l);
+				ofs.close();
+				struct stat statbuf;
+				if (stat (scriptfile.c_str(), &statbuf) != -1){
+					struct utimbuf tv;
+					tv.actime = statbuf.st_ctime;
+					tv.modtime = statbuf.st_mtime;
+					utime(precompliefile.c_str(),&tv);
+				}
 			}
 			gc();
 			return ret;
@@ -589,7 +680,6 @@ namespace lyramilk{namespace script{namespace js
 		JS_SetRuntimeThread(rt);
 		JS::RootedObject global(cx,JS_GetGlobalObject(cx));
 
-	
 		if(func.type_compat(lyramilk::data::var::t_str)){
 			jsval retval;
 			std::vector<jsval> jvs;
@@ -632,6 +722,7 @@ namespace lyramilk{namespace script{namespace js
 
 	void script_js::define(lyramilk::data::string classname,functional_map m,class_builder builder,class_destoryer destoryer)
 	{
+		init();
 		JS_SetRuntimeThread(rt);
 		JS::RootedObject global(cx,JS_GetGlobalObject(cx));
 
@@ -659,6 +750,7 @@ namespace lyramilk{namespace script{namespace js
 	
 	void script_js::define(lyramilk::data::string funcname,functional_type func)
 	{
+		init();
 		JS_SetRuntimeThread(rt);
 		JS::RootedObject global(cx,JS_GetGlobalObject(cx));
 
@@ -670,6 +762,7 @@ namespace lyramilk{namespace script{namespace js
 
 	lyramilk::data::var script_js::createobject(lyramilk::data::string classname,lyramilk::data::var::array args)
 	{
+		init();
 		JS_SetRuntimeThread(rt);
 		JS::RootedObject global(cx,JS_GetGlobalObject(cx));
 
@@ -716,5 +809,15 @@ namespace lyramilk{namespace script{namespace js
 	lyramilk::data::string script_js::filename()
 	{
 		return scriptfilename;
+	}
+
+	void script_js::init()
+	{
+		if(isinited) return;
+		isinited = true;
+		JS_SetRuntimeThread(rt);
+		JSObject * glob = JS_NewGlobalObject(cx, &globalClass, NULL);
+		JS::RootedObject global(cx, glob);
+		JS_InitStandardClasses(cx,global);
 	}
 }}}

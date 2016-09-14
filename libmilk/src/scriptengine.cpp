@@ -41,6 +41,16 @@ namespace lyramilk{namespace script
 		return load_string(str);
 	}
 
+	bool engine::snaphot_from(lyramilk::data::string bytecodefilepath)
+	{
+		return false;
+	}
+
+	bool engine::snaphot_to(lyramilk::data::string bytecodefilepath)
+	{
+		return false;
+	}
+
 	lyramilk::data::var engine::call(lyramilk::data::var func)
 	{
 		lyramilk::data::var::array a;
