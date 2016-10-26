@@ -175,12 +175,4 @@ namespace lyramilk{
 	extern  _lyramilk_api_ lyramilk::log::logss klog;
 }
 
-#ifdef _MSC_VER
-	#define D(...) lyramilk::kdict(__VA_ARGS__)
-#elif defined __GNUC__
-	#define D(x...) lyramilk::kdict(x)
-#else
-	#define D(x)	
-#endif
-
 #endif

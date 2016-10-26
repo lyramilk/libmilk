@@ -194,7 +194,6 @@ namespace lyramilk{namespace threading
 		pthread_rwlock_t lock;
 	};
 
-
 	template <typename T>
 	class atomic
 	{
@@ -274,6 +273,16 @@ namespace lyramilk{namespace threading
 			atomic tmp(t);
 			--*this;
 			return t;
+		}
+		
+		bool operator ==(const T& o)
+		{
+			return __sync_bool_compare_and_swap(&t,o,t);
+		}
+		
+		bool operator !=(const T& o)
+		{
+			return !__sync_bool_compare_and_swap(&t,o,t);
 		}
 	};
 

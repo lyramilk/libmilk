@@ -3,13 +3,15 @@ Name:		libmilk
 Version:	%(awk 'match($0,"set\\s*\\(version\\s*(.*)\\)",mr) {print mr[1]}' %{CMakeListPath}/CMakeLists.txt)
 Release:	1%{?dist}
 Summary:	Utility library by lyramilk
+Vendor:		lyramilk
 URL:		http://www.lyramilk.com/
 Group:		Development/Libraries
 License:	ASL 2.0
 
 BuildRequires:	gcc-c++ >= 4.4.6 ${CMAKE_BUILD_DEPENDS}
-Requires:	 ${CMAKE_RUN_DEPENDS}
-Prefix:		/usr
+Requires:	${CMAKE_RUN_DEPENDS}
+Prefix:		%{_prefix}
+Prefix:		%{_sysconfdir}
 
 %description
 
@@ -21,8 +23,8 @@ Prefix:		/usr
 	make
 	make install
 	tree %{?_builddir}/%{?name}/output
-	sed -ri "s,(Version:)\s*([0-9\.]*)(.*),\1%{?version}\3," %{?_builddir}/%{?name}/output/*.pc
-	cat  %{?_builddir}/%{?name}/output/*.pc
+	sed -ri "s,(Version:)\s*([0-9\.]*)(.*),\1%{?version}\3," %{?_builddir}/%{?name}/output/%{?name}.pc
+	cat  %{?_builddir}/%{?name}/output/%{?name}.pc
 %install
 	mkdir -p %{?buildroot}%{?_includedir}/%{?name}
 	mkdir -p %{?buildroot}%{?_libdir}
@@ -71,7 +73,8 @@ Prefix:		/usr
 Summary:	Development files for %{?name} 
 Group:		Development/Libraries
 Requires:       %{name} = %{?version}
-Prefix:		/usr
+Prefix:		%{_prefix}
+Prefix:		%{_sysconfdir}
 %description devel
 
 %files devel

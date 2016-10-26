@@ -36,7 +36,7 @@ namespace lyramilk{namespace io
 	// aiopoll
 	bool aiopoll::transmessage()
 	{
-		const int ee_max = 1;
+		const int ee_max = 32;
 		epoll_event ees[ee_max];
 		int ee_count = epoll_wait(epfd, ees, ee_max, -1);
 		for(int i=0;i<ee_count;++i){
@@ -45,9 +45,15 @@ namespace lyramilk{namespace io
 		}
 		return true;
 	}
+
 	aiopoll::aiopoll()
 	{
 		epfd = epoll_create(pool_max);
+	}
+
+	native_epool_type aiopoll::getfd()
+	{
+		return epfd;
 	}
 
 	aiopoll::~aiopoll()

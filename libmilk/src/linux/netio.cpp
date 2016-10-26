@@ -126,100 +126,20 @@ namespace lyramilk{namespace netio
 		return sslobj != nullptr;
 	}
 
-	lyramilk::data::int32 socket::read(char* buf, lyramilk::data::int32 len,lyramilk::data::uint32 delay)
-	{
-		if(!check_read(delay)){
-			errno = EAGAIN;
-			return -1;
-		}
-		int rt = 0;
-#ifdef OPENSSL_FOUND
-		if(ssl()){
-			rt = SSL_read((SSL*)sslobj, buf, len);
-		}else{
-			rt = ::recv(sock,buf,len,0);
-		}
-#else
-		rt = ::recv(sock,buf,len,0);
-#endif
-		if(rt < 0){
-			lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.socket.read") << lyramilk::kdict("从套接字中读取数据时发生错误:%s",strerror(errno)) << std::endl;
-		}else if(rt == 0){
-			lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.socket.read") << lyramilk::kdict("从套接字中读取数据时发生错误:%s","套接字己关闭") << std::endl;
-		}
-		return rt;
-	}
 
-	lyramilk::data::int32 socket::write(const char* buf, lyramilk::data::int32 len,lyramilk::data::uint32 delay)
-	{
-		if(!check_write(delay)){
-			errno = EAGAIN;
-			return -1;
-		}
-		int rt = 0;
-#ifdef OPENSSL_FOUND
-		if(ssl()){
-			rt = SSL_write((SSL*)sslobj, buf, len);
-		}else{
-			rt = ::send(sock,buf,len,0);
-		}
-#else
-		rt = ::send(sock,buf,len,0);
-#endif
-		if(rt < 0){
-			lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.client.write") << lyramilk::kdict("发生了错误:%s",strerror(errno)) << std::endl;
-		}
-		return rt;
-	}
-
-	bool socket::check_read(lyramilk::data::uint32 delay)
-	{
-		pollfd pfd;
-		pfd.fd = sock;
-		pfd.events = POLLIN;
-		pfd.revents = 0;
-		int ret = ::poll(&pfd,1,delay);
-		if(ret > 0){
-			if(pfd.revents & POLLIN){
-				return true;
-			}
-		}
-		return false;
-	}
-
-	bool socket::check_write(lyramilk::data::uint32 delay)
+	bool socket::isalive()
 	{
 		pollfd pfd;
 		pfd.fd = sock;
 		pfd.events = POLLOUT;
 		pfd.revents = 0;
-		int ret = ::poll(&pfd,1,delay);
+		int ret = ::poll(&pfd,1,0);
 		if(ret > 0){
 			if(pfd.revents & POLLOUT){
 				return true;
 			}
 		}
 		return false;
-	}
-
-	bool socket::check_error()
-	{
-		pollfd pfd;
-		pfd.fd = sock;
-		pfd.events = POLLHUP | POLLERR;
-		pfd.revents = 0;
-		int ret = ::poll(&pfd,1,0);
-		if(ret > 0){
-			if(pfd.revents){
-				return true;
-			}
-		}
-		return false;
-	}
-
-	bool socket::isalive()
-	{
-		return check_write(0);
 	}
 
 	bool socket::close()
@@ -319,6 +239,11 @@ namespace lyramilk{namespace netio
 		return false;
 	}
 
+	bool client::ssl()
+	{
+		return socket::ssl();
+	}
+
 	void client::ssl(bool use_ssl)
 	{
 		this->use_ssl = use_ssl;
@@ -359,5 +284,95 @@ namespace lyramilk{namespace netio
 #endif
 	}
 
+	lyramilk::data::int32 client::read(char* buf, lyramilk::data::int32 len,lyramilk::data::uint32 delay)
+	{
+		if(!check_read(delay)){
+			errno = EAGAIN;
+			return -1;
+		}
+		int rt = 0;
+#ifdef OPENSSL_FOUND
+		if(ssl()){
+			rt = SSL_read((SSL*)sslobj, buf, len);
+		}else{
+			rt = ::recv(sock,buf,len,0);
+		}
+#else
+		rt = ::recv(sock,buf,len,0);
+#endif
+		if(rt < 0){
+			lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.client.read") << lyramilk::kdict("从套接字中读取数据时发生错误:%s",strerror(errno)) << std::endl;
+		}else if(rt == 0){
+			lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.client.read") << lyramilk::kdict("从套接字中读取数据时发生错误:%s","套接字己关闭") << std::endl;
+		}
+		return rt;
+	}
+
+	lyramilk::data::int32 client::write(const char* buf, lyramilk::data::int32 len,lyramilk::data::uint32 delay)
+	{
+		if(!check_write(delay)){
+			errno = EAGAIN;
+			return -1;
+		}
+		int rt = 0;
+#ifdef OPENSSL_FOUND
+		if(ssl()){
+			rt = SSL_write((SSL*)sslobj, buf, len);
+		}else{
+			rt = ::send(sock,buf,len,0);
+		}
+#else
+		rt = ::send(sock,buf,len,0);
+#endif
+		if(rt < 0){
+			lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.client.write") << lyramilk::kdict("发生了错误:%s",strerror(errno)) << std::endl;
+		}
+		return rt;
+	}
+
+	bool client::check_read(lyramilk::data::uint32 delay)
+	{
+		pollfd pfd;
+		pfd.fd = sock;
+		pfd.events = POLLIN;
+		pfd.revents = 0;
+		int ret = ::poll(&pfd,1,delay);
+		if(ret > 0){
+			if(pfd.revents & POLLIN){
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool client::check_write(lyramilk::data::uint32 delay)
+	{
+		pollfd pfd;
+		pfd.fd = sock;
+		pfd.events = POLLOUT;
+		pfd.revents = 0;
+		int ret = ::poll(&pfd,1,delay);
+		if(ret > 0){
+			if(pfd.revents & POLLOUT){
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool client::check_error()
+	{
+		pollfd pfd;
+		pfd.fd = sock;
+		pfd.events = POLLHUP | POLLERR;
+		pfd.revents = 0;
+		int ret = ::poll(&pfd,1,0);
+		if(ret > 0){
+			if(pfd.revents){
+				return true;
+			}
+		}
+		return false;
+	}
 }}
 

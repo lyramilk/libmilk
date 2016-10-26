@@ -1,6 +1,6 @@
 ﻿#定义工程名及版本
 project(milk)
-set(version 1.1.16)
+set(version 1.1.17)
 set(soversion 1.1)
 
 cmake_minimum_required (VERSION 2.8.11) 
@@ -67,6 +67,7 @@ if(UNIX)
 	#set(CMAKE_REQUIRED_INCLUDES /usr/include/)
 	#check_include_file_cxx(unordered_map	Z_HAVE_UNORDEREDMAP)
 	check_include_file_cxx(tr1/unordered_map	Z_HAVE_TR1_UNORDEREDMAP)
+	check_include_file_cxx(jemalloc/jemalloc.h	Z_HAVE_JEMALLOC)
 endif()
 
 if(JSON_C_FOUND)

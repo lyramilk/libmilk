@@ -7,7 +7,9 @@
 #ifndef null
 #define null nullptr
 #endif
-
+#ifdef Z_HAVE_JEMALLOC
+	#include <jemalloc/jemalloc.h>
+#endif
 std::locale::id id;
 
 using namespace lyramilk::data;
@@ -162,12 +164,10 @@ T reverse_order(T t)
 	#include <assert.h>
 	#include <arpa/inet.h>
 
-
-	string iconv(string str,string from,string to)
+	static lyramilk::data::string iconv(const lyramilk::data::string& str,const lyramilk::data::string& from,const lyramilk::data::string& to)
 	{
-		const size_t ds = 64;
-
-		iconv_t cd = iconv_open(from.c_str(),to.c_str());
+		const size_t ds = 4096;
+		iconv_t cd = iconv_open(to.c_str(),from.c_str());
 		if(cd == 0){
 			assert(cd);
 			return "";
@@ -175,7 +175,6 @@ T reverse_order(T t)
 
 		char* p1 = (char*)str.c_str();
 		size_t p1s = str.size();
-
 		std::vector<char> ret;
 		char* p2 = ret.data();
 		size_t p2s = ret.size();
@@ -193,25 +192,22 @@ T reverse_order(T t)
 		if(rc == -1){
 			return "";
 		}
-		return string(ret.data(),p2 - (char*)ret.data());
+		return lyramilk::data::string(ret.data(),p2 - (char*)ret.data());
 	}
-
 
 	wstring utf8_unicode(string str)
 	{
-		string dst = iconv(str,"wchar_t","utf8//ignore");
+		string dst = iconv(str,"utf8//ignore","wchar_t");
 		if(dst.size()&1){
 			dst.push_back(0);
 		}
 		return wstring((wchar_t*)dst.c_str(),dst.size() >> tempc<sizeof(wchar_t)>::square);
 	}
 
-
-
 	string unicode_utf8(wstring str)
 	{
 		string src((char*)str.c_str(),str.size() << tempc<sizeof(wchar_t)>::square);
-		string dst = iconv(src,"utf8","wchar_t");
+		string dst = iconv(src,"wchar_t","utf8");
 		return dst;
 	}
 
@@ -253,7 +249,20 @@ T reverse_order(T t)
 	#define u2t(x) u2a(x)
 #endif
 
+#ifdef Z_HAVE_JEMALLOC
 
+s
+void* lyramilk::data::milk_malloc(size_t size)
+{
+	return ::je_malloc(size);
+}
+
+void lyramilk::data::milk_free(void* p, size_t size)
+{
+	::je_free(p);
+}
+
+#else
 void* lyramilk::data::milk_malloc(size_t size)
 {
 	return ::malloc(size);
@@ -263,7 +272,7 @@ void lyramilk::data::milk_free(void* p, size_t size)
 {
 	::free(p);
 }
-
+#endif
 
 var::type_invalid::type_invalid(string msg)
 {

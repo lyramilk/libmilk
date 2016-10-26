@@ -11,6 +11,8 @@
 #include <iostream>
 #include <sstream>
 #include <exception>
+
+
 #ifdef Z_HAVE_UNORDEREDMAP
 	#include <unordered_map>
 #elif defined Z_HAVE_TR1_UNORDEREDMAP
@@ -525,6 +527,8 @@ namespace std{
 #elif defined Z_HAVE_TR1_UNORDEREDMAP
 namespace std{namespace tr1{
 #endif
+
+#if (defined Z_HAVE_UNORDEREDMAP) || (defined Z_HAVE_TR1_UNORDEREDMAP)
 	template <>
 	inline size_t hash<lyramilk::data::string>::operator()(lyramilk::data::string d) const
 	{
@@ -570,6 +574,7 @@ namespace std{namespace tr1{
 		  r = r*131 + *p++;
 		return r;*/
 	}
+#endif
 #ifdef Z_HAVE_UNORDEREDMAP
 }
 #elif defined Z_HAVE_TR1_UNORDEREDMAP

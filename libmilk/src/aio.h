@@ -62,12 +62,14 @@ namespace lyramilk{namespace io
 	{
 	  protected:
 		friend class aioselector;
-		const static int pool_max = 1000000;
 		native_epool_type epfd;
 		virtual bool transmessage();
 	  public:
+		const static int pool_max = 1000000;
+	  public:
 		aiopoll();
 		virtual ~aiopoll();
+		virtual native_epool_type getfd();
 
 		virtual bool add(aioselector* r);
 		virtual bool add(aioselector* r,uint32 mask);

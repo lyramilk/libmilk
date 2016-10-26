@@ -14,12 +14,11 @@ namespace lyramilk{namespace netio
 	*/
 	class _lyramilk_api_ aiosession : public lyramilk::io::aioselector,public socket
 	{
-	public:
+	  public:
 		typedef aiosession* (*builder)();
 		typedef void(*destoryer)(aiosession* s);
-	protected:
+	  protected:
 		destoryer dtr;
-	private:
 		friend class aiolistener;
 		virtual bool notify_in();
 		virtual bool notify_out();
@@ -27,18 +26,38 @@ namespace lyramilk{namespace netio
 		virtual bool notify_err();
 		virtual bool notify_pri();
 		lyramilk::data::stringstream scache;
+		lyramilk::data::string retransmitcache;
 		int flag;
 		virtual void ondestory();
-	protected:
+	  protected:
 		virtual int cache_read(char* buf,int bufsize);
-		virtual void cache_skip(int offset);
 		virtual bool cache_empty();
 		virtual bool cache_ok();
 		virtual void cache_clear();
-	public:
+	  public:
 		aiosession();
 		virtual ~aiosession();
 
+		virtual bool init();
+		virtual void destory();
+
+		/// 模板化会话对象的销毁函数
+		template <typename T>
+		static void __tdestoryer(aiosession* s)
+		{
+			delete static_cast<T*>(s);
+		}
+
+		/// 模板化会话对象的生成函数
+		template <typename T>
+		static T* __tbuilder()
+		{
+			T* p = new T();
+			p->dtr = __tdestoryer<T>;
+			return p;
+		}
+		virtual native_filedescriptor_type getfd();
+	  protected:
 		/**
 			@brief 连接时触发
 			@return 返回false会导致服务器主动断开链接。
@@ -58,30 +77,51 @@ namespace lyramilk{namespace netio
 			@return 返回false会导致服务器主动断开链接。
 		*/
 		virtual bool onrequest(const char* cache, int size, lyramilk::data::ostream& os) = 0;
-
-		/// 模板化会话对象的销毁函数
-		template <typename T>
-		static void __tdestoryer(aiosession* s)
-		{
-			delete static_cast<T*>(s);
-		}
-
-		/// 模板化会话对象的生成函数
-		template <typename T>
-		static T* __tbuilder()
-		{
-			T* p = new T();
-			p->dtr = __tdestoryer<T>;
-			return p;
-		}
-		virtual native_filedescriptor_type getfd();
-	private:
+	  private:
 		virtual bool read(void* buf, lyramilk::data::uint32 len,lyramilk::data::uint32 delay);
 		virtual bool write(const void* buf, lyramilk::data::uint32 len,lyramilk::data::uint32 delay);
 
 		virtual bool check_read(lyramilk::data::uint32 delay);
 		virtual bool check_write(lyramilk::data::uint32 delay);
 		virtual bool check_error();
+	};
+
+	class _lyramilk_api_ aiosession2;
+	class _lyramilk_api_ aiosession2_buf : public std::basic_streambuf<char>
+	{
+		friend class aiosession2_stream;
+	  protected:
+		native_filedescriptor_type fd;
+		native_epool_type epfd;
+		aiosession2* r;
+
+		virtual std::streamsize xsputn (const char* s, std::streamsize n);
+		virtual int overflow (int c);
+	  public:
+		aiosession2_buf();
+		virtual ~aiosession2_buf();
+	};
+
+	class _lyramilk_api_ aiosession2_stream : public lyramilk::data::ostringstream
+	{
+		aiosession2_buf sbuf;
+	  public:
+		aiosession2_stream();
+		virtual ~aiosession2_stream();
+
+		virtual void init(native_epool_type epfd,native_filedescriptor_type fd,aiosession2* r);
+	};
+
+	class _lyramilk_api_ aiosession2 : public aiosession
+	{
+		aiosession2_stream ss;
+	  public:
+		aiosession2();
+		virtual ~aiosession2();
+		virtual bool init();
+		virtual void destory();
+	  protected:
+		virtual bool notify_in();
 	};
 
 	/**

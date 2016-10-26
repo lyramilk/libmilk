@@ -55,6 +55,35 @@ namespace lyramilk{namespace netio
 		//检查该套接字的通信是否己加密
 		virtual bool ssl();
 
+		//判断套接字是否可用
+		virtual bool isalive();
+
+		//关闭套接字
+		virtual bool close();
+
+		/// 取得本端ip
+		virtual netaddress source() const;
+
+		/// 取得对端ip
+		virtual netaddress dest() const;
+	};
+
+	/// 客户端套接字
+	class _lyramilk_api_ client : public socket
+	{
+		ssl_ctx_type sslctx;
+		bool use_ssl;
+	public:
+		client();
+		virtual ~client();
+
+		virtual bool open(const netaddress& addr);
+		virtual bool open(lyramilk::data::string host,lyramilk::data::uint16 port);
+
+		virtual bool ssl();
+		virtual void ssl(bool use_ssl);
+		virtual bool init_ssl(lyramilk::data::string certfilename = "", lyramilk::data::string keyfilename = "");
+
 		/*
 			@brief 从套接字中读取数据
 			@param buf 从套接字中读取的数据将写入该缓冲区。
@@ -92,34 +121,6 @@ namespace lyramilk{namespace netio
 			@brief 检查套接字是有错误
 		*/
 		virtual bool check_error();
-
-		//判断套接字是否可用
-		virtual bool isalive();
-
-		//关闭套接字
-		virtual bool close();
-
-		/// 取得本端ip
-		virtual netaddress source() const;
-
-		/// 取得对端ip
-		virtual netaddress dest() const;
-	};
-
-	/// 客户端套接字
-	class _lyramilk_api_ client : public socket
-	{
-		ssl_ctx_type sslctx;
-		bool use_ssl;
-	public:
-		client();
-		virtual ~client();
-
-		virtual bool open(const netaddress& addr);
-		virtual bool open(lyramilk::data::string host,lyramilk::data::uint16 port);
-
-		virtual void ssl(bool use_ssl);
-		virtual bool init_ssl(lyramilk::data::string certfilename = "", lyramilk::data::string keyfilename = "");
 	};
 }}
 

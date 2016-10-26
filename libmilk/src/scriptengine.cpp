@@ -60,6 +60,45 @@ namespace lyramilk{namespace script
 	void engine::gc()
 	{}
 
+	struct engine_helper
+	{
+		lyramilk::script::engine* (*ctr)();
+		void (*dtr)(lyramilk::script::engine*);
+	};
+
+	typedef std::map<lyramilk::data::string,engine_helper> engine_builder;
+
+	static engine_builder& get_builder()
+	{
+		static engine_builder _mm;
+		return _mm;
+	};
+
+
+
+	bool engine::define(lyramilk::data::string scriptname,lyramilk::script::engine* (*builder)(),void (*destoryer)(lyramilk::script::engine*))
+	{
+		engine_helper r;
+		r.ctr = builder;
+		r.dtr = destoryer;
+		std::pair<engine_builder::iterator,bool> pr = get_builder().insert(std::make_pair(scriptname,r));
+		return pr.second;
+	}
+
+	lyramilk::script::engine* engine::createinstance(lyramilk::data::string scriptname)
+	{
+		engine_builder::const_iterator it = get_builder().find(scriptname);
+		if(it == get_builder().end()) return nullptr;
+		return it->second.ctr();
+	}
+
+	void engine::destoryinstance(lyramilk::data::string scriptname,lyramilk::script::engine* eng)
+	{
+		engine_builder::const_iterator it = get_builder().find(scriptname);
+		if(it == get_builder().end()) return;
+		return it->second.dtr(eng);
+	}
+
 	// engines
 	engines::engines()
 	{}

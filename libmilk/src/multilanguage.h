@@ -80,4 +80,13 @@ namespace lyramilk{
 	/// 全局默认字典，可以通过这个字典对输出字符串进行翻译。
 	extern _lyramilk_api_ lyramilk::data::multilanguage::dict kdict;
 }
+
+#ifdef _MSC_VER
+	#define D(...) lyramilk::kdict(__VA_ARGS__)
+#elif defined __GNUC__
+	#define D(x...) lyramilk::kdict(x)
+#else
+	#define D(x)	
+#endif
+
 #endif

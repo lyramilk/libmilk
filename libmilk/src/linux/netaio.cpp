@@ -67,10 +67,18 @@ namespace lyramilk{namespace netio
 	{
 		char buff[4096];
 		while(cache_ok()){
-			int sendcount = cache_read(buff,4096);
+			int sendcount = 0;
+			if(retransmitcache.empty()){
+				sendcount = cache_read(buff,4096);
+			}else{
+				sendcount = retransmitcache.size();
+				assert(sendcount < 4096);
+				retransmitcache.copy(buff,sendcount);
+			}
 			if(sendcount == 0){
 				break;
 			}
+			assert(sendcount > 0 && sendcount <= 4096);
 			int rt = 0;
 #ifdef OPENSSL_FOUND
 			if(ssl()){
@@ -84,18 +92,19 @@ namespace lyramilk{namespace netio
 			if(rt == 0) return false;
 			if(rt == -1){
 				if(errno == EAGAIN || errno == EINTR){
-					cache_skip( 0 - sendcount);
+					cache_clear();
+					retransmitcache.assign(buff,sendcount);
 					break;
 				}
 				return false;
 			}
 			assert(rt > 0);
 			if(rt < sendcount){
-				int rc = rt - sendcount;
-				assert(rc < 0);
-				cache_skip(rc);
+				cache_clear();
+				retransmitcache.assign(buff + rt,sendcount - rt);
 				break;
 			}
+			retransmitcache.clear();
 		}
 		if(!cache_empty()){
 			return pool->reset(this,EPOLLOUT | flag);
@@ -113,11 +122,6 @@ namespace lyramilk{namespace netio
 	{
 		scache.read(buff,4096);
 		return scache.gcount();
-	}
-
-	void aiosession::cache_skip(int offset)
-	{
-		scache.seekg(offset,std::stringstream::cur);
 	}
 
 	bool aiosession::cache_empty()
@@ -173,6 +177,16 @@ namespace lyramilk{namespace netio
 	{
 		close();
 	}
+	
+	bool aiosession::init()
+	{
+		return oninit(scache);
+	}
+
+	void aiosession::destory()
+	{
+		ondestory();
+	}
 
 	bool aiosession::oninit(lyramilk::data::ostream& os)
 	{
@@ -216,6 +230,104 @@ namespace lyramilk{namespace netio
 	{
 		lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiosession.check_error") << lyramilk::kdict("不该调用此方法。") << std::endl;
 		TODO();
+	}
+
+	/******** aiosession2_buf ************/
+	std::streamsize aiosession2_buf::xsputn (const char* s, std::streamsize n)
+	{
+		std::streamsize ret=n;
+		while(n>0){
+			int rc = ::send(fd,s,n,0);
+			if(rc == -1 && (errno == EINTR ||errno == EAGAIN)){
+				usleep(1000);
+			}
+			if(rc < 1) return 0;
+			n-=rc;
+			s+=rc;
+		}
+		return ret;
+	}
+
+	int aiosession2_buf::overflow (int c)
+	{
+		char cc = c;
+		xsputn(&cc,1);
+		return 0;
+	}
+
+	aiosession2_buf::aiosession2_buf()
+	{
+	}
+
+	aiosession2_buf::~aiosession2_buf()
+	{
+	}
+
+	/******** aiosession2_stream ************/
+	aiosession2_stream::aiosession2_stream()
+	{}
+
+	aiosession2_stream::~aiosession2_stream()
+	{}
+
+	void aiosession2_stream::init(native_epool_type epfd,native_filedescriptor_type fd,aiosession2* r)
+	{
+		sbuf.epfd = epfd;
+		sbuf.fd = fd;
+		sbuf.r = r;
+		lyramilk::data::ostringstream::init(&sbuf);
+	}
+
+	/******** aiosession2 ************/
+	aiosession2::aiosession2()
+	{
+	}
+
+	aiosession2::~aiosession2()
+	{
+	}
+
+	bool aiosession2::init()
+	{
+		ss.init(pool->getfd(),getfd(),this);
+		return oninit(ss);
+	}
+
+	void aiosession2::destory()
+	{
+		onfinally(ss);
+		dtr(this);
+	}
+
+
+	bool aiosession2::notify_in()
+	{
+		char buff[4096];
+		int i = 0;
+		do{
+#ifdef OPENSSL_FOUND
+			if(ssl()){
+				i = SSL_read((SSL*)sslobj, buff,4096);
+			}else{
+				i = ::recv(sock,buff,4096,0);
+			}
+#else
+			i = ::recv(sock,buff,4096,0);
+#endif
+			if(i == 0) return false;
+			if(i == -1){
+				if(errno == EAGAIN ) break;
+				if(errno == EINTR) continue;
+				return false;
+			}
+			assert(i > 0);
+
+			if(!onrequest(buff,i,ss)){
+				return false;
+			}
+		}while(i > 0);
+
+		return true;
 	}
 
 	// aiolistener
@@ -307,14 +419,15 @@ namespace lyramilk{namespace netio
 #ifdef OPENSSL_FOUND
 			s->sslobj = sslptr;
 #endif
-			if(s->oninit(s->scache)){
+			s->pool = pool;
+			if(s->init()){
 				/*非阻塞模式*/
 				unsigned int argp = 1;
 				ioctl(acceptfd,FIONBIO,&argp);
 				assert(pool);
 				pool->add(s,s->flag);
 			}else{
-				s->ondestory();
+				s->destory();
 			}
 			return true;
 		}

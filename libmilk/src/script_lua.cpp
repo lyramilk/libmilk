@@ -484,6 +484,20 @@ namespace lyramilk{namespace script{namespace lua
 		return scriptfilename;
 	}
 
+	static bool ___init()
+	{
+		return true;
+	}
+
+#ifdef __GNUC__
+
+	static __attribute__ ((constructor)) void __init()
+	{
+		___init();
+	}
+#else
+	bool r = __init();
+#endif
 }}}
 
 

@@ -171,9 +171,26 @@ namespace lyramilk{namespace script
 			T* pthis = (T*)env[engine::s_env_this()].userdata(engine::s_user_nativeobject());
 			return (pthis->*(Q))(params,env);
 		}
+
+		/**
+			@brief 定义一个脚本引擎与其创建函数的对应关系。
+			@param scriptname 脚本引擎的名字
+			@param builder 脚本引擎对象的创建函数
+		*/
+		static bool define(lyramilk::data::string scriptname,lyramilk::script::engine* (*builder)(),void (*destoryer)(lyramilk::script::engine*));
+		/**
+			@brief 通过脚本引擎的名字创建一个脚本引擎对象。
+			@param scriptname 脚本引擎的名字
+		*/
+		static lyramilk::script::engine* createinstance(lyramilk::data::string scriptname);
+
+		/**
+			@brief 销毁由createinstance创建的引擎对象。
+		*/
+		static void destoryinstance(lyramilk::data::string scriptname,lyramilk::script::engine* eng);
 	};
 
-	class _lyramilk_api_ engines : public lyramilk::threading::exclusive::list<engine>
+	class _lyramilk_api_ engines : public lyramilk::threading::exclusive::list<lyramilk::script::engine>
 	{
 	  public:
 		engines();
