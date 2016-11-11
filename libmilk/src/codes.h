@@ -77,6 +77,12 @@ namespace lyramilk{ namespace data
 		bool undefine(const string& codingname);
 
 		/**
+			@brief 获取解码器
+			@param codingname 用该名称代表的编码对src进行转换。
+		*/
+		coding* getcoder(const string& codingname);
+
+		/**
 			@brief 将字符串转换为目标编码。
 			@param src 将要被编码的字符换或二进制串。
 			@param codingname 用该名称代表的编码对src进行转换。

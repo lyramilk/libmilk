@@ -233,15 +233,33 @@ namespace lyramilk{namespace netio
 	}
 
 	/******** aiosession2_buf ************/
+
+	bool inline sock_write_able(native_socket_type sock,int delay)
+	{
+		pollfd pfd;
+		pfd.fd = sock;
+		pfd.events = POLLOUT;
+		pfd.revents = 0;
+		errno = 0;
+		int ret = ::poll(&pfd,1,delay);
+		if(ret > 0){
+			if(pfd.revents & POLLOUT){
+				return true;
+			}
+		}
+		return false;
+	}
+
+
 	std::streamsize aiosession2_buf::xsputn (const char* s, std::streamsize n)
 	{
 		std::streamsize ret=n;
 		while(n>0){
+			sock_write_able(fd,3000);
 			int rc = ::send(fd,s,n,0);
-			if(rc == -1 && (errno == EINTR ||errno == EAGAIN)){
-				usleep(1000);
+			if(rc < 1){
+				return 0;
 			}
-			if(rc < 1) return 0;
 			n-=rc;
 			s+=rc;
 		}
@@ -327,7 +345,7 @@ namespace lyramilk{namespace netio
 			}
 		}while(i > 0);
 
-		return true;
+		return pool->reset(this,flag);
 	}
 
 	// aiolistener

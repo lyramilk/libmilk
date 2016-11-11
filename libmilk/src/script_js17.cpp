@@ -9,6 +9,7 @@
 #include <utime.h>
 #include <math.h>
 //script_js
+#include <jsfriendapi.h>
 
 namespace lyramilk{namespace script{namespace js
 {
@@ -45,8 +46,9 @@ namespace lyramilk{namespace script{namespace js
 		lyramilk::klog(lyramilk::log::warning,"lyramilk.script.js") << lyramilk::kdict("%s(%d)%s",(report->filename ? report->filename : "<no name>"),report->lineno,message) << std::endl;
 	}
 
-	static void js_set_property_ptr(JSContext *cx,JSObject* o,lyramilk::data::string name,void* ptr)
+	static bool js_set_property_ptr(JSContext *cx,JSObject* o,lyramilk::data::string name,void* ptr)
 	{
+		/*
 		lyramilk::data::string name_flag = name + "__flag";
 		int offset = ((long)ptr) & 1;
 		if(offset){
@@ -58,10 +60,17 @@ namespace lyramilk{namespace script{namespace js
 		}
 		jsval jv = PRIVATE_TO_JSVAL(ptr);
 		JS_SetProperty(cx,o,name.c_str(),&jv);
+		/*/
+
+		jsval jv;
+		jv.setUnmarkedPtr(ptr);
+		return !!JS_SetProperty(cx,o,name.c_str(),&jv);
+		/**/
 	}
 
 	static void* js_get_property_ptr(JSContext *cx,JSObject* o,lyramilk::data::string name)
 	{
+		/*
 		lyramilk::data::string name_flag = name + "__flag";
 		jsval __flag;
 		long offset = 0;
@@ -77,7 +86,19 @@ namespace lyramilk{namespace script{namespace js
 				return (void*)&p[offset];
 			}
 		}
-		return NULL;
+
+		return nullptr;
+		
+		/*/
+
+		jsval __prop;
+		__prop.setUndefined();
+		if(JS_GetProperty(cx,o,name.c_str(),&__prop)){
+			if(__prop.isNullOrUndefined()) return nullptr;
+			return __prop.toUnmarkedPtr();
+		}
+		return nullptr;
+		/**/
 	}
 
 	/*
@@ -124,6 +145,7 @@ namespace lyramilk{namespace script{namespace js
 			iconv((const char*)cstr,slen,str,"utf16le","utf8");
 /*/
 			lyramilk::data::string str;
+			str.reserve(len*3);
 			for(size_t i =0;i<len;++i){
 				jschar wc = cstr[i];
 				if(wc < 0x80){
@@ -163,7 +185,17 @@ namespace lyramilk{namespace script{namespace js
 				v.assign(engine::s_user_functionid(),(void*)jid);
 				return v;
 			}else{
-				js_obj_pack *ppack = (js_obj_pack*)js_get_property_ptr(cx,jo,"__script_native");
+				js_obj_pack *ppack = nullptr;
+				{
+					jsval jv;
+					if(JS_TRUE == JS_GetProperty(cx,jo,"__script_native",&jv)){
+						if(!JSVAL_IS_VOID(jv)){
+							void* p = JSVAL_TO_PRIVATE(jv);
+							ppack = (js_obj_pack*)p;
+						}
+					}
+				}
+
 				if(ppack && ppack->pthis){
 					jsid joid;
 					JS_GetObjectId(cx,jo,&joid);
@@ -378,6 +410,9 @@ namespace lyramilk{namespace script{namespace js
 		JSObject* jsret = JS_NewObject(cx,&nativeClass,callee,JS_GetGlobalObject(cx));
 
 		js_obj_pack *ppack = new js_obj_pack((engine::class_destoryer)pfuncdel,(engine*)penv,pnewobj);
+		/*
+			虽然 PRIVATE_TO_JSVAL 会舍弃一个bit（相当于x&~1）但是因为结构体导致 ppack 不会落到奇数地址上，故不需要补位。
+		*/
 		jsval jv = PRIVATE_TO_JSVAL(ppack);
 		if(JS_TRUE != JS_SetProperty(cx,jsret,"__script_native",&jv)){
 			delete ppack;
@@ -449,7 +484,18 @@ namespace lyramilk{namespace script{namespace js
 		JS::RootedObject jsobj(cx,JS_THIS_OBJECT(cx,vp));
 
 		void* pfunc = js_get_property_ptr(cx,callee,"__function_pointer");
-		js_obj_pack *ppack = (js_obj_pack*)js_get_property_ptr(cx,jsobj,"__script_native");
+
+
+		js_obj_pack *ppack = nullptr;
+		{
+			jsval jv;
+			if(JS_TRUE == JS_GetProperty(cx,jsobj,"__script_native",&jv)){
+				if(!JSVAL_IS_VOID(jv)){
+					void* p = JSVAL_TO_PRIVATE(jv);
+					ppack = (js_obj_pack*)p;
+				}
+			}
+		}
 		jsval* jv = JS_ARGV(cx,vp);
 
 		engine::functional_type pfun = (engine::functional_type)pfunc;
@@ -463,6 +509,7 @@ namespace lyramilk{namespace script{namespace js
 				lyramilk::data::var ret = pfun(params,ppack->info);
 				jsval jsret = v2j(cx,ret);
 				JS_SET_RVAL(cx,vp,jsret);
+				return JS_TRUE;
 			}catch(lyramilk::data::string& str){
 				jsval args = v2j(cx,str.c_str());
 				jsval exc;
@@ -497,16 +544,14 @@ namespace lyramilk{namespace script{namespace js
 			}
 		}
 
-		return JS_TRUE;
+		return JS_FALSE;
 	}
 
 	JSBool static js_func_adapter_noclass(JSContext *cx, unsigned argc, jsval *vp)
 	{
 		JS::RootedObject callee(cx, JSVAL_TO_OBJECT(JS_CALLEE(cx, vp)));
-		//JSObject *jsobj = JS_THIS_OBJECT(cx,vp);
 
 		void* pfunc = js_get_property_ptr(cx,callee,"__function_pointer");
-		//js_obj_pack *ppack = (js_obj_pack*)JS_GetPrivate(cx,jsobj);
 		script_js *penv = (script_js*)js_get_property_ptr(cx,callee,"__env_pointer");
 		jsval* jv = JS_ARGV(cx,vp);
 
@@ -559,29 +604,29 @@ namespace lyramilk{namespace script{namespace js
 		return JS_TRUE;
 	}
 
-	script_js::script_js():rt(NULL),cx(NULL)
+	script_js::script_js():rt(NULL),cx_template(NULL)
 	{
-		rt = JS_Init(128*1024L*1024L);
-		cx = JS_NewContext(rt, 8192);
-
-		JS_SetRuntimePrivate(rt,cx);
-
-		JS_SetCStringsAreUTF8();
-		//JS_SetOptions(cx, JSOPTION_VAROBJFIX | JSOPTION_JIT | JSOPTION_METHODJIT);
-		JS_SetOptions(cx, JSOPTION_VAROBJFIX | JSOPTION_METHODJIT);
-		JS_SetVersion(cx, JSVERSION_LATEST);
-
-		JS_SetErrorReporter(cx, script_js_error_report);
-
-		isinited = false;
 		info[engine::s_env_engine()].assign(engine::s_user_engineptr(),this);
+
+		rt = JS_Init(128*1024L*1024L);
+		cx_template = JS_NewContext(rt, 8192);
+		JS_SetCStringsAreUTF8();
+
+		//JS_SetRuntimePrivate(rt,cx_template);
+		JS_SetOptions(cx_template, JSOPTION_VAROBJFIX | JSOPTION_METHODJIT);
+		JS_SetVersion(cx_template, JSVERSION_LATEST);
+		JS_SetErrorReporter(cx_template, script_js_error_report);
+
+		JSObject * glob = JS_NewGlobalObject(cx_template, &globalClass, NULL);
+		JS::RootedObject global(cx_template, glob);
+		JS_InitStandardClasses(cx_template,global);
 	}
 
 	script_js::~script_js()
 	{
 		gc();
 		JS_SetRuntimeThread(rt);
-		JS_DestroyContext(cx);
+		JS_DestroyContext(cx_template);
 		JS_DestroyRuntime(rt);
 		//JS_ShutDown();
 	}
@@ -590,12 +635,11 @@ namespace lyramilk{namespace script{namespace js
 	{
 		init();
 		JS_SetRuntimeThread(rt);
+		JSContext *cx = (JSContext *)JS_GetRuntimePrivate(rt);
 		JS::RootedObject global(cx,JS_GetGlobalObject(cx));
 		JSScript* script = JS_CompileScript(cx,global,scriptstring.c_str(),scriptstring.size(),NULL,1);
 		if(script){
-			bool ret = JS_ExecuteScript(cx,global,script,NULL) == JS_TRUE;
-			gc();
-			return ret;
+			return !!JS_ExecuteScript(cx,global,script,NULL);
 		}
 		return false;
 	}
@@ -625,11 +669,12 @@ namespace lyramilk{namespace script{namespace js
 		}
 	}
 
-
+#if 0
 	bool script_js::load_file(lyramilk::data::string scriptfile)
 	{
 		init();
 		JS_SetRuntimeThread(rt);
+		JSContext *cx = (JSContext *)JS_GetRuntimePrivate(rt);
 		JS::RootedObject global(cx,JS_GetGlobalObject(cx));
 
 		lyramilk::data::string precompliefile = scriptfile;
@@ -653,16 +698,18 @@ lyramilk::debug::clocktester _d(td,std::cout,str);*/
 			lyramilk::data::string jsbuff;
 			std::ifstream ifs;
 			ifs.open(precompliefile.c_str(),std::ifstream::binary|std::ifstream::in);
-			char buff[65536];
-			while(ifs){
-				ifs.read(buff,65536);
-				jsbuff.append(buff,ifs.gcount());
-			}
-			ifs.close();
-			if(!jsbuff.empty()){
-				script = JS_DecodeScript(cx,jsbuff.c_str(),jsbuff.size(),nullptr,nullptr);
-				if(script){
-					isprecomplie = true;
+			if(ifs.is_open()){
+				char buff[65536];
+				while(ifs){
+					ifs.read(buff,65536);
+					jsbuff.append(buff,ifs.gcount());
+				}
+				ifs.close();
+				if(!jsbuff.empty()){
+					script = JS_DecodeScript(cx,jsbuff.c_str(),jsbuff.size(),nullptr,nullptr);
+					if(script){
+						isprecomplie = true;
+					}
 				}
 			}
 		}
@@ -689,25 +736,70 @@ lyramilk::debug::clocktester _d(td,std::cout,str);*/
 				void* p = JS_EncodeScript(cx,script,&l);
 				std::ofstream ofs;
 				ofs.open(precompliefile.c_str(),std::ofstream::binary|std::ofstream::out);
-				ofs.write((const char*)p,l);
-				ofs.close();
-				struct stat statbuf;
-				if (stat (scriptfile.c_str(), &statbuf) != -1){
-					struct utimbuf tv;
-					tv.actime = statbuf.st_ctime;
-					tv.modtime = statbuf.st_mtime;
-					utime(precompliefile.c_str(),&tv);
+				if(ofs.is_open()){
+					ofs.write((const char*)p,l);
+					ofs.close();
+					struct stat statbuf;
+					if (stat (scriptfile.c_str(), &statbuf) != -1){
+						struct utimbuf tv;
+						tv.actime = statbuf.st_ctime;
+						tv.modtime = statbuf.st_mtime;
+						utime(precompliefile.c_str(),&tv);
+					}
 				}
 			}
-			gc();
 			return ret;
 		}
 		return false;
 	}
+#else
+	bool script_js::load_file(lyramilk::data::string scriptfile)
+	{
+		scriptfilename = scriptfile;
+		/**
+		JS_SetRuntimeThread(rt);
+		JSContext *cx = (JSContext *)JS_GetRuntimePrivate(rt);
+		if(!cx){
+			struct stat statbuf;
+			stat (scriptfile.c_str(), &statbuf);
+			void* cx_timestamp = (void*)statbuf.st_mtime;
 
+			std::map<lyramilk::data::string,JSContext*>::iterator it = fm.find(scriptfile);
+			if(it!=fm.end()){
+				void* timestamp = JS_GetContextPrivate(it->second);
+				if(cx_timestamp == timestamp){
+					JS_SetRuntimePrivate(rt,it->second);
+					cx = it->second;
+					return true;
+				}
+				fm.erase(it);
+				JS_DestroyContext(it->second);
+			}
+			init();
+			cx = (JSContext *)JS_GetRuntimePrivate(rt);
+			if(!cx) return false;
+			JS_SetContextPrivate(cx,cx_timestamp);
+			fm[scriptfile] = cx;
+		}
+		/*/
+		//非重用
+		init();
+		JS_SetRuntimeThread(rt);
+		JSContext *cx = (JSContext *)JS_GetRuntimePrivate(rt);
+		/**/
+		JS::RootedObject global(cx,JS_GetGlobalObject(cx));
+
+		JSScript* script = nullptr;
+		script = JS_CompileUTF8File(cx,global,scriptfile.c_str());
+		if(!script)return false;
+		return !!JS_ExecuteScript(cx,global,script,nullptr);
+	}
+#endif
 	lyramilk::data::var script_js::call(lyramilk::data::var func,lyramilk::data::var::array args)
 	{
+		init();
 		JS_SetRuntimeThread(rt);
+		JSContext *cx = (JSContext *)JS_GetRuntimePrivate(rt);
 		JS::RootedObject global(cx,JS_GetGlobalObject(cx));
 
 		if(func.type_compat(lyramilk::data::var::t_str)){
@@ -717,13 +809,15 @@ lyramilk::debug::clocktester _d(td,std::cout,str);*/
 				lyramilk::data::var& v = *it;
 				jvs.push_back(v2j(cx,v));
 			}
+
 			if(JS_TRUE == JS_CallFunctionName(cx,global,func.str().c_str(),jvs.size(),jvs.data(),&retval)){
 				lyramilk::data::var ret = j2v(cx,retval);
-				gc();
 				return ret;
 			}
 		}else if(func.type() == lyramilk::data::var::t_user){
+			//调用回调函数
 			jsid jid = (jsid)func.userdata(engine::s_user_functionid());
+			if(!jid) return lyramilk::data::var::nil;
 			jsval retval;
 			jsval jv;
 			JS_IdToValue(cx,jid,&jv);
@@ -737,63 +831,76 @@ lyramilk::debug::clocktester _d(td,std::cout,str);*/
 
 			if(JS_TRUE == JS_CallFunction(cx,global,fun,jvs.size(),jvs.data(),&retval)){
 				lyramilk::data::var ret = j2v(cx,retval);
-				gc();
 				return ret;
 			}
 		}
-		gc();
 		return lyramilk::data::var::nil;
 	}
 
 	void script_js::reset()
 	{
-		TODO();
+		/**
+		//重用
+		JS_SetRuntimeThread(rt);
+		JSContext *cx = (JSContext *)JS_GetRuntimePrivate(rt);
+		if(cx){
+			JS_GC(rt);
+			JS_SetRuntimePrivate(rt,nullptr);
+		}
+		/*/
+		//非重用
+		JS_SetRuntimeThread(rt);
+		JSContext *cx = (JSContext *)JS_GetRuntimePrivate(rt);
+		if(cx){
+			JS_DestroyContext(cx);
+			JS_SetRuntimePrivate(rt,nullptr);
+		}
+		/**/
 	}
 
 	void script_js::define(lyramilk::data::string classname,functional_map m,class_builder builder,class_destoryer destoryer)
 	{
-		init();
 		JS_SetRuntimeThread(rt);
-		JS::RootedObject global(cx,JS_GetGlobalObject(cx));
+		JS::RootedObject global(cx_template,JS_GetGlobalObject(cx_template));
 
 		//std::cout << "注册类：" << classname << ",构造:" << (void*)builder << ",释放" << (void*)destoryer << std::endl;
-		JSObject* jo = JS_DefineObject(cx,global,classname.c_str(),&classesClass,NULL,0);
+		JSObject* jo = JS_DefineObject(cx_template,global,classname.c_str(),&classesClass,NULL,0);
 		assert(jo);
 		jsid joid;
-		JS_GetObjectId(cx,jo,&joid);
+		JS_GetObjectId(cx_template,jo,&joid);
 		this->m[classname] = joid;
 
-		js_set_property_ptr(cx,jo,"__new",(void*)builder);
-		js_set_property_ptr(cx,jo,"__delete",(void*)destoryer);
-		js_set_property_ptr(cx,jo,"__env",(void*)this);
+		js_set_property_ptr(cx_template,jo,"__new",(void*)builder);
+		js_set_property_ptr(cx_template,jo,"__delete",(void*)destoryer);
+		js_set_property_ptr(cx_template,jo,"__env",(void*)this);
 		
 		functional_map::iterator it = m.begin();
 		for(;it!=m.end();++it){
 			//std::cout << "\t注册函数：" << it->first << "," << (void*)it->second << std::endl;
-			JSFunction *f = JS_DefineFunction(cx,jo,it->first.c_str(),js_func_adapter,10,10);
+			JSFunction *f = JS_DefineFunction(cx_template,jo,it->first.c_str(),js_func_adapter,10,10);
 			assert(f);
 			JSObject *fo = JS_GetFunctionObject(f);
 			assert(fo);
-			js_set_property_ptr(cx,fo,"__function_pointer",(void*)it->second);
+			js_set_property_ptr(cx_template,fo,"__function_pointer",(void*)it->second);
 		}
 	}
 	
 	void script_js::define(lyramilk::data::string funcname,functional_type func)
 	{
-		init();
+		//std::cout << "注册全局函数：" << funcname << "," << (void*)func << std::endl;
 		JS_SetRuntimeThread(rt);
-		JS::RootedObject global(cx,JS_GetGlobalObject(cx));
-
-		JSFunction *f = JS_DefineFunction(cx,global,funcname.c_str(),js_func_adapter_noclass,10,10);
+		JS::RootedObject global(cx_template,JS_GetGlobalObject(cx_template));
+		JSFunction *f = JS_DefineFunction(cx_template,global,funcname.c_str(),js_func_adapter_noclass,10,10);
 		JSObject *fo = JS_GetFunctionObject(f);
-		js_set_property_ptr(cx,fo,"__function_pointer",(void*)func);
-		js_set_property_ptr(cx,fo,"__env_pointer",(void*)this);
+		js_set_property_ptr(cx_template,fo,"__function_pointer",(void*)func);
+		js_set_property_ptr(cx_template,fo,"__env_pointer",(void*)this);
 	}
 
 	lyramilk::data::var script_js::createobject(lyramilk::data::string classname,lyramilk::data::var::array args)
 	{
 		init();
 		JS_SetRuntimeThread(rt);
+		JSContext *cx = (JSContext *)JS_GetRuntimePrivate(rt);
 		JS::RootedObject global(cx,JS_GetGlobalObject(cx));
 
 		std::map<lyramilk::data::string,jsid>::iterator it = m.find(classname);
@@ -811,8 +918,8 @@ lyramilk::debug::clocktester _d(td,std::cout,str);*/
 		JSObject* jsret = JS_NewObject(cx,&nativeClass,jsobj,global);
 
 		js_obj_pack *ppack = new js_obj_pack((engine::class_destoryer)pfuncdel,this,pnewobj);
-		//JS_SetPrivate(jsret,ppack);
 		jsval jv = PRIVATE_TO_JSVAL(ppack);
+
 		if(JS_TRUE != JS_SetProperty(cx,jsret,"__script_native",&jv)){
 			delete ppack;
 			return lyramilk::data::var::nil;
@@ -843,12 +950,23 @@ lyramilk::debug::clocktester _d(td,std::cout,str);*/
 
 	void script_js::init()
 	{
-		if(isinited) return;
-		isinited = true;
 		JS_SetRuntimeThread(rt);
-		JSObject * glob = JS_NewGlobalObject(cx, &globalClass, NULL);
-		JS::RootedObject global(cx, glob);
-		JS_InitStandardClasses(cx,global);
+		JSContext *cx = (JSContext *)JS_GetRuntimePrivate(rt);
+		if(cx == nullptr){
+			cx = JS_NewContext(rt, 8192);
+			assert(cx);
+			JS_SetOptions(cx, JSOPTION_VAROBJFIX | JSOPTION_METHODJIT);
+			JS_SetVersion(cx, JSVERSION_LATEST);
+			JS_SetErrorReporter(cx, script_js_error_report);
+
+			JSObject * template_glob = JS_GetGlobalObject(cx_template);
+
+			JSObject * glob = JS_NewGlobalObject(cx, &globalClass, NULL);
+			JS_InitStandardClasses(cx,glob);
+			JS_SetPrototype(cx,glob,template_glob);
+
+			JS_SetRuntimePrivate(rt,cx);
+		}
 	}
 
 	static lyramilk::script::engine* __ctr()
@@ -878,7 +996,3 @@ lyramilk::debug::clocktester _d(td,std::cout,str);*/
 #endif
 
 }}}
-
-
-
-

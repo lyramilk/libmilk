@@ -299,7 +299,7 @@ class coding_js:public lyramilk::data::coding
 
 	virtual lyramilk::data::string encode(const lyramilk::data::string& str)
 	{
-		lyramilk::data::string ustr = iconv(str,"utf16le","utf8");
+		lyramilk::data::string ustr = iconv(str,"utf8","utf16le");
 		const char tb[] = "0123456789ABCDEF";
 		lyramilk::data::string dst(ustr.size() * 6,0);
 		char* pdst = (char*)dst.c_str();
@@ -346,6 +346,7 @@ class coding_b64:public lyramilk::data::coding
 		lyramilk::data::string ret;
 		ret.reserve(str.size());
 		unsigned int len = str.size();
+		if(len == 0) return "";
 		unsigned int m = len&0x3;
 		if(!m)m=4;
 		len -= m;
@@ -423,6 +424,7 @@ class coding_b64:public lyramilk::data::coding
 		lyramilk::data::string ret;
 		ret.reserve(str.size()*3+1);
 		unsigned int len = str.size();
+		if(len == 0) return "";
 		unsigned int m = len%3;
 		len -= m;
 		const unsigned char* b = (const unsigned char*)str.c_str();
@@ -474,6 +476,7 @@ class coding_urlb64:public lyramilk::data::coding
 		lyramilk::data::string ret;
 		ret.reserve(str.size());
 		unsigned int len = str.size();
+		if(len == 0) return "";
 		unsigned int m = len&0x3;
 		if(!m)m=4;
 		len -= m;
@@ -551,6 +554,7 @@ class coding_urlb64:public lyramilk::data::coding
 		lyramilk::data::string ret;
 		ret.reserve(str.size()*3+1);
 		unsigned int len = str.size();
+		if(len == 0) return "";
 		unsigned int m = len%3;
 		len -= m;
 		const unsigned char* b = (const unsigned char*)str.c_str();

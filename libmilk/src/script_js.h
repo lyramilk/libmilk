@@ -14,11 +14,12 @@ namespace lyramilk{namespace script{namespace js
 	class script_js : public lyramilk::script::engine
 	{
 		JSRuntime* rt;
-		JSContext* cx;
+		JSContext* cx_template;
 
 		std::map<lyramilk::data::string,jsid> m;
 		lyramilk::data::string scriptfilename;
 		bool isinited;
+		//std::map<lyramilk::data::string,JSContext*> fm;
 	  public:
 		lyramilk::data::var::map info;
 		script_js();

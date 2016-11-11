@@ -351,19 +351,17 @@ namespace lyramilk{namespace threading
 
 				ptr(const ptr& p):q(p.q)
 				{
-					if(q){
-						q->addref();
-					}
+					if(q) q->addref();
 				}
 
 				ptr(item* pi):q(pi)
 				{
-					if(q)q->addref();
+					if(q) q->addref();
 				}
 
 				~ptr()
 				{
-					if(q)q->release();
+					if(q) q->release();
 				}
 
 				bool good()
@@ -371,21 +369,22 @@ namespace lyramilk{namespace threading
 					return q != NULL;
 				}
 
-				ptr& operator =(const ptr& o) const
+				ptr& operator =(const ptr& o)
 				{
-					o.q->addref();
-					if(q)q->release();
+					if(o.q) o.q->addref();
+					if(q) q->release();
 					q = o.q;
+					return *this;
 				}
 
 				T* operator->() const
 				{
-					return q->t;
+					return q?q->t:nullptr;
 				}
 
 				operator T*() const
 				{
-					return q->t;
+					return q?q->t:nullptr;
 				}
 			};
 

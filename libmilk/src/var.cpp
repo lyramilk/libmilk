@@ -2392,6 +2392,27 @@ var& var::path(string varpath) throw(type_invalid)
 	return *p;
 }
 
+template < >
+lyramilk::data::chunk& lyramilk::data::var::as<lyramilk::data::chunk&>() throw(type_invalid)
+{
+	if(t != t_bin) throw type_invalid(lyramilk::kdict("as取引用时无法转换类型"));
+	return *u.p;
+}
+
+template < >
+lyramilk::data::string& lyramilk::data::var::as<lyramilk::data::string&>() throw(type_invalid)
+{
+	if(t != t_str) throw type_invalid(lyramilk::kdict("as取引用时无法转换类型"));
+	return *u.s;
+}
+
+template < >
+lyramilk::data::wstring& lyramilk::data::var::as<lyramilk::data::wstring&>() throw(type_invalid)
+{
+	if(t != t_wstr) throw type_invalid(lyramilk::kdict("as取引用时无法转换类型"));
+	return *u.w;
+}
+
 std::ostream& operator << (std::ostream& os,const lyramilk::data::var& t)
 {
 	return os << t.str();

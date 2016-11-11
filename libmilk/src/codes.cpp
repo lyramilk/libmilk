@@ -81,6 +81,15 @@ namespace lyramilk{ namespace data
 		return true;
 	}
 
+	coding* lyramilk::data::codes::getcoder(const string& codingname)
+	{
+		lyramilk::data::string str(codingname.size(),0);
+		transform(codingname.begin(), codingname.end(), str.begin(), tolower);
+		builder_type::iterator it = builder.find(str);
+		if(it == builder.end()) return nullptr;
+		return it->second();
+	}
+
 	lyramilk::data::string lyramilk::data::codes::encode(const lyramilk::data::string& src,const lyramilk::data::string& codingname) throw (lyramilk::exception)
 	{
 		lyramilk::data::string str(codingname.size(),0);
@@ -152,6 +161,26 @@ namespace lyramilk{ namespace data
 	};
 #endif
 
+class coding_utf8:public lyramilk::data::coding
+{
+  public:
+	virtual lyramilk::data::string decode(const lyramilk::data::string& str)
+	{
+		return str;
+	}
+	virtual lyramilk::data::string encode(const lyramilk::data::string& str)
+	{
+		return str;
+	}
+
+	static lyramilk::data::coding* getter()
+	{
+		static coding_utf8 _mm;
+		return &_mm;
+	}
+};
+
+
 template <char* name>
 class coding_t:public lyramilk::data::coding
 {
@@ -191,6 +220,10 @@ static bool ___init()
 	lyramilk::data::codes::instance()->define(c_utf32,coding_t<c_utf32>::getter);
 	lyramilk::data::codes::instance()->define("utf-32",coding_t<c_utf32>::getter);
 	lyramilk::data::codes::instance()->define("wchar_t",coding_t<c_utf32>::getter);
+	lyramilk::data::codes::instance()->define("utf8",coding_utf8::getter);
+	lyramilk::data::codes::instance()->define("utf-8",coding_utf8::getter);
+	lyramilk::data::codes::instance()->define("UTF8",coding_utf8::getter);
+	lyramilk::data::codes::instance()->define("UTF-8",coding_utf8::getter);
 	return true;
 }
 

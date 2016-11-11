@@ -520,6 +520,15 @@ namespace lyramilk{namespace data
 		bool _serialize(ostream& os) const throw(type_invalid);
 		bool _deserialize(istream& is);
 	};
+
+	template < >
+	lyramilk::data::chunk& lyramilk::data::var::as<lyramilk::data::chunk&>() throw(type_invalid);
+
+	template < >
+	lyramilk::data::string& lyramilk::data::var::as<lyramilk::data::string&>() throw(type_invalid);
+
+	template < >
+	lyramilk::data::wstring& lyramilk::data::var::as<lyramilk::data::wstring&>() throw(type_invalid);
 }}
 
 #ifdef Z_HAVE_UNORDEREDMAP
