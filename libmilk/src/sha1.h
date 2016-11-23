@@ -21,7 +21,7 @@ namespace lyramilk{ namespace cryptology
 #endif
 
 	/**
-		@brief 一条sh1生成的hash。
+		@brief 一条sha1生成的hash。
 		@details 将其不完整地实现成了160位大整数，这样的语义是不恰当的，但为了实现简便故如此实现。
 	 */
 	struct _lyramilk_api_ sha1_key
@@ -29,31 +29,10 @@ namespace lyramilk{ namespace cryptology
 		char key[20];
 
 		sha1_key();
-		sha1_key(int o);
 		sha1_key(const cryptology::sha1_key& o);
-
-		sha1_key& operator =(int o);
 		sha1_key& operator =(const cryptology::sha1_key& o);
-		
-		bool operator < (const sha1_key& o) const;
-		bool operator > (const sha1_key& o) const;
-		bool operator <= (const sha1_key& o) const;
-		bool operator >= (const sha1_key& o) const;
-		bool operator == (const sha1_key& o) const;
-		bool operator != (const sha1_key& o) const;
-
-		sha1_key operator + (const sha1_key& o) const;
-		sha1_key operator - (const sha1_key& o) const;
-		sha1_key operator ^ (const sha1_key& o) const;
-		sha1_key operator << (int o) const;
-
-		sha1_key& operator += (const sha1_key& o);
-		sha1_key& operator -= (const sha1_key& o);
-		sha1_key& operator ^= (const sha1_key& o);
-		sha1_key& operator <<= (int o);
+		lyramilk::data::string str();
 	};
-	_lyramilk_api_ std::ostream& operator << (std::ostream& o, const sha1_key& r);
-	_lyramilk_api_ std::istream& operator >> (std::istream& o, sha1_key& r);
 
 	/**
 		@brief 用stl的流缓冲区对象封装sha1算法，设计初衷是为下面的sha1类服务。

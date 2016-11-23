@@ -87,12 +87,17 @@ namespace lyramilk{namespace data
 	json_object* var_to_node(const var& v)
 	{
 		switch(v.type()){
-		  case var::t_bin:
+		  case var::t_bin:{
+			{
+				return nullptr;
+			}
+			break;
+		  }
 		  case var::t_str:
 		  case var::t_wstr:
 			{
 				string str = v;
-				return json_object_new_string(str.c_str());
+				return json_object_new_string_len(str.c_str(),str.size());
 			}
 			break;
 		  case var::t_bool:
@@ -174,11 +179,11 @@ namespace lyramilk{namespace data
 			break;
 		  case var::t_user:
 			{
-				return json_object_new_object();
+				return nullptr;
 			}
 		  case var::t_invalid:
 			{
-				return json_object_new_object();
+				return nullptr;
 			}
 			break;
 		}

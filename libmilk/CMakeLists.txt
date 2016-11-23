@@ -1,6 +1,6 @@
 ﻿#定义工程名及版本
 project(milk)
-set(version 1.1.18)
+set(version 1.1.19)
 set(soversion 1.1)
 
 cmake_minimum_required (VERSION 2.8.11) 
@@ -129,6 +129,13 @@ if(Z_HAVE_UNORDEREDMAP)
 	list(APPEND CONFIG_MACROS Z_HAVE_UNORDEREDMAP)
 elseif(Z_HAVE_TR1_UNORDEREDMAP)
 	list(APPEND CONFIG_MACROS Z_HAVE_TR1_UNORDEREDMAP)
+endif()
+
+if(Z_HAVE_JEMALLOC)
+	list(APPEND BUILD_DEPENDS jemalloc-devel)
+	list(APPEND RUN_DEPENDS jemalloc)
+	list(APPEND LIBS_DEPENDS -ljemalloc)
+	list(APPEND CONFIG_MACROS Z_HAVE_JEMALLOC)
 endif()
 
 if(UNIX)

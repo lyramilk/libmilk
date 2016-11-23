@@ -539,50 +539,7 @@ namespace std{namespace tr1{
 
 #if (defined Z_HAVE_UNORDEREDMAP) || (defined Z_HAVE_TR1_UNORDEREDMAP)
 	template <>
-	inline size_t hash<lyramilk::data::string>::operator()(lyramilk::data::string d) const
-	{
-	/*
-		size_t l = d.size();
-		std::size_t r = 0;
-		if(l > 8){
-			r = *(std::size_t*)d.c_str();
-		}else{
-			const char* p = d.c_str();
-			for(;l > 0;--l){
-				r |=  0xff&(std::size_t)*p++;
-				r <<= 8;
-			}
-		}
-		return r;*/
-/*
-		const char* p = d.c_str();
-		size_t l = d.size();
-		if(l > 8) l = 8;
-		std::size_t r = static_cast<std::size_t>(14695981039346656037ULL);
-		for(;l > 0;--l){
-			r ^=  (std::size_t)*p++;
-			r *= 1099511628211ULL;
-		}
-		return r;*/
-
-		const char* p = d.c_str();
-		size_t l = d.size();
-		if(l > 128) l = 128;
-		std::size_t r = static_cast<std::size_t>(2166136261UL);
-		for(;l > 0;--l){
-			r ^=  (std::size_t)*p++;
-			r *= 16777619UL;
-		}
-		return r;
-/*
-		const char* p = d.c_str();
-		size_t l = d.size();
-		if(l > 64) l = 64;
-		size_t r = 0;
-		for (; l > 0; --l)
-		  r = r*131 + *p++;
-		return r;*/
-	}
+	size_t hash<lyramilk::data::string>::operator()(lyramilk::data::string) const;
 #endif
 #ifdef Z_HAVE_UNORDEREDMAP
 }

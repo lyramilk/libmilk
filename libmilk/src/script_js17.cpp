@@ -123,18 +123,23 @@ namespace lyramilk{namespace script{namespace js
 		}
 	};
 
-	lyramilk::data::var static j2v(JSContext* cx,jsval jv)
+	static void j2v(JSContext* cx,jsval jv,lyramilk::data::var& retv)
 	{
 		if(jv.isNullOrUndefined()){
-			return lyramilk::data::var::nil;
+			retv = lyramilk::data::var::nil;
+			return;
 		}else if(jv.isInt32()){
-			return jv.toInt32();
+			retv = jv.toInt32();
+			return;
 		}else if(jv.isDouble()){
-			return jv.toDouble();
+			retv = jv.toDouble();
+			return;
 		}else if(jv.isNumber()){
-			return jv.toNumber();
+			retv = jv.toNumber();
+			return;
 		}else if(jv.isBoolean()){
-			return jv.toBoolean();
+			retv = jv.toBoolean();
+			return;
 		}else if(jv.isString()){
 			JSString* jstr = jv.toString();
 			size_t len = 0;
@@ -160,80 +165,88 @@ namespace lyramilk{namespace script{namespace js
 				}
 			}
 /**/
-			return str;
+			retv = str;
+			return;
 		}else if(jv.isObject()){
 			JSObject *jo = jv.toObjectOrNull();
 			if(JS_IsArrayObject(cx,jo)){
-				lyramilk::data::var v;
-				v.type(lyramilk::data::var::t_array);
-				lyramilk::data::var::array& r = v;
+				retv.type(lyramilk::data::var::t_array);
+				lyramilk::data::var::array& r = retv;
 				uint32_t len = 0;
 				if(!JS_GetArrayLength(cx,jo,&len)){
-					return lyramilk::data::var::nil;
+					retv = lyramilk::data::var::nil;
+					return;
 				}
+				r.resize(len);
 				for(uint32_t i=0;i<len;++i){
 					jsval jv;
 					JS_LookupElement(cx,jo,i,&jv);
-					lyramilk::data::var cval = j2v(cx,jv);
-					r.push_back(cval);
+					j2v(cx,jv,r[i]);
 				}
-				return v;
-
 			}else if(JS_ObjectIsFunction(cx,jo)){
 				jsid jid = OBJECT_TO_JSID(jo);
-				lyramilk::data::var v;
-				v.assign(engine::s_user_functionid(),(void*)jid);
-				return v;
+				retv.assign(engine::s_user_functionid(),(void*)jid);
+				return;
 			}else{
-				js_obj_pack *ppack = nullptr;
-				{
-					jsval jv;
-					if(JS_TRUE == JS_GetProperty(cx,jo,"__script_native",&jv)){
-						if(!JSVAL_IS_VOID(jv)){
-							void* p = JSVAL_TO_PRIVATE(jv);
-							ppack = (js_obj_pack*)p;
-						}
-					}
-				}
-
-				if(ppack && ppack->pthis){
-					jsid joid;
-					JS_GetObjectId(cx,jo,&joid);
-					lyramilk::data::var v;
-					v.assign(engine::s_user_objectid(),(void*)joid);
-					v.userdata(engine::s_user_nativeobject(),ppack->pthis);
-					return v;
-				}
-				jsval jv;
-				if(JS_TRUE == JS_GetProperty(cx,jo,"__script_var",&jv)){
-					if(!jv.isNullOrUndefined()){
-						void* p = JSVAL_TO_PRIVATE(jv);
-						if(p){
-							return *(lyramilk::data::var*)p;
-						}
-					}
-				}
-
-				lyramilk::data::var v;
-				v.type(lyramilk::data::var::t_map);
-				lyramilk::data::var::map& m = v;
 				JSObject *iter = JS_NewPropertyIterator(cx,jo);
 				if(iter){
+					retv.type(lyramilk::data::var::t_map);
+					lyramilk::data::var::map& m = retv;
 					jsid jid;
-					while(JS_NextProperty(cx,iter,&jid) && !JSID_IS_VOID(jid)){
-						jsval jk;
+					while(JS_NextProperty(cx,iter,&jid)){
+						jsval jk,jv;
 						JS_IdToValue(cx,jid,&jk);
-
-						jsval jv;
+						if(!jk.isString()) break;
 						JS_LookupPropertyById(cx,jo,jid,&jv);
 
-						lyramilk::data::string skey = j2v(cx,jk);
-						lyramilk::data::var cval = j2v(cx,jv);
-						//m.insert(std::pair<lyramilk::data::string,lyramilk::data::var>(ckey,cval));
-						m[skey] = cval;
+						lyramilk::data::string skey;
+						{
+							JSString* jstr = jk.toString();
+							size_t len = 0;
+							const jschar* cstr = JS_GetStringCharsZAndLength(cx,jstr,&len);
+							skey.reserve(len*3);
+							for(size_t i =0;i<len;++i){
+								jschar wc = cstr[i];
+								if(wc < 0x80){
+									skey.push_back((unsigned char)wc);
+								}else if(wc < 0x800){
+									skey.push_back((unsigned char)((wc>>6)&0x1f) | 0xc0);
+									skey.push_back((unsigned char)((wc>>0)&0x3f) | 0x80);
+								}else if(wc < 0x10000){
+									skey.push_back((unsigned char)((wc>>12)&0xf) | 0xe0);
+									skey.push_back((unsigned char)((wc>>6)&0x3f) | 0x80);
+									skey.push_back((unsigned char)((wc>>0)&0x3f) | 0x80);
+								}
+							}
+						}
+
+						if(skey == "__script_native"){
+							js_obj_pack *ppack = nullptr;
+							if(!JSVAL_IS_VOID(jv)){
+								void* p = JSVAL_TO_PRIVATE(jv);
+								ppack = (js_obj_pack*)p;
+							}
+							if(ppack && ppack->pthis){
+								jsid joid;
+								JS_GetObjectId(cx,jo,&joid);
+								retv.assign(engine::s_user_objectid(),(void*)joid);
+								retv.userdata(engine::s_user_nativeobject(),ppack->pthis);
+								return;
+							}
+						}else if(skey == "__script_var"){
+							if(!jv.isNullOrUndefined()){
+								void* p = JSVAL_TO_PRIVATE(jv);
+								if(p){
+									retv = *(lyramilk::data::var*)p;
+									return;
+								}
+							}
+						}else{
+							j2v(cx,jv,m[skey]);
+						}
 					}
 				}
-				return v;
+				return ;
 			}
 		}else{
 			JSType jt = JS_TypeOfValue(cx,jv);
@@ -357,9 +370,9 @@ namespace lyramilk{namespace script{namespace js
 			lyramilk::data::var::array params;
 			if(argc>0){
 				jsval* jv = JS_ARGV(cx,vp);
+				params.resize(argc);
 				for(unsigned i=0;i<argc;++i){
-					lyramilk::data::var v = j2v(cx,jv[i]);
-					params.push_back(v);
+					j2v(cx,jv[i],params[i]);
 				}
 			}
 
@@ -501,9 +514,9 @@ namespace lyramilk{namespace script{namespace js
 		engine::functional_type pfun = (engine::functional_type)pfunc;
 		if(pfun && ppack && ppack->pthis){
 			lyramilk::data::var::array params;
+			params.resize(argc);
 			for(unsigned i=0;i<argc;++i){
-				lyramilk::data::var v = j2v(cx,jv[i]);
-				params.push_back(v);
+				j2v(cx,jv[i],params[i]);
 			}
 			try{
 				lyramilk::data::var ret = pfun(params,ppack->info);
@@ -558,11 +571,10 @@ namespace lyramilk{namespace script{namespace js
 		engine::functional_type pfun = (engine::functional_type)pfunc;
 		if(pfun){
 			lyramilk::data::var::array params;
+			params.resize(argc);
 			for(unsigned i=0;i<argc;++i){
-				lyramilk::data::var v = j2v(cx,jv[i]);
-				params.push_back(v);
+				j2v(cx,jv[i],params[i]);
 			}
-
 			try{
 				lyramilk::data::var ret = pfun(params,penv->info);
 				jsval jsret = v2j(cx,ret);
@@ -608,7 +620,7 @@ namespace lyramilk{namespace script{namespace js
 	{
 		info[engine::s_env_engine()].assign(engine::s_user_engineptr(),this);
 
-		rt = JS_Init(128*1024L*1024L);
+		rt = JS_NewRuntime(128*1024L*1024L);
 		cx_template = JS_NewContext(rt, 8192);
 		JS_SetCStringsAreUTF8();
 
@@ -626,6 +638,12 @@ namespace lyramilk{namespace script{namespace js
 	{
 		gc();
 		JS_SetRuntimeThread(rt);
+		JSContext *cx = (JSContext *)JS_GetRuntimePrivate(rt);
+		if(cx){
+			JS_DestroyContext(cx);
+			JS_SetRuntimePrivate(rt,nullptr);
+			scriptfilename.clear();
+		}
 		JS_DestroyContext(cx_template);
 		JS_DestroyRuntime(rt);
 		//JS_ShutDown();
@@ -755,7 +773,9 @@ lyramilk::debug::clocktester _d(td,std::cout,str);*/
 #else
 	bool script_js::load_file(lyramilk::data::string scriptfile)
 	{
-		scriptfilename = scriptfile;
+		if(scriptfilename.empty()){
+			scriptfilename = scriptfile;
+		}
 		/**
 		JS_SetRuntimeThread(rt);
 		JSContext *cx = (JSContext *)JS_GetRuntimePrivate(rt);
@@ -811,7 +831,8 @@ lyramilk::debug::clocktester _d(td,std::cout,str);*/
 			}
 
 			if(JS_TRUE == JS_CallFunctionName(cx,global,func.str().c_str(),jvs.size(),jvs.data(),&retval)){
-				lyramilk::data::var ret = j2v(cx,retval);
+				lyramilk::data::var ret;
+				j2v(cx,retval,ret);
 				return ret;
 			}
 		}else if(func.type() == lyramilk::data::var::t_user){
@@ -830,7 +851,8 @@ lyramilk::debug::clocktester _d(td,std::cout,str);*/
 			}
 
 			if(JS_TRUE == JS_CallFunction(cx,global,fun,jvs.size(),jvs.data(),&retval)){
-				lyramilk::data::var ret = j2v(cx,retval);
+				lyramilk::data::var ret;
+				j2v(cx,retval,ret);
 				return ret;
 			}
 		}
@@ -854,6 +876,7 @@ lyramilk::debug::clocktester _d(td,std::cout,str);*/
 		if(cx){
 			JS_DestroyContext(cx);
 			JS_SetRuntimePrivate(rt,nullptr);
+			scriptfilename.clear();
 		}
 		/**/
 	}

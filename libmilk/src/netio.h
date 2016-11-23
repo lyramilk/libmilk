@@ -46,6 +46,7 @@ namespace lyramilk{namespace netio
 	class _lyramilk_api_ socket
 	{
 	  protected:
+		friend class socket_stream_buf;
 		ssl_type sslobj;
 		bool sslenable;
 		native_socket_type sock;
@@ -66,6 +67,40 @@ namespace lyramilk{namespace netio
 
 		/// 取得对端ip
 		virtual netaddress dest() const;
+
+		/// 取得套接字
+		virtual native_socket_type fd() const;
+	};
+
+	class _lyramilk_api_ socket_stream;
+
+	/// 以流的方式操作套接字的流缓冲
+	class _lyramilk_api_ socket_stream_buf : public std::basic_streambuf<char>
+	{
+		friend class socket_stream;
+	  protected:
+		lyramilk::netio::socket* psock;
+		std::vector<char> putbuf;
+		std::vector<char> getbuf;
+		virtual int_type sync();
+		virtual int_type overflow (int_type c = traits_type::eof());
+		virtual int_type underflow();
+	  public:
+		socket_stream_buf();
+		virtual ~socket_stream_buf();
+	};
+
+	/*
+		@brief 以流的方式操作套接字的流
+		@details 只支持读写
+	*/
+	class _lyramilk_api_ socket_stream : public lyramilk::data::stringstream
+	{
+		socket_stream_buf sbuf;
+		socket& c;
+	  public:
+		socket_stream(socket& ac);
+		virtual ~socket_stream();
 	};
 
 	/// 客户端套接字
@@ -122,6 +157,8 @@ namespace lyramilk{namespace netio
 		*/
 		virtual bool check_error();
 	};
+
+
 }}
 
 #endif

@@ -1,8 +1,16 @@
-var t = new os();
-t.print("[js]加载脚本开始。");
-function test(v)
+var t1 = new test_system(3);
+t1.print("[js]加载脚本开始。");
+function mytest(t,v)
 {
-	t.print("[js]执行test" + v);
+	myecho("[js]执行test");
+	var k = 0;
+	var tm1 = new Date().getTime();
+	for(var i=0;i<1000000;++i){
+		k = myaddm({k:k,v:i});
+		//k = myadd(k,i);
+	}
+	var tm2 = new Date().getTime();
+	myecho("测试时间" + (tm2-tm1) + ",结果" + k);
 
 	var m = {
 		"app":"map_app",
@@ -10,9 +18,8 @@ function test(v)
 		"tototo":"map_tototo",
 	};
 
-	var w = new niuniu(2002);
-	t.print("[js]" + w.add(1987));
-	return w.testmap(m);
+	t.print("[js]" + v.add(1987));
+	return v.testmap(m);
 }
 
-t.print("[js]加载脚本完成。");
+t1.print("[js]加载脚本完成。");

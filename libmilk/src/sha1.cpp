@@ -163,168 +163,19 @@ sha1_key::sha1_key(const sha1_key& o)
 	operator =(o);
 }
 
-sha1_key::sha1_key(int o)
-{
-	operator =(o);
-}
-
 sha1_key& sha1_key::operator =(const sha1_key& o)
 {
 	memcpy(key,o.key,sizeof(key));
 	return *this;
 }
 
-sha1_key& sha1_key::operator =(int o)
+lyramilk::data::string sha1_key::str()
 {
-	memset(key,(o >= 0 ? 0 : -1),sizeof(key));
-	key[19] = o&0xff;
-	o >>= 8;
-	key[18] = o&0xff;
-	o >>= 8;
-	key[17] = o&0xff;
-	o >>= 8;
-	key[16] = o&0xff;
-	return *this;
-}
-
-bool sha1_key::operator < (const sha1_key& o) const
-{
-	return memcmp(key,o.key,20) < 0;
-}
-
-bool sha1_key::operator > (const sha1_key& o) const
-{
-	return memcmp(key,o.key,20) > 0;
-}
-
-bool sha1_key::operator <= (const sha1_key& o) const
-{
-	return memcmp(key,o.key,20) <= 0;
-}
-
-bool sha1_key::operator >= (const sha1_key& o) const
-{
-	return memcmp(key,o.key,20) >= 0;
-}
-
-bool sha1_key::operator == (const sha1_key& o) const
-{
-	return memcmp(key,o.key,20) == 0;
-}
-
-bool sha1_key::operator != (const sha1_key& o) const
-{
-	return memcmp(key,o.key,20) != 0;
-}
-
-sha1_key sha1_key::operator + (const sha1_key& o) const
-{
-	sha1_key k = *this;
-	return k += o;
-}
-
-sha1_key sha1_key::operator - (const sha1_key& o) const
-{
-	sha1_key k = *this;
-	return k -= o;
-}
-
-sha1_key sha1_key::operator ^ (const sha1_key& o) const
-{
-	sha1_key k = *this;
-	return k ^= o;
-}
-
-sha1_key sha1_key::operator << (int o) const
-{
-	sha1_key k = *this;
-	return k <<= o;
-}
-
-sha1_key& sha1_key::operator += (const sha1_key& o)
-{
-	unsigned int cr = 0;
-	for(int i=19;i>=0;--i){
-		unsigned int sum = (unsigned int)key[i] + (unsigned int)o.key[i] + cr;
-		cr = sum >> 8;
-		key[i] = sum&0xff;
-	}
-	return *this;
-}
-
-sha1_key& sha1_key::operator -= (const sha1_key& o)
-{
-	unsigned int cr = 0;
-	for(int i=19;i>=0;--i){
-		int sum = (int)(unsigned char)key[i] - (int)(unsigned char)o.key[i] - cr;
-		if(sum < 0){
-			sum += 0x100;
-			cr = 1;
-		}else{
-			cr = 0;
-		}
-		key[i] = sum&0xff;
-	}
-	return *this;
-}
-
-sha1_key& sha1_key::operator ^= (const sha1_key& o)
-{
-	for(int i=0;i<20;--i){
-		key[i] ^= o.key[i];
-	}
-	return *this;
-}
-
-sha1_key& sha1_key::operator <<= (int o)
-{
-	if(o > 7){
-		int d = o/8;
-		for(int i=0;i<(20 - d);i++){
-			key[i] = key[i+d];
-		}
-		for(int i=20 - d;i<20;i++){
-			key[i] = 0;
-		}
-	}
-	unsigned int cr = 0;
-	unsigned int md = o%8;
-	for(int i=19;i>=0;--i){
-		unsigned int sum = (((unsigned int)(unsigned char)key[i]) << md)|cr;
-		cr = sum >> 8;
-		key[i] = sum&0xff;
-	}
-	return *this;
-}
-
-
-std::ostream& lyramilk::cryptology::operator << (std::ostream& o,const sha1_key& r)
-{
-	std::stringstream  ss;
+	lyramilk::data::stringstream  ss;
 	for(int i=0;i<20;++i){
-		ss << std::hex << std::setw(2) << std::setfill('0') << (unsigned int)(unsigned char)r.key[i];
+		ss << std::hex << std::setw(2) << std::setfill('0') << (unsigned int)(unsigned char)key[i];
 	}
-	o << ss.str();
-	return o;
-}
-
-std::istream& lyramilk::cryptology::operator >> (std::istream& o,sha1_key& r)
-{
-	for(unsigned int i=0;i<sizeof(r.key);++i){
-		char p[3] = {0};
-		o.read(p,2);
-		if(!o.good()) break;
-		if(p[0] >= 'a' && p[0] <= 'f') p[0] -= 'a' - '0' - 10;
-		if(p[0] >= 'A' && p[0] <= 'F') p[0] -= 'A' - '0' - 10;
-		if(p[1] >= 'a' && p[1] <= 'f') p[1] -= 'a' - '0' - 10;
-		if(p[1] >= 'A' && p[1] <= 'F') p[1] -= 'A' - '0' - 10;
-
-		unsigned char h = p[0] - '0';
-		unsigned char l = p[1] - '0';
-		
-		r.key[i] = (l + (h << 4));
-	}
-	return o;
+	return ss.str();
 }
 
 sha1_buf::int_type sha1_buf::overflow(sha1_buf::int_type c)
@@ -344,10 +195,9 @@ sha1_buf::int_type sha1_buf::underflow()
 
 int sha1_buf::sync()
 {
-	if(pptr() == pbase()){
-		return traits_type::eof();
+	if(pptr() != pbase()){
+		SHA1Update(&context, (unsigned char*)pbase(), (unsigned int)(pptr() - pbase())); 
 	}
-	SHA1Update(&context, (unsigned char*)pbase(), (unsigned int)(pptr() - pbase())); 
 	ctx tmp = context;
 	SHA1Final((unsigned char*)getbuf.data(),&tmp);
 
@@ -383,11 +233,5 @@ sha1_key sha1::get_key()
 
 lyramilk::data::string sha1::str()
 {
-	sha1_key r = get_key();
-	lyramilk::data::stringstream  ss;
-	
-	for(int i=0;i<20;++i){
-		ss << std::hex << std::setw(2) << std::setfill('0') << (unsigned int)(unsigned char)r.key[i];
-	}
-	return ss.str();
+	return get_key().str();
 }

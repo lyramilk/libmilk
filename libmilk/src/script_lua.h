@@ -2,13 +2,7 @@
 #define _lyramilk_script_lua_engine_h_
 
 #include "scriptengine.h"
-extern "C" {
-	#include <lua.h>
-	#include <lauxlib.h>
-	#include <lualib.h>
-}
-
-#include <stack>
+#include <lua.hpp>
 
 /**
 	@namespace lyramilk::script::lua
@@ -20,16 +14,16 @@ namespace lyramilk{namespace script{namespace lua
 	class script_lua : public lyramilk::script::engine
 	{
 		lua_State *L;
+		lua_State *L_template;
 		lyramilk::data::string scriptfilename;
 	  public:
-		std::stack<lyramilk::data::string> callstack;
 		struct metainfo
 		{
 			class_builder ctr;
 			class_destoryer dtr;
-			std::map<lyramilk::data::string,functional_type> funcmap;
 			void* self;
 			lyramilk::script::engine *env;
+			lyramilk::data::string name;
 		};
 	  public:
 		script_lua();
@@ -40,10 +34,12 @@ namespace lyramilk{namespace script{namespace lua
 		virtual void reset();
 		virtual void define(lyramilk::data::string classname,functional_map m,class_builder builder,class_destoryer destoryer);
 		virtual lyramilk::data::var createobject(lyramilk::data::string classname,lyramilk::data::var::array args);
+		virtual void define(lyramilk::data::string funcname,functional_type func);
 		virtual void gc();
 		virtual lyramilk::data::string name();
 		virtual lyramilk::data::string filename();
 	  private:
+		bool init();
 		std::map<lyramilk::data::string,metainfo> minfo;
 		void clear();
 	};

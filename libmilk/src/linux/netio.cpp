@@ -58,6 +58,7 @@
 
 namespace lyramilk{namespace netio
 {
+	/* netaddress */
 	netaddress::netaddress(lyramilk::data::string host, lyramilk::data::uint16 port)
 	{
 		this->host = host;
@@ -102,7 +103,7 @@ namespace lyramilk{namespace netio
 		return this->host;
 	}
 
-	//////
+	/* socket */
 	socket::socket()
 	{
 		sslobj = nullptr;
@@ -156,18 +157,100 @@ namespace lyramilk{namespace netio
 	{
 		sockaddr_in addr;
 		socklen_t size = sizeof addr;
-		if(getpeername(sock,(sockaddr*)&addr,&size) !=0 ) return netaddress();
-		return netaddress(addr.sin_addr.s_addr,addr.sin_port);
+		if(getsockname(sock,(sockaddr*)&addr,&size) !=0 ) return netaddress();
+		return netaddress(addr.sin_addr.s_addr,ntohs(addr.sin_port));
 	}
 
 	netaddress socket::dest() const
 	{
 		sockaddr_in addr;
 		socklen_t size = sizeof addr;
-		if(getsockname(sock,(sockaddr*)&addr,&size) !=0 ) return netaddress();
-		return netaddress(addr.sin_addr.s_addr,addr.sin_port);
+		if(getpeername(sock,(sockaddr*)&addr,&size) !=0 ) return netaddress();
+		return netaddress(addr.sin_addr.s_addr,ntohs(addr.sin_port));
 	}
 
+	native_socket_type socket::fd() const
+	{
+		return sock;
+	}
+
+	/* socket_stream_buf */
+	socket_stream_buf::int_type socket_stream_buf::sync()
+	{
+		return overflow();
+	}
+	socket_stream_buf::int_type socket_stream_buf::overflow (int_type c)
+	{
+		const char* p = pbase();
+		int l = pptr() - pbase();
+		int r = 0;
+#ifdef OPENSSL_FOUND
+		if(psock->ssl()){
+			r = SSL_write((SSL*)psock->sslobj, p,l);
+		}else{
+			r = ::send(psock->sock,p,l,0);
+		}
+#else
+		r = ::send(psock->sock,p,l,0);
+#endif
+		if(r>0){
+			setp(putbuf.data() + r,putbuf.data() + putbuf.size());
+			sputc(c);
+			return 0;
+		}
+		return traits_type::eof();
+	}
+
+	socket_stream_buf::int_type socket_stream_buf::underflow()
+	{
+		char* p = getbuf.data();
+		int l = getbuf.size();
+		int r = 0;
+errno = 0;
+#ifdef OPENSSL_FOUND
+		if(psock->ssl()){
+			r = SSL_read((SSL*)psock->sslobj, p,l);
+		}else{
+			r = ::recv(psock->sock,p,l,0);
+		}
+#else
+		r = ::recv(psock->sock,p,l,0);
+#endif
+		if(r>0){
+			setg(getbuf.data(),getbuf.data(),getbuf.data() + r);
+			//return sgetc();
+			//return sbumpc();
+			return *egptr();
+		}
+		return traits_type::eof();
+	}
+
+	socket_stream_buf::socket_stream_buf()
+	{
+		putbuf.assign(0x4000,0);
+		setp(putbuf.data(),putbuf.data() + putbuf.size());
+
+		getbuf.assign(0x4000,0);
+		setg(getbuf.data(),getbuf.data() + getbuf.size(),getbuf.data() + getbuf.size());
+	}
+
+	socket_stream_buf::~socket_stream_buf()
+	{
+	}
+
+	/* socket_stream */
+	socket_stream::socket_stream(socket& ac):c(ac)
+	{
+		sbuf.psock = &ac;
+		lyramilk::data::stringstream::init(&sbuf);
+	}
+
+	socket_stream::~socket_stream()
+	{
+	
+	}
+
+	/* client */
 	client::client():use_ssl(false)
 	{}
 

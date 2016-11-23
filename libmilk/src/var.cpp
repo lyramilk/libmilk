@@ -249,20 +249,6 @@ T reverse_order(T t)
 	#define u2t(x) u2a(x)
 #endif
 
-#ifdef Z_HAVE_JEMALLOC
-
-s
-void* lyramilk::data::milk_malloc(size_t size)
-{
-	return ::je_malloc(size);
-}
-
-void lyramilk::data::milk_free(void* p, size_t size)
-{
-	::je_free(p);
-}
-
-#else
 void* lyramilk::data::milk_malloc(size_t size)
 {
 	return ::malloc(size);
@@ -272,7 +258,6 @@ void lyramilk::data::milk_free(void* p, size_t size)
 {
 	::free(p);
 }
-#endif
 
 var::type_invalid::type_invalid(string msg)
 {
@@ -2450,3 +2435,88 @@ lyramilk::data::bostream& operator << (lyramilk::data::bostream& os, const signe
 {
 	return os << (const unsigned char*)c;
 }
+
+
+#ifdef Z_HAVE_UNORDEREDMAP
+namespace std{
+#elif defined Z_HAVE_TR1_UNORDEREDMAP
+namespace std{namespace tr1{
+#endif
+
+#if (defined Z_HAVE_UNORDEREDMAP) || (defined Z_HAVE_TR1_UNORDEREDMAP)
+	template <>
+	std::size_t hash<lyramilk::data::string>::operator()(lyramilk::data::string d) const
+	{
+/* bkdr *
+		const char* p = d.c_str();
+		size_t l = d.size();
+		std::size_t r = 0;
+		for(;l > 0;--l){
+			r = r*131 + (*p++);
+		}
+		return r;
+//*/
+
+/* djb *
+		const char* p = d.c_str();
+		size_t l = d.size();
+		std::size_t r = 5381;
+		for(;l > 0;--l){
+			r = (r << 5) + (*p++);
+		}
+		return r;
+//*/
+
+/* ap *
+		const char* p = d.c_str();
+		size_t l = d.size();
+		std::size_t r = 0;
+		for(;l > 0;--l){
+			if(r&1){
+				r ^= (r << 7) ^ (*p++) ^ (r >> 3);
+			}else{
+				r ^= ~((r << 11) ^ (*p++) ^ (r >> 5));
+			}
+		}
+		return r;
+//*/
+
+/* dek */
+		const char* p = d.c_str();
+		size_t l = d.size();
+		std::size_t r = 1315423911;
+		for(;l > 0;--l){
+			r = (r << 5) ^ (r >> 27) ^ (*p++);
+		}
+		return r;
+//*/
+
+/*	fnv32 *
+		const char* p = d.c_str();
+		size_t l = d.size();
+		std::size_t r = static_cast<std::size_t>(2166136261UL);
+		for(;l > 0;--l){
+			r ^=  (std::size_t)(*p++);
+			r *= 16777619UL;
+		}
+		return r;
+//*/
+
+/*	fnv64 *
+		const char* p = d.c_str();
+		size_t l = d.size();
+		std::size_t r = static_cast<std::size_t>(14695981039346656037ULL);
+		for(;l > 0;--l){
+			r ^=  (std::size_t)(*p++);
+			r *= 1099511628211ULL;
+		}
+		return r;
+//*/
+	}
+#endif
+#ifdef Z_HAVE_UNORDEREDMAP
+}
+#elif defined Z_HAVE_TR1_UNORDEREDMAP
+}}
+#endif
+
