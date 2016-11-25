@@ -178,6 +178,7 @@ logss::logss(lyramilk::data::string m):db(*this)
 
 logss::logss(const logss& qlog,lyramilk::data::string m):db(*this)
 {
+	lyramilk::threading::mutex_sync _((lyramilk::threading::mutex_os&)qlog.lock);
 	if(qlog.module.empty()){
 		module = qlog.module + m;
 	}else if(!m.empty()){

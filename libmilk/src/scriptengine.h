@@ -17,7 +17,8 @@ namespace lyramilk{namespace script
 	*/
 	class _lyramilk_api_ engine
 	{
-		lyramilk::data::var::map _mparams;
+	  protected:
+		lyramilk::data::var::map mparams;
 	  public:
 
 		// 脚本向C++传递对象id时使用。
@@ -56,7 +57,7 @@ namespace lyramilk{namespace script
 		/**
 			@brief 函数指针：适配脚本可访问的C++对象中的函数
 		*/
-		typedef lyramilk::data::var (*functional_type)(lyramilk::data::var::array argv,lyramilk::data::var::map env);
+		typedef lyramilk::data::var (*functional_type)(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env);
 
 		/**
 			@brief functional_type的map
@@ -81,23 +82,25 @@ namespace lyramilk{namespace script
 		/**
 			@brief 从一个字符串中加载脚本代码
 			@param script 字符串形式的脚本代码
+			@param permanent 为ture表示reset时不会失效。
 			@return 返回true表示成功
 		*/
-		virtual bool load_string(lyramilk::data::string script) = 0;
+		virtual bool load_string(bool permanent,lyramilk::data::string script) = 0;
 
 		/**
 			@brief 从一个文件中加载脚本代码
 			@param scriptfile 脚本文件路径
+			@param permanent 为ture表示reset时不会失效。
 			@return 返回true表示成功
 		*/
-		virtual bool load_file(lyramilk::data::string scriptfile);
+		virtual bool load_file(bool permanent,lyramilk::data::string scriptfile);
 
 		/**
 			@brief 执行脚本函数。
 			@param func 脚本函数名
 			@return 脚本的返回值
 		*/
-		virtual lyramilk::data::var call(lyramilk::data::var func);
+		virtual lyramilk::data::var call(bool permanent,lyramilk::data::var func);
 
 		/**
 			@brief 执行脚本函数。
@@ -105,7 +108,7 @@ namespace lyramilk{namespace script
 			@param args 参数
 			@return 脚本的返回值
 		*/
-		virtual lyramilk::data::var call(lyramilk::data::var func,lyramilk::data::var::array args) = 0;
+		virtual lyramilk::data::var call(bool permanent,lyramilk::data::var func,lyramilk::data::var::array args) = 0;
 
 		/**
 			@brief 重置脚本引擎。
@@ -119,14 +122,14 @@ namespace lyramilk{namespace script
 			@param builder 该对象的创建函数
 			@param destoryer 该对象的销毁函数
 		*/
-		virtual void define(lyramilk::data::string classname,functional_map m,class_builder builder,class_destoryer destoryer) = 0;
+		virtual void define(bool permanent,lyramilk::data::string classname,functional_map m,class_builder builder,class_destoryer destoryer) = 0;
 
 		/**
 			@brief 将一个脚本可访问的C++函数注入到脚本引擎中。
 			@param funcname 函数名
 			@param func 脚本可访问的C++本地函数
 		*/
-		virtual void define(lyramilk::data::string funcname,functional_type func) = 0;
+		virtual void define(bool permanent,lyramilk::data::string funcname,functional_type func) = 0;
 
 		/**
 			@brief 将一个脚本可访问的C++对象装载到一个var对象中以作为参数由C++传递给脚本引擎。
@@ -152,24 +155,14 @@ namespace lyramilk{namespace script
 		virtual lyramilk::data::string filename() = 0;
 
 		/**
-			@brief 从快照中恢复虚拟机状态。
-		*/
-		virtual bool snaphot_from(lyramilk::data::string bytecodefilepath);
-
-		/**
-			@brief 为当前虚拟机环境制作快照（只保存函数定义）。
-		*/
-		virtual bool snaphot_to(lyramilk::data::string bytecodefilepath);
-
-		/**
 			@brief 该模板用于适配C++可访问的对象的成员函数到脚本引擎支持的形式。
 			@details 该模板用于适配C++可访问的对象的成员函数到脚本引擎支持的形式。举例，如果number是一个C++类，而number的普通成员函数add函数符合functional_type形式，那么 lyramilk::script::engine::functional<number,&number::add>可以将该函数适配到非成员的functional_type形式。
 		*/
-		template <typename T,lyramilk::data::var (T::*Q)(lyramilk::data::var::array ,lyramilk::data::var::map )>
-		static lyramilk::data::var functional(lyramilk::data::var::array params,lyramilk::data::var::map env)
+		template <typename T,lyramilk::data::var (T::*Q)(const lyramilk::data::var::array& ,const lyramilk::data::var::map& )>
+		static inline lyramilk::data::var functional(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env)
 		{
-			T* pthis = (T*)env[engine::s_env_this()].userdata(engine::s_user_nativeobject());
-			return (pthis->*(Q))(params,env);
+			T* pthis = (T*)env.find(engine::s_env_this())->second.userdata(engine::s_user_nativeobject());
+			return (pthis->*(Q))(args,env);
 		}
 
 		/**
@@ -207,8 +200,8 @@ namespace lyramilk{namespace script
 			log(lt,m) << str << std::endl;	\
 			throw lyramilk::exception(str);	\
 		}	\
-		lyramilk::data::var& v = params.at(i);	\
-		if(!v.type_compat(t)){	\
+		const lyramilk::data::var& v = params.at(i);	\
+		if(!v.type_like(t)){	\
 			lyramilk::data::string str = D("参数%d类型不兼容:%s，期待%s",i+1,v.type_name().c_str(),lyramilk::data::var::type_name(t).c_str());	\
 			log(lt,m) << str << std::endl;	\
 			throw lyramilk::exception(str);	\
@@ -219,8 +212,8 @@ namespace lyramilk{namespace script
 		if(params.size() < i + 1){	\
 			throw lyramilk::exception(D("参数太少"));	\
 		}	\
-		lyramilk::data::var& v = params.at(i);	\
-		if(!v.type_compat(t)){	\
+		const lyramilk::data::var& v = params.at(i);	\
+		if(!v.type_like(t)){	\
 			throw lyramilk::exception(D("参数%d类型不兼容:%s，期待%s",i+1,v.type_name().c_str(),lyramilk::data::var::type_name(t).c_str()));	\
 		}	\
 	}

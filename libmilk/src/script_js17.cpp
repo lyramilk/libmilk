@@ -437,12 +437,6 @@ namespace lyramilk{namespace script{namespace js
 
 	void jsdtr(JSFreeOp *fop, JSObject *obj)
 	{
-		/*
-		JSContext* cx = NULL;
-		for(;JS_ContextIterator(rt,&cx);){
-
-		}
-		*/
 		JSRuntime* rt = fop->runtime();
 		JSContext *cx = (JSContext *)JS_GetRuntimePrivate(rt);
 
@@ -560,7 +554,7 @@ namespace lyramilk{namespace script{namespace js
 		return JS_FALSE;
 	}
 
-	JSBool static js_func_adapter_noclass(JSContext *cx, unsigned argc, jsval *vp)
+	JSBool script_js::js_func_adapter_noclass(JSContext *cx, unsigned argc, jsval *vp)
 	{
 		JS::RootedObject callee(cx, JSVAL_TO_OBJECT(JS_CALLEE(cx, vp)));
 
@@ -649,190 +643,64 @@ namespace lyramilk{namespace script{namespace js
 		//JS_ShutDown();
 	}
 
-	bool script_js::load_string(lyramilk::data::string scriptstring)
+	bool script_js::load_string(bool permanent,lyramilk::data::string scriptstring)
 	{
-		init();
 		JS_SetRuntimeThread(rt);
-		JSContext *cx = (JSContext *)JS_GetRuntimePrivate(rt);
-		JS::RootedObject global(cx,JS_GetGlobalObject(cx));
-		JSScript* script = JS_CompileScript(cx,global,scriptstring.c_str(),scriptstring.size(),NULL,1);
+		JSContext* selectedcx = cx_template;
+		if(!permanent){
+			init();
+			selectedcx = (JSContext *)JS_GetRuntimePrivate(rt);
+		}
+		JS::RootedObject global(selectedcx,JS_GetGlobalObject(selectedcx));
+
+		JSScript* script = JS_CompileScript(selectedcx,global,scriptstring.c_str(),scriptstring.size(),NULL,1);
 		if(script){
-			return !!JS_ExecuteScript(cx,global,script,NULL);
+			return !!JS_ExecuteScript(selectedcx,global,script,NULL);
 		}
 		return false;
 	}
 
-	//lyramilk::debug::nsecdiff td;
-	/*
-	lyramilk::debug::clocktester _d(td,log(lyramilk::log::debug),k);
-	*/
-
-	void inline fsync(lyramilk::data::string file1,lyramilk::data::string file2,bool* file1exist,bool* file2exist,bool* issync)
-	{
-		struct stat statbuf[2];
-		if (stat (file1.c_str(), &statbuf[0]) == -1){
-			*file1exist = false;
-		}else{
-			*file1exist = true;
-		}
-		if (stat (file2.c_str(), &statbuf[1]) == -1){
-			*file2exist = false;
-		}else{
-			*file2exist = true;
-		}
-		if(*file1exist && *file2exist){
-			*issync = statbuf[0].st_mtime == statbuf[1].st_mtime;
-		}else{
-			*issync = false;
-		}
-	}
-
-#if 0
-	bool script_js::load_file(lyramilk::data::string scriptfile)
-	{
-		init();
-		JS_SetRuntimeThread(rt);
-		JSContext *cx = (JSContext *)JS_GetRuntimePrivate(rt);
-		JS::RootedObject global(cx,JS_GetGlobalObject(cx));
-
-		lyramilk::data::string precompliefile = scriptfile;
-		if(precompliefile.size() > 3){
-			if(precompliefile.compare(precompliefile.size() - 3,3,".js",3) == 0){
-				precompliefile.push_back('c');
-			}else{
-				precompliefile.append(".jsc");
-			}
-		}
-
-		bool isprecomplie = false;
-		JSScript* script = nullptr;
-
-		bool f1,f2,fs;
-		fsync(scriptfile,precompliefile,&f1,&f2,&fs);
-		if(f1 && f2 && fs){
-			/*
-lyramilk::data::string str = "从字节码编译" + scriptfile;
-lyramilk::debug::clocktester _d(td,std::cout,str);*/
-			lyramilk::data::string jsbuff;
-			std::ifstream ifs;
-			ifs.open(precompliefile.c_str(),std::ifstream::binary|std::ifstream::in);
-			if(ifs.is_open()){
-				char buff[65536];
-				while(ifs){
-					ifs.read(buff,65536);
-					jsbuff.append(buff,ifs.gcount());
-				}
-				ifs.close();
-				if(!jsbuff.empty()){
-					script = JS_DecodeScript(cx,jsbuff.c_str(),jsbuff.size(),nullptr,nullptr);
-					if(script){
-						isprecomplie = true;
-					}
-				}
-			}
-		}
-		if(!isprecomplie){
-			/*
-lyramilk::data::string str = "完整编译" + scriptfile;
-lyramilk::debug::clocktester _d(td,std::cout,str);*/
-			script = JS_CompileUTF8File(cx,global,scriptfile.c_str());
-		}
-
-		if(script){
-			bool ret = false;
-			if(scriptfilename.empty()){
-				scriptfilename = scriptfile;
-				ret = JS_ExecuteScript(cx,global,script,nullptr) == JS_TRUE;
-				if(!ret){
-					scriptfilename.clear();
-				}
-			}else{
-				ret = JS_ExecuteScript(cx,global,script,nullptr) == JS_TRUE;
-			}
-			if(ret && !isprecomplie){
-				uint32_t l = 0;
-				void* p = JS_EncodeScript(cx,script,&l);
-				std::ofstream ofs;
-				ofs.open(precompliefile.c_str(),std::ofstream::binary|std::ofstream::out);
-				if(ofs.is_open()){
-					ofs.write((const char*)p,l);
-					ofs.close();
-					struct stat statbuf;
-					if (stat (scriptfile.c_str(), &statbuf) != -1){
-						struct utimbuf tv;
-						tv.actime = statbuf.st_ctime;
-						tv.modtime = statbuf.st_mtime;
-						utime(precompliefile.c_str(),&tv);
-					}
-				}
-			}
-			return ret;
-		}
-		return false;
-	}
-#else
-	bool script_js::load_file(lyramilk::data::string scriptfile)
+	bool script_js::load_file(bool permanent,lyramilk::data::string scriptfile)
 	{
 		if(scriptfilename.empty()){
 			scriptfilename = scriptfile;
 		}
-		/**
-		JS_SetRuntimeThread(rt);
-		JSContext *cx = (JSContext *)JS_GetRuntimePrivate(rt);
-		if(!cx){
-			struct stat statbuf;
-			stat (scriptfile.c_str(), &statbuf);
-			void* cx_timestamp = (void*)statbuf.st_mtime;
 
-			std::map<lyramilk::data::string,JSContext*>::iterator it = fm.find(scriptfile);
-			if(it!=fm.end()){
-				void* timestamp = JS_GetContextPrivate(it->second);
-				if(cx_timestamp == timestamp){
-					JS_SetRuntimePrivate(rt,it->second);
-					cx = it->second;
-					return true;
-				}
-				fm.erase(it);
-				JS_DestroyContext(it->second);
-			}
-			init();
-			cx = (JSContext *)JS_GetRuntimePrivate(rt);
-			if(!cx) return false;
-			JS_SetContextPrivate(cx,cx_timestamp);
-			fm[scriptfile] = cx;
-		}
-		/*/
-		//非重用
-		init();
 		JS_SetRuntimeThread(rt);
-		JSContext *cx = (JSContext *)JS_GetRuntimePrivate(rt);
-		/**/
-		JS::RootedObject global(cx,JS_GetGlobalObject(cx));
+		JSContext* selectedcx = cx_template;
+		if(!permanent){
+			init();
+			selectedcx = (JSContext *)JS_GetRuntimePrivate(rt);
+		}
+		JS::RootedObject global(selectedcx,JS_GetGlobalObject(selectedcx));
 
 		JSScript* script = nullptr;
-		script = JS_CompileUTF8File(cx,global,scriptfile.c_str());
+		script = JS_CompileUTF8File(selectedcx,global,scriptfile.c_str());
 		if(!script)return false;
-		return !!JS_ExecuteScript(cx,global,script,nullptr);
+		return !!JS_ExecuteScript(selectedcx,global,script,nullptr);
 	}
-#endif
-	lyramilk::data::var script_js::call(lyramilk::data::var func,lyramilk::data::var::array args)
-	{
-		init();
-		JS_SetRuntimeThread(rt);
-		JSContext *cx = (JSContext *)JS_GetRuntimePrivate(rt);
-		JS::RootedObject global(cx,JS_GetGlobalObject(cx));
 
-		if(func.type_compat(lyramilk::data::var::t_str)){
+	lyramilk::data::var script_js::call(bool permanent,lyramilk::data::var func,lyramilk::data::var::array args)
+	{
+		JS_SetRuntimeThread(rt);
+		JSContext* selectedcx = cx_template;
+		if(!permanent){
+			init();
+			selectedcx = (JSContext *)JS_GetRuntimePrivate(rt);
+		}
+		JS::RootedObject global(selectedcx,JS_GetGlobalObject(selectedcx));
+
+		if(func.type_like(lyramilk::data::var::t_str)){
 			jsval retval;
 			std::vector<jsval> jvs;
 			for(lyramilk::data::var::array::iterator it = args.begin();it!=args.end();++it){
 				lyramilk::data::var& v = *it;
-				jvs.push_back(v2j(cx,v));
+				jvs.push_back(v2j(selectedcx,v));
 			}
 
-			if(JS_TRUE == JS_CallFunctionName(cx,global,func.str().c_str(),jvs.size(),jvs.data(),&retval)){
+			if(JS_TRUE == JS_CallFunctionName(selectedcx,global,func.str().c_str(),jvs.size(),jvs.data(),&retval)){
 				lyramilk::data::var ret;
-				j2v(cx,retval,ret);
+				j2v(selectedcx,retval,ret);
 				return ret;
 			}
 		}else if(func.type() == lyramilk::data::var::t_user){
@@ -841,18 +709,18 @@ lyramilk::debug::clocktester _d(td,std::cout,str);*/
 			if(!jid) return lyramilk::data::var::nil;
 			jsval retval;
 			jsval jv;
-			JS_IdToValue(cx,jid,&jv);
-			JSFunction *fun = JS_ValueToFunction(cx,jv);
+			JS_IdToValue(selectedcx,jid,&jv);
+			JSFunction *fun = JS_ValueToFunction(selectedcx,jv);
 
 			std::vector<jsval> jvs;
 			for(lyramilk::data::var::array::iterator it = args.begin();it!=args.end();++it){
 				lyramilk::data::var& v = *it;
-				jvs.push_back(v2j(cx,v));
+				jvs.push_back(v2j(selectedcx,v));
 			}
 
-			if(JS_TRUE == JS_CallFunction(cx,global,fun,jvs.size(),jvs.data(),&retval)){
+			if(JS_TRUE == JS_CallFunction(selectedcx,global,fun,jvs.size(),jvs.data(),&retval)){
 				lyramilk::data::var ret;
-				j2v(cx,retval,ret);
+				j2v(selectedcx,retval,ret);
 				return ret;
 			}
 		}
@@ -861,95 +729,95 @@ lyramilk::debug::clocktester _d(td,std::cout,str);*/
 
 	void script_js::reset()
 	{
-		/**
-		//重用
 		JS_SetRuntimeThread(rt);
-		JSContext *cx = (JSContext *)JS_GetRuntimePrivate(rt);
-		if(cx){
-			JS_GC(rt);
-			JS_SetRuntimePrivate(rt,nullptr);
-		}
-		/*/
-		//非重用
-		JS_SetRuntimeThread(rt);
-		JSContext *cx = (JSContext *)JS_GetRuntimePrivate(rt);
-		if(cx){
-			JS_DestroyContext(cx);
+		JSContext *selectedcx = (JSContext *)JS_GetRuntimePrivate(rt);
+		if(selectedcx){
+			JS_DestroyContext(selectedcx);
 			JS_SetRuntimePrivate(rt,nullptr);
 			scriptfilename.clear();
+			mparams["clearonreset"].clear();
 		}
-		/**/
 	}
 
-	void script_js::define(lyramilk::data::string classname,functional_map m,class_builder builder,class_destoryer destoryer)
+	void script_js::define(bool permanent,lyramilk::data::string classname,functional_map m,class_builder builder,class_destoryer destoryer)
 	{
 		JS_SetRuntimeThread(rt);
-		JS::RootedObject global(cx_template,JS_GetGlobalObject(cx_template));
+		JSContext* selectedcx = cx_template;
+		if(!permanent){
+			init();
+			selectedcx = (JSContext *)JS_GetRuntimePrivate(rt);
+		}
+		JS::RootedObject global(selectedcx,JS_GetGlobalObject(selectedcx));
 
 		//std::cout << "注册类：" << classname << ",构造:" << (void*)builder << ",释放" << (void*)destoryer << std::endl;
-		JSObject* jo = JS_DefineObject(cx_template,global,classname.c_str(),&classesClass,NULL,0);
+		JSObject* jo = JS_DefineObject(selectedcx,global,classname.c_str(),&classesClass,NULL,0);
 		assert(jo);
 		jsid joid;
-		JS_GetObjectId(cx_template,jo,&joid);
-		this->m[classname] = joid;
+		JS_GetObjectId(selectedcx,jo,&joid);
+		this->mdefs[classname] = joid;
 
-		js_set_property_ptr(cx_template,jo,"__new",(void*)builder);
-		js_set_property_ptr(cx_template,jo,"__delete",(void*)destoryer);
-		js_set_property_ptr(cx_template,jo,"__env",(void*)this);
+		js_set_property_ptr(selectedcx,jo,"__new",(void*)builder);
+		js_set_property_ptr(selectedcx,jo,"__delete",(void*)destoryer);
+		js_set_property_ptr(selectedcx,jo,"__env",(void*)this);
 		
 		functional_map::iterator it = m.begin();
 		for(;it!=m.end();++it){
 			//std::cout << "\t注册函数：" << it->first << "," << (void*)it->second << std::endl;
-			JSFunction *f = JS_DefineFunction(cx_template,jo,it->first.c_str(),js_func_adapter,10,10);
+			JSFunction *f = JS_DefineFunction(selectedcx,jo,it->first.c_str(),js_func_adapter,10,10);
 			assert(f);
 			JSObject *fo = JS_GetFunctionObject(f);
 			assert(fo);
-			js_set_property_ptr(cx_template,fo,"__function_pointer",(void*)it->second);
+			js_set_property_ptr(selectedcx,fo,"__function_pointer",(void*)it->second);
 		}
 	}
 	
-	void script_js::define(lyramilk::data::string funcname,functional_type func)
+	void script_js::define(bool permanent,lyramilk::data::string funcname,functional_type func)
 	{
-		//std::cout << "注册全局函数：" << funcname << "," << (void*)func << std::endl;
 		JS_SetRuntimeThread(rt);
-		JS::RootedObject global(cx_template,JS_GetGlobalObject(cx_template));
-		JSFunction *f = JS_DefineFunction(cx_template,global,funcname.c_str(),js_func_adapter_noclass,10,10);
+		JSContext* selectedcx = cx_template;
+		if(!permanent){
+			init();
+			selectedcx = (JSContext *)JS_GetRuntimePrivate(rt);
+		}
+		JS::RootedObject global(selectedcx,JS_GetGlobalObject(selectedcx));
+		//std::cout << "注册全局函数：" << funcname << "," << (void*)func << std::endl;
+		JSFunction *f = JS_DefineFunction(selectedcx,global,funcname.c_str(),js_func_adapter_noclass,10,10);
 		JSObject *fo = JS_GetFunctionObject(f);
-		js_set_property_ptr(cx_template,fo,"__function_pointer",(void*)func);
-		js_set_property_ptr(cx_template,fo,"__env_pointer",(void*)this);
+		js_set_property_ptr(selectedcx,fo,"__function_pointer",(void*)func);
+		js_set_property_ptr(selectedcx,fo,"__env_pointer",(void*)this);
 	}
 
 	lyramilk::data::var script_js::createobject(lyramilk::data::string classname,lyramilk::data::var::array args)
 	{
 		init();
 		JS_SetRuntimeThread(rt);
-		JSContext *cx = (JSContext *)JS_GetRuntimePrivate(rt);
-		JS::RootedObject global(cx,JS_GetGlobalObject(cx));
+		JSContext *selectedcx = (JSContext *)JS_GetRuntimePrivate(rt);
+		JS::RootedObject global(selectedcx,JS_GetGlobalObject(selectedcx));
 
-		std::map<lyramilk::data::string,jsid>::iterator it = m.find(classname);
-		if(it==m.end()) return lyramilk::data::var::nil;
+		std::map<lyramilk::data::string,jsid>::iterator it = mdefs.find(classname);
+		if(it==mdefs.end()) return lyramilk::data::var::nil;
 
 		JSObject* jsobj = JSID_TO_OBJECT(it->second);
 
-		void *pfuncnew = js_get_property_ptr(cx,jsobj,"__new");
-		void *pfuncdel = js_get_property_ptr(cx,jsobj,"__delete");
+		void *pfuncnew = js_get_property_ptr(selectedcx,jsobj,"__new");
+		void *pfuncdel = js_get_property_ptr(selectedcx,jsobj,"__delete");
 		void *pnewobj = NULL;
 		engine::class_builder pfun = (engine::class_builder)pfuncnew;
 		if(!pfun) return lyramilk::data::var::nil;
 
 		pnewobj = pfun(args);
-		JSObject* jsret = JS_NewObject(cx,&nativeClass,jsobj,global);
+		JSObject* jsret = JS_NewObject(selectedcx,&nativeClass,jsobj,global);
 
 		js_obj_pack *ppack = new js_obj_pack((engine::class_destoryer)pfuncdel,this,pnewobj);
 		jsval jv = PRIVATE_TO_JSVAL(ppack);
 
-		if(JS_TRUE != JS_SetProperty(cx,jsret,"__script_native",&jv)){
+		if(JS_TRUE != JS_SetProperty(selectedcx,jsret,"__script_native",&jv)){
 			delete ppack;
 			return lyramilk::data::var::nil;
 		}
 
 		jsid jsretid;
-		JS_GetObjectId(cx,jsret,&jsretid);
+		JS_GetObjectId(selectedcx,jsret,&jsretid);
 		lyramilk::data::var v(engine::s_user_objectid(),(const void*)jsretid);
 		v.userdata(engine::s_user_nativeobject(),pnewobj);
 		return v;

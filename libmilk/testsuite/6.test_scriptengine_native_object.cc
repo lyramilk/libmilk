@@ -32,13 +32,13 @@ class os
 		delete (os*)p;
 	}
 
-	lyramilk::data::var print(lyramilk::data::var::array args,lyramilk::data::var::map env)
+	lyramilk::data::var print(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env)
 	{
 		MILK_CHECK_SCRIPT_ARGS(args,0,lyramilk::data::var::t_str);
 		std::cout << lyramilk::ansi_3_64::green << args[0] << lyramilk::ansi_3_64::reset << std::endl;
 		return true;
 	}
-	lyramilk::data::var desc(lyramilk::data::var::array args,lyramilk::data::var::map env)
+	lyramilk::data::var desc(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env)
 	{
 		return "test_system";
 	}
@@ -80,21 +80,21 @@ class number
 		std::cout << lyramilk::ansi_3_64::green << "+++++++++++++++++++++++++++++++++++++++ 析构number " << this << lyramilk::ansi_3_64::reset << std::endl;
 	}
 
-	lyramilk::data::var add(lyramilk::data::var::array args,lyramilk::data::var::map env)
+	lyramilk::data::var add(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env)
 	{
 		std::cout << lyramilk::ansi_3_64::green << "[add]this=" << this << "," << i << "," << args.size() << lyramilk::ansi_3_64::reset << std::endl;
 		MILK_CHECK_SCRIPT_ARGS_LOG(log,lyramilk::log::warning,__FUNCTION__,args,0,lyramilk::data::var::t_str);
 		return i + (int)args[0];
 	}
 
-	lyramilk::data::var sub(lyramilk::data::var::array args,lyramilk::data::var::map env)
+	lyramilk::data::var sub(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env)
 	{
 		std::cout << lyramilk::ansi_3_64::green << "[sub]this=" << this << "," << i << "," << args << lyramilk::ansi_3_64::reset << std::endl;
 		MILK_CHECK_SCRIPT_ARGS_LOG(log,lyramilk::log::warning,__FUNCTION__,args,0,lyramilk::data::var::t_str);
 		return i - (int)args[0];
 	}
 
-	lyramilk::data::var testmap(lyramilk::data::var::array args,lyramilk::data::var::map env)
+	lyramilk::data::var testmap(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env)
 	{
 		std::cout << lyramilk::ansi_3_64::green << "[testmap]" << args << lyramilk::ansi_3_64::reset << std::endl;
 		lyramilk::data::var::map m;
@@ -102,27 +102,27 @@ class number
 		m["orange"] = 333;
 		return m;
 	}
-	lyramilk::data::var desc(lyramilk::data::var::array args,lyramilk::data::var::map env)
+	lyramilk::data::var desc(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env)
 	{
 		return "test_number";
 	}
 };
 
-lyramilk::data::var echo(lyramilk::data::var::array args,lyramilk::data::var::map env)
+lyramilk::data::var echo(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env)
 {
 	MILK_CHECK_SCRIPT_ARGS(args,0,lyramilk::data::var::t_str);
 	std::cout << lyramilk::ansi_3_64::green << args[0] << lyramilk::ansi_3_64::reset << std::endl;
 	return true;
 }
 
-lyramilk::data::var add(lyramilk::data::var::array args,lyramilk::data::var::map env)
+lyramilk::data::var add(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env)
 {
 	MILK_CHECK_SCRIPT_ARGS(args,0,lyramilk::data::var::t_int32);
 	MILK_CHECK_SCRIPT_ARGS(args,1,lyramilk::data::var::t_int32);
 	return (int)args[0] + (int)args[1];
 }
 
-lyramilk::data::var addm(lyramilk::data::var::array args,lyramilk::data::var::map env)
+lyramilk::data::var addm(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env)
 {
 	MILK_CHECK_SCRIPT_ARGS(args,0,lyramilk::data::var::t_map);
 	return (int)args[0]["k"] + (int)args[0]["v"];
@@ -136,20 +136,20 @@ void test_script(lyramilk::data::string file,lyramilk::script::engine* eng)
 		fn["sub"] = lyramilk::script::engine::functional<number,&number::sub>;
 		fn["testmap"] = lyramilk::script::engine::functional<number,&number::testmap>;
 		fn["desc"] = lyramilk::script::engine::functional<number,&number::desc>;
-		eng->define("test_number",fn,number::ctr,number::dtr);
+		eng->define(true,"test_number",fn,number::ctr,number::dtr);
 	}
 
 	{
 		lyramilk::script::engine::functional_map fn;
 		fn["print"] = lyramilk::script::engine::functional<os,&os::print>;
 		fn["desc"] = lyramilk::script::engine::functional<os,&os::desc>;
-		eng->define("test_system",fn,os::ctr,os::dtr);
+		eng->define(true,"test_system",fn,os::ctr,os::dtr);
 	}
-	eng->define("myecho",echo);
-	eng->define("myadd",add);
-	eng->define("myaddm",addm);
+	eng->define(true,"myecho",echo);
+	eng->define(true,"myadd",add);
+	eng->define(true,"myaddm",addm);
 	{
-		eng->load_file(file);
+		eng->load_file(false,file);
 		//std::cout << "加载" << file << "完成" << std::endl;
 
 		lyramilk::data::var::array r;

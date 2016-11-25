@@ -66,10 +66,10 @@ void test_c(const lyramilk::data::string& str,lyramilk::data::string alg)
 	long long d1,d2;
 
 	nd.mark();
-	lyramilk::data::string deststr = lyramilk::data::codes::instance()->encode(str,alg);
+	lyramilk::data::string deststr = lyramilk::data::codes::instance()->encode(alg,str);
 	d1 = nd.diff();
 	nd.mark();
-	lyramilk::data::string str2 = lyramilk::data::codes::instance()->decode(deststr,alg);
+	lyramilk::data::string str2 = lyramilk::data::codes::instance()->decode(alg,deststr);
 	d2 = nd.diff();
 
 	std::cout << "变换算法" << alg << "，en=" << deststr.size() << "(" << d1 << "),de=" << str2.size() << "(" << d2 << ")" << std::endl;

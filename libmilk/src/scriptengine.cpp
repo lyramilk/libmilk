@@ -16,17 +16,17 @@ namespace lyramilk{namespace script
 		lyramilk::data::var::map::iterator it = _mparams.find(k);
 		if(it == _mparams.end()) return lyramilk::data::var::nil;
 		return it->second;*/
-		return _mparams[k];
+		return mparams[k];
 	}
 
 	bool engine::set(lyramilk::data::string k,lyramilk::data::var v)
 	{
-		_mparams[k] = v;
+		mparams[k] = v;
 		return true;
 	}
 
 
-	bool engine::load_file(lyramilk::data::string scriptfile)
+	bool engine::load_file(bool permanent,lyramilk::data::string scriptfile)
 	{
 		lyramilk::data::string str;
 		std::ifstream ifs;
@@ -38,23 +38,13 @@ namespace lyramilk{namespace script
 			str.append(buff,(unsigned int)ifs.gcount());
 		}
 		ifs.close();
-		return load_string(str);
+		return load_string(permanent,str);
 	}
 
-	bool engine::snaphot_from(lyramilk::data::string bytecodefilepath)
-	{
-		return false;
-	}
-
-	bool engine::snaphot_to(lyramilk::data::string bytecodefilepath)
-	{
-		return false;
-	}
-
-	lyramilk::data::var engine::call(lyramilk::data::var func)
+	lyramilk::data::var engine::call(bool permanent,lyramilk::data::var func)
 	{
 		lyramilk::data::var::array a;
-		return call(func,a);
+		return call(permanent,func,a);
 	}
 	
 	void engine::gc()

@@ -177,7 +177,7 @@ namespace lyramilk{namespace data
 		{
 			string p;
 		  public:
-			type_invalid(string msg = "");
+			type_invalid(string msg);
 			virtual ~type_invalid() throw();
 			virtual const char* what() const throw();
 		};
@@ -288,32 +288,13 @@ namespace lyramilk{namespace data
 
 		var& operator =(const var& v);
 
-		var& at(lyramilk::data::uint32 index) throw(type_invalid)
-		{/*
-			if(t == t_map){
-				return u.m->operator[](var(index));
-			}*/
-			if(t == t_array){
-				return u.a->at(index);
-			}
-			throw type_invalid();
-		}
-		var& at(const string& index) throw(type_invalid)
-		{
-			if(t == t_map){
-				return u.m->operator[](index);
-			}
-			throw type_invalid();
-		}
-		var& at(const wstring& index) throw(type_invalid)
-		{
-			if(t == t_map){
-				var str = index;
-				return u.m->operator[](str.str());
-			}
-			throw type_invalid();
-		}
+		var& at(lyramilk::data::uint64 index) throw(type_invalid);
+		var& at(const string& index) throw(type_invalid);
+		var& at(const wstring& index) throw(type_invalid);
 
+		const var& at(lyramilk::data::uint64 index) const throw(type_invalid);
+		const var& at(const string& index) const throw(type_invalid);
+		const var& at(const wstring& index) const throw(type_invalid);
 		/**
 			@brief 为var赋值
 			@details 用另外一个var赋值这个var。
@@ -371,9 +352,6 @@ namespace lyramilk{namespace data
 		operator map& () throw(type_invalid);
 		operator const map& () const throw(type_invalid);
 
-
-		THIS_FUNCTION_IS_DEPRECATED(const char* c_str() const throw(type_invalid));
-		THIS_FUNCTION_IS_DEPRECATED(const wchar_t* c_wstr() const throw(type_invalid));
 		/**
 			@brief 定义额外的用户数据。
 			@param v 用户数据的标识。
@@ -418,23 +396,39 @@ namespace lyramilk{namespace data
 			@param nt 目标var类型。
 			@return 返回是否可以转换。
 		*/
-		bool type_compat(vt nt);
+		bool type_like(vt nt) const;
 
-		var& operator[](const char* index);
-		var& operator[](const wchar_t* index);
-		var& operator[](const string& index);
-		var& operator[](const wstring& index);
-		var& operator[](bool index);
-		var& operator[](int8 index);
-		var& operator[](uint8 index);
-		var& operator[](int16 index);
-		var& operator[](uint16 index);
-		var& operator[](int32 index);
-		var& operator[](uint32 index);
-		var& operator[](long index);
-		var& operator[](int64 index);
-		var& operator[](uint64 index);
-		var& operator[](double index);
+		var& operator[](const char* index) throw(type_invalid);
+		var& operator[](const wchar_t* index) throw(type_invalid);
+		var& operator[](const string& index) throw(type_invalid);
+		var& operator[](const wstring& index) throw(type_invalid);
+		var& operator[](bool index) throw(type_invalid);
+		var& operator[](int8 index) throw(type_invalid);
+		var& operator[](uint8 index) throw(type_invalid);
+		var& operator[](int16 index) throw(type_invalid);
+		var& operator[](uint16 index) throw(type_invalid);
+		var& operator[](int32 index) throw(type_invalid);
+		var& operator[](uint32 index) throw(type_invalid);
+		var& operator[](long index) throw(type_invalid);
+		var& operator[](int64 index) throw(type_invalid);
+		var& operator[](uint64 index) throw(type_invalid);
+		var& operator[](double index) throw(type_invalid);
+
+		const var& operator[](const char* index) const throw(type_invalid);
+		const var& operator[](const wchar_t* index) const throw(type_invalid);
+		const var& operator[](const string& index) const throw(type_invalid);
+		const var& operator[](const wstring& index) const throw(type_invalid);
+		const var& operator[](bool index) const throw(type_invalid);
+		const var& operator[](int8 index) const throw(type_invalid);
+		const var& operator[](uint8 index) const throw(type_invalid);
+		const var& operator[](int16 index) const throw(type_invalid);
+		const var& operator[](uint16 index) const throw(type_invalid);
+		const var& operator[](int32 index) const throw(type_invalid);
+		const var& operator[](uint32 index) const throw(type_invalid);
+		const var& operator[](long index) const throw(type_invalid);
+		const var& operator[](int64 index) const throw(type_invalid);
+		const var& operator[](uint64 index) const throw(type_invalid);
+		const var& operator[](double index) const throw(type_invalid);
 
 		/**
 			@brief 以字符串返回

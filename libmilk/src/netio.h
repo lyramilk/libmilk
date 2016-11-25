@@ -80,8 +80,8 @@ namespace lyramilk{namespace netio
 		friend class socket_stream;
 	  protected:
 		lyramilk::netio::socket* psock;
-		std::vector<char> putbuf;
-		std::vector<char> getbuf;
+		char putbuf[2048];
+		char getbuf[2048];
 		virtual int_type sync();
 		virtual int_type overflow (int_type c = traits_type::eof());
 		virtual int_type underflow();

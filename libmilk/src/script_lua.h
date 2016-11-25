@@ -28,13 +28,13 @@ namespace lyramilk{namespace script{namespace lua
 	  public:
 		script_lua();
 		virtual ~script_lua();
-		virtual bool load_string(lyramilk::data::string script);
-		virtual bool load_file(lyramilk::data::string scriptfile);
-		virtual lyramilk::data::var call(lyramilk::data::var func,lyramilk::data::var::array args);
-		virtual void reset();
-		virtual void define(lyramilk::data::string classname,functional_map m,class_builder builder,class_destoryer destoryer);
+		virtual bool load_string(bool permanent,lyramilk::data::string script);
+		virtual bool load_file(bool permanent,lyramilk::data::string scriptfile);
+		virtual lyramilk::data::var call(bool permanent,lyramilk::data::var func,lyramilk::data::var::array args);
+		virtual void define(bool permanent,lyramilk::data::string classname,functional_map m,class_builder builder,class_destoryer destoryer);
+		virtual void define(bool permanent,lyramilk::data::string funcname,functional_type func);
 		virtual lyramilk::data::var createobject(lyramilk::data::string classname,lyramilk::data::var::array args);
-		virtual void define(lyramilk::data::string funcname,functional_type func);
+		virtual void reset();
 		virtual void gc();
 		virtual lyramilk::data::string name();
 		virtual lyramilk::data::string filename();

@@ -194,8 +194,11 @@ namespace lyramilk{namespace netio
 		r = ::send(psock->sock,p,l,0);
 #endif
 		if(r>0){
-			setp(putbuf.data() + r,putbuf.data() + putbuf.size());
-			sputc(c);
+//COUT.write(p,r) << std::endl;
+			setp(putbuf + l - r,putbuf + sizeof(putbuf));
+			if(c != traits_type::eof()){
+				sputc(c);
+			}
 			return 0;
 		}
 		return traits_type::eof();
@@ -203,10 +206,9 @@ namespace lyramilk{namespace netio
 
 	socket_stream_buf::int_type socket_stream_buf::underflow()
 	{
-		char* p = getbuf.data();
-		int l = getbuf.size();
+		char* p = getbuf;
+		int l = sizeof(getbuf);
 		int r = 0;
-errno = 0;
 #ifdef OPENSSL_FOUND
 		if(psock->ssl()){
 			r = SSL_read((SSL*)psock->sslobj, p,l);
@@ -217,21 +219,17 @@ errno = 0;
 		r = ::recv(psock->sock,p,l,0);
 #endif
 		if(r>0){
-			setg(getbuf.data(),getbuf.data(),getbuf.data() + r);
-			//return sgetc();
-			//return sbumpc();
-			return *egptr();
+//COUT.write(p,r) << std::endl;
+			setg(getbuf,getbuf,getbuf + r);
+			return sgetc();
 		}
 		return traits_type::eof();
 	}
 
 	socket_stream_buf::socket_stream_buf()
 	{
-		putbuf.assign(0x4000,0);
-		setp(putbuf.data(),putbuf.data() + putbuf.size());
-
-		getbuf.assign(0x4000,0);
-		setg(getbuf.data(),getbuf.data() + getbuf.size(),getbuf.data() + getbuf.size());
+		setp(putbuf,putbuf + sizeof(putbuf));
+		setg(getbuf,getbuf + sizeof(getbuf),getbuf + sizeof(getbuf));
 	}
 
 	socket_stream_buf::~socket_stream_buf()

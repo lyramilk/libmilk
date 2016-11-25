@@ -16,25 +16,25 @@ namespace lyramilk{namespace script{namespace js
 		JSRuntime* rt;
 		JSContext* cx_template;
 
-		std::map<lyramilk::data::string,jsid> m;
+		std::map<lyramilk::data::string,jsid> mdefs;
 		lyramilk::data::string scriptfilename;
-		bool isinited;
-		//std::map<lyramilk::data::string,JSContext*> fm;
-	  public:
+
 		lyramilk::data::var::map info;
+
+		JSBool static js_func_adapter_noclass(JSContext *cx, unsigned argc, jsval *vp);
+	  public:
 		script_js();
 		virtual ~script_js();
-		virtual bool load_string(lyramilk::data::string script);
-		virtual bool load_file(lyramilk::data::string scriptfile);
-		virtual lyramilk::data::var call(lyramilk::data::var func,lyramilk::data::var::array args);
-		virtual void reset();
-		virtual void define(lyramilk::data::string classname,functional_map m,class_builder builder,class_destoryer destoryer);
-		virtual void define(lyramilk::data::string funcname,functional_type func);
+		virtual bool load_string(bool permanent,lyramilk::data::string script);
+		virtual bool load_file(bool permanent,lyramilk::data::string scriptfile);
+		virtual lyramilk::data::var call(bool permanent,lyramilk::data::var func,lyramilk::data::var::array args);
+		virtual void define(bool permanent,lyramilk::data::string classname,functional_map m,class_builder builder,class_destoryer destoryer);
+		virtual void define(bool permanent,lyramilk::data::string funcname,functional_type func);
 		virtual lyramilk::data::var createobject(lyramilk::data::string classname,lyramilk::data::var::array args);
+		virtual void reset();
 		virtual void gc();
 		virtual lyramilk::data::string name();
 		virtual lyramilk::data::string filename();
-
 		void init();
 	};
 
