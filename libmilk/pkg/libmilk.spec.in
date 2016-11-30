@@ -24,19 +24,21 @@ Prefix:		%{_sysconfdir}
 	make install
 	tree %{?_builddir}/%{?name}/output
 	sed -ri "s,(Version:)\s*([0-9\.]*)(.*),\1%{?version}\3," %{?_builddir}/%{?name}/output/%{?name}.pc
-	cat  %{?_builddir}/%{?name}/output/%{?name}.pc
+	#cat  %{?_builddir}/%{?name}/output/%{?name}.pc
 %install
 	mkdir -p %{?buildroot}%{?_includedir}/%{?name}
 	mkdir -p %{?buildroot}%{?_libdir}
 	mkdir -p %{?buildroot}%{?_libdir}/pkgconfig
 	mkdir -p %{?buildroot}%{?_sysconfdir}/%{?name}
 	mkdir -p %{?buildroot}%{?_mandir}
+	mkdir -p %{?buildroot}%{_usr}/share/gdb/auto-load%{?_libdir}
 
 	mv %{?_builddir}/%{?name}/output/*.h %{?buildroot}%{?_includedir}/%{?name}
 #	mv %{?_builddir}/%{?name}/output/*.a %{?buildroot}%{?_libdir}
 	mv %{?_builddir}/%{?name}/output/*.so %{?buildroot}%{?_libdir}
 	mv %{?_builddir}/%{?name}/output/*.so.* %{?buildroot}%{?_libdir}
 	mv %{?_builddir}/%{?name}/output/*.pc %{?buildroot}%{?_libdir}/pkgconfig
+	mv %{?_builddir}/%{?name}/output/*.py %{?buildroot}%{_usr}/share/gdb/auto-load%{?_libdir}/%{?name}.so.%{?version}-gdb.py
 
 #清理
 %clean
@@ -58,6 +60,9 @@ Prefix:		%{_sysconfdir}
 %files
 	%defattr(-,root,root,-)
 	%{?_libdir}/%{?name}.so.*
+	%{_usr}/share/gdb/auto-load%{?_libdir}/*.py
+	%{_usr}/share/gdb/auto-load%{?_libdir}/*.pyc
+	%{_usr}/share/gdb/auto-load%{?_libdir}/*.pyo
 #	%{?_libdir}/%{?name}.so.%{?version}
 #	%config(noreplace) %{?_sysconfdir}/%{?name}/*
 

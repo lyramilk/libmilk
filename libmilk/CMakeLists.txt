@@ -1,6 +1,6 @@
 ﻿#定义工程名及版本
 project(milk)
-set(version 1.1.20)
+set(version 1.1.21)
 set(soversion 1.1)
 
 cmake_minimum_required (VERSION 2.8.11) 
@@ -25,8 +25,8 @@ enable_testing()
 #定制编译选项
 
 if(release)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O4 -DNDEBUG -Wall --std=c++0x ")
-	set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} -O4 -Wall ")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O4 -DNDEBUG -Wall --std=c++0x ")
+	set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} -g -O4 -Wall ")
 	message("Build as release")
 else()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall --std=c++0x -fstack-protector ")
@@ -49,6 +49,7 @@ aux_source_directory(src src_cpps)
 
 #搜索头文件
 file(GLOB src_hs RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.h)
+
 include_directories(src)
 
 if(UNIX)
@@ -185,6 +186,7 @@ endif()
 
 #定义安装目标
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/pkg/lib${PROJECT_NAME}.pc DESTINATION ${install_dir})
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/pkg/lib${PROJECT_NAME}_gdb.py DESTINATION ${install_dir})
 install(FILES ${src_hs} DESTINATION ${install_dir})
 install(TARGETS ${PROJECT_NAME} DESTINATION ${install_dir})
 if(PROJECT_LIBRARY_BOTH)

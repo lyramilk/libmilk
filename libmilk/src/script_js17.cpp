@@ -48,20 +48,6 @@ namespace lyramilk{namespace script{namespace js
 
 	static bool js_set_property_ptr(JSContext *cx,JSObject* o,lyramilk::data::string name,void* ptr)
 	{
-		/*
-		lyramilk::data::string name_flag = name + "__flag";
-		int offset = ((long)ptr) & 1;
-		if(offset){
-			jsval jvflag = INT_TO_JSVAL(1);
-			JS_SetProperty(cx,o,name_flag.c_str(),&jvflag);
-		}else{
-			jsval jvflag = INT_TO_JSVAL(0);
-			JS_SetProperty(cx,o,name_flag.c_str(),&jvflag);
-		}
-		jsval jv = PRIVATE_TO_JSVAL(ptr);
-		JS_SetProperty(cx,o,name.c_str(),&jv);
-		/*/
-
 		jsval jv;
 		jv.setUnmarkedPtr(ptr);
 		return !!JS_SetProperty(cx,o,name.c_str(),&jv);
@@ -70,27 +56,6 @@ namespace lyramilk{namespace script{namespace js
 
 	static void* js_get_property_ptr(JSContext *cx,JSObject* o,lyramilk::data::string name)
 	{
-		/*
-		lyramilk::data::string name_flag = name + "__flag";
-		jsval __flag;
-		long offset = 0;
-		if(JS_GetProperty(cx,o,name_flag.c_str(),&__flag)){
-			if(JSVAL_IS_INT(__flag)){
-				offset = JSVAL_TO_INT(__flag);
-			}
-		}
-		jsval __prop;
-		if(JS_GetProperty(cx,o,name.c_str(),&__prop)){
-			if(JSVAL_IS_DOUBLE(__prop)){
-				const char* p = (const char*)JSVAL_TO_PRIVATE(__prop);
-				return (void*)&p[offset];
-			}
-		}
-
-		return nullptr;
-		
-		/*/
-
 		jsval __prop;
 		__prop.setUndefined();
 		if(JS_GetProperty(cx,o,name.c_str(),&__prop)){
@@ -98,16 +63,7 @@ namespace lyramilk{namespace script{namespace js
 			return __prop.toUnmarkedPtr();
 		}
 		return nullptr;
-		/**/
 	}
-
-	/*
-	static jsid js_object_to_jsid(JSContext *cx,JSObject* jo)
-	{
-		jsid joid;
-		JS_GetObjectId(cx,jo,&joid);
-		return joid;
-	}*/
 
 	struct js_obj_pack
 	{
@@ -142,13 +98,13 @@ namespace lyramilk{namespace script{namespace js
 			return;
 		}else if(jv.isString()){
 			JSString* jstr = jv.toString();
+			if(jstr == nullptr){
+				retv = lyramilk::data::var::nil;
+				return;
+			}
 			size_t len = 0;
 			const jschar* cstr = JS_GetStringCharsZAndLength(cx,jstr,&len);
-/*
-			int slen = len*(sizeof(jschar)/sizeof(char));
-			lyramilk::data::string str;
-			iconv((const char*)cstr,slen,str,"utf16le","utf8");
-/*/
+
 			lyramilk::data::string str;
 			str.reserve(len*3);
 			for(size_t i =0;i<len;++i){
@@ -164,7 +120,7 @@ namespace lyramilk{namespace script{namespace js
 					str.push_back((unsigned char)((wc>>0)&0x3f) | 0x80);
 				}
 			}
-/**/
+
 			retv = str;
 			return;
 		}else if(jv.isObject()){
@@ -183,9 +139,15 @@ namespace lyramilk{namespace script{namespace js
 					JS_LookupElement(cx,jo,i,&jv);
 					j2v(cx,jv,r[i]);
 				}
-			}else if(JS_ObjectIsFunction(cx,jo)){
+			}else if(JS_ObjectIsCallable(cx,jo)){
 				jsid jid = OBJECT_TO_JSID(jo);
 				retv.assign(engine::s_user_functionid(),(void*)jid);
+				return;
+			}else if(JS_ObjectIsDate(cx,jo)){
+				jsval retval;
+				if(JS_TRUE == JS_CallFunctionName(cx,jo,"getTime",0,nullptr,&retval)){
+					j2v(cx,retval,retv);
+				}
 				return;
 			}else{
 				JSObject *iter = JS_NewPropertyIterator(cx,jo);
@@ -202,6 +164,10 @@ namespace lyramilk{namespace script{namespace js
 						lyramilk::data::string skey;
 						{
 							JSString* jstr = jk.toString();
+							if(jstr == nullptr){
+								continue;
+							}
+
 							size_t len = 0;
 							const jschar* cstr = JS_GetStringCharsZAndLength(cx,jstr,&len);
 							skey.reserve(len*3);
@@ -292,19 +258,6 @@ namespace lyramilk{namespace script{namespace js
 			}
 		  case lyramilk::data::var::t_wstr:
 		  case lyramilk::data::var::t_str:{
-			  /*
-				lyramilk::data::wstring s = v;
-
-				std::vector<jschar> jcstr;
-				lyramilk::data::wstring::iterator it = s.begin();
-				for(;it!=s.end();++it){
-					jcstr.push_back((jschar)*it);
-				}
-
-				JSString* str = JS_NewUCStringCopyN(cx,jcstr.data(),jcstr.size());
-				return STRING_TO_JSVAL(str);
-
-				*/
 				lyramilk::data::string s = v;
 				JSString* str = JS_NewStringCopyN(cx,s.c_str(),s.size());
 				return STRING_TO_JSVAL(str);
@@ -344,17 +297,9 @@ namespace lyramilk{namespace script{namespace js
 
 			assert((((long)(&v))&1) == 0);
 			return PRIVATE_TO_JSVAL(&v);
-//		  default:;
 		}
 		return JSVAL_VOID;
 	}
-/*
-	lyramilk::data::string static typeofjsval(JSContext *cx,jsval* p)
-	{
-		JSType jt = JS_TypeOfValue(cx,*p);
-		const char* tn = JS_GetTypeName(cx,jt);
-		return tn;
-	}*/
 
 	JSBool jsctr(JSContext *cx, unsigned argc, jsval *vp)
 	{
