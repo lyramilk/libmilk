@@ -588,14 +588,11 @@ namespace lyramilk{namespace script{namespace js
 		//JS_ShutDown();
 	}
 
-	bool script_js::load_string(bool permanent,lyramilk::data::string scriptstring)
+	bool script_js::load_string(lyramilk::data::string scriptstring)
 	{
 		JS_SetRuntimeThread(rt);
-		JSContext* selectedcx = cx_template;
-		if(!permanent){
-			init();
-			selectedcx = (JSContext *)JS_GetRuntimePrivate(rt);
-		}
+		init();
+		JSContext* selectedcx = (JSContext *)JS_GetRuntimePrivate(rt);
 		JS::RootedObject global(selectedcx,JS_GetGlobalObject(selectedcx));
 
 		JSScript* script = JS_CompileScript(selectedcx,global,scriptstring.c_str(),scriptstring.size(),NULL,1);
@@ -605,18 +602,15 @@ namespace lyramilk{namespace script{namespace js
 		return false;
 	}
 
-	bool script_js::load_file(bool permanent,lyramilk::data::string scriptfile)
+	bool script_js::load_file(lyramilk::data::string scriptfile)
 	{
 		if(scriptfilename.empty()){
 			scriptfilename = scriptfile;
 		}
 
 		JS_SetRuntimeThread(rt);
-		JSContext* selectedcx = cx_template;
-		if(!permanent){
-			init();
-			selectedcx = (JSContext *)JS_GetRuntimePrivate(rt);
-		}
+		init();
+		JSContext* selectedcx = (JSContext *)JS_GetRuntimePrivate(rt);
 		JS::RootedObject global(selectedcx,JS_GetGlobalObject(selectedcx));
 
 		JSScript* script = nullptr;
@@ -625,14 +619,11 @@ namespace lyramilk{namespace script{namespace js
 		return !!JS_ExecuteScript(selectedcx,global,script,nullptr);
 	}
 
-	lyramilk::data::var script_js::call(bool permanent,lyramilk::data::var func,lyramilk::data::var::array args)
+	lyramilk::data::var script_js::call(lyramilk::data::var func,lyramilk::data::var::array args)
 	{
 		JS_SetRuntimeThread(rt);
-		JSContext* selectedcx = cx_template;
-		if(!permanent){
-			init();
-			selectedcx = (JSContext *)JS_GetRuntimePrivate(rt);
-		}
+		init();
+		JSContext* selectedcx = (JSContext *)JS_GetRuntimePrivate(rt);
 		JS::RootedObject global(selectedcx,JS_GetGlobalObject(selectedcx));
 
 		if(func.type_like(lyramilk::data::var::t_str)){
@@ -683,14 +674,10 @@ namespace lyramilk{namespace script{namespace js
 		}
 	}
 
-	void script_js::define(bool permanent,lyramilk::data::string classname,functional_map m,class_builder builder,class_destoryer destoryer)
+	void script_js::define(lyramilk::data::string classname,functional_map m,class_builder builder,class_destoryer destoryer)
 	{
 		JS_SetRuntimeThread(rt);
 		JSContext* selectedcx = cx_template;
-		if(!permanent){
-			init();
-			selectedcx = (JSContext *)JS_GetRuntimePrivate(rt);
-		}
 		JS::RootedObject global(selectedcx,JS_GetGlobalObject(selectedcx));
 
 		//std::cout << "注册类：" << classname << ",构造:" << (void*)builder << ",释放" << (void*)destoryer << std::endl;
@@ -715,14 +702,10 @@ namespace lyramilk{namespace script{namespace js
 		}
 	}
 	
-	void script_js::define(bool permanent,lyramilk::data::string funcname,functional_type func)
+	void script_js::define(lyramilk::data::string funcname,functional_type func)
 	{
 		JS_SetRuntimeThread(rt);
 		JSContext* selectedcx = cx_template;
-		if(!permanent){
-			init();
-			selectedcx = (JSContext *)JS_GetRuntimePrivate(rt);
-		}
 		JS::RootedObject global(selectedcx,JS_GetGlobalObject(selectedcx));
 		//std::cout << "注册全局函数：" << funcname << "," << (void*)func << std::endl;
 		JSFunction *f = JS_DefineFunction(selectedcx,global,funcname.c_str(),js_func_adapter_noclass,10,10);
@@ -733,9 +716,9 @@ namespace lyramilk{namespace script{namespace js
 
 	lyramilk::data::var script_js::createobject(lyramilk::data::string classname,lyramilk::data::var::array args)
 	{
-		init();
 		JS_SetRuntimeThread(rt);
-		JSContext *selectedcx = (JSContext *)JS_GetRuntimePrivate(rt);
+		init();
+		JSContext* selectedcx = (JSContext *)JS_GetRuntimePrivate(rt);
 		JS::RootedObject global(selectedcx,JS_GetGlobalObject(selectedcx));
 
 		std::map<lyramilk::data::string,jsid>::iterator it = mdefs.find(classname);
@@ -796,7 +779,7 @@ namespace lyramilk{namespace script{namespace js
 			JSObject * glob = JS_NewGlobalObject(cx, &globalClass, NULL);
 			JS_InitStandardClasses(cx,glob);
 
-			JS_CopyPropertiesFrom(cx,glob,JS_GetGlobalObject(cx_template));
+			JS_SetPrototype(cx,glob,JS_GetGlobalObject(cx_template));
 
 			JS_SetRuntimePrivate(rt,cx);
 		}

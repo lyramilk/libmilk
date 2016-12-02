@@ -82,10 +82,9 @@ namespace lyramilk{namespace script
 		/**
 			@brief 从一个字符串中加载脚本代码
 			@param script 字符串形式的脚本代码
-			@param permanent 为ture表示reset时不会失效。
 			@return 返回true表示成功
 		*/
-		virtual bool load_string(bool permanent,lyramilk::data::string script) = 0;
+		virtual bool load_string(lyramilk::data::string script) = 0;
 
 		/**
 			@brief 从一个文件中加载脚本代码
@@ -93,14 +92,14 @@ namespace lyramilk{namespace script
 			@param permanent 为ture表示reset时不会失效。
 			@return 返回true表示成功
 		*/
-		virtual bool load_file(bool permanent,lyramilk::data::string scriptfile);
+		virtual bool load_file(lyramilk::data::string scriptfile);
 
 		/**
 			@brief 执行脚本函数。
 			@param func 脚本函数名
 			@return 脚本的返回值
 		*/
-		virtual lyramilk::data::var call(bool permanent,lyramilk::data::var func);
+		virtual lyramilk::data::var call(lyramilk::data::var func);
 
 		/**
 			@brief 执行脚本函数。
@@ -108,7 +107,7 @@ namespace lyramilk{namespace script
 			@param args 参数
 			@return 脚本的返回值
 		*/
-		virtual lyramilk::data::var call(bool permanent,lyramilk::data::var func,lyramilk::data::var::array args) = 0;
+		virtual lyramilk::data::var call(lyramilk::data::var func,lyramilk::data::var::array args) = 0;
 
 		/**
 			@brief 重置脚本引擎。
@@ -122,14 +121,14 @@ namespace lyramilk{namespace script
 			@param builder 该对象的创建函数
 			@param destoryer 该对象的销毁函数
 		*/
-		virtual void define(bool permanent,lyramilk::data::string classname,functional_map m,class_builder builder,class_destoryer destoryer) = 0;
+		virtual void define(lyramilk::data::string classname,functional_map m,class_builder builder,class_destoryer destoryer) = 0;
 
 		/**
 			@brief 将一个脚本可访问的C++函数注入到脚本引擎中。
 			@param funcname 函数名
 			@param func 脚本可访问的C++本地函数
 		*/
-		virtual void define(bool permanent,lyramilk::data::string funcname,functional_type func) = 0;
+		virtual void define(lyramilk::data::string funcname,functional_type func) = 0;
 
 		/**
 			@brief 将一个脚本可访问的C++对象装载到一个var对象中以作为参数由C++传递给脚本引擎。

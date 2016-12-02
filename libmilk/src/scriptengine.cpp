@@ -26,7 +26,7 @@ namespace lyramilk{namespace script
 	}
 
 
-	bool engine::load_file(bool permanent,lyramilk::data::string scriptfile)
+	bool engine::load_file(lyramilk::data::string scriptfile)
 	{
 		lyramilk::data::string str;
 		std::ifstream ifs;
@@ -38,13 +38,13 @@ namespace lyramilk{namespace script
 			str.append(buff,(unsigned int)ifs.gcount());
 		}
 		ifs.close();
-		return load_string(permanent,str);
+		return load_string(str);
 	}
 
-	lyramilk::data::var engine::call(bool permanent,lyramilk::data::var func)
+	lyramilk::data::var engine::call(lyramilk::data::var func)
 	{
 		lyramilk::data::var::array a;
-		return call(permanent,func,a);
+		return call(func,a);
 	}
 	
 	void engine::gc()

@@ -359,7 +359,7 @@ namespace lyramilk{namespace script{namespace lua
 		lua_close(L_template);
 	}
 
-	bool script_lua::load_string(bool permanent,lyramilk::data::string scriptstring)
+	bool script_lua::load_string(lyramilk::data::string scriptstring)
 	{
 		init();
 		if(luaL_loadstring(L, scriptstring.c_str()) == 0){
@@ -384,7 +384,7 @@ namespace lyramilk{namespace script{namespace lua
 		return false;
 	}
 
-	bool script_lua::load_file(bool permanent,lyramilk::data::string scriptfile)
+	bool script_lua::load_file(lyramilk::data::string scriptfile)
 	{
 		init();
 		bool mainfile = false;
@@ -417,7 +417,7 @@ namespace lyramilk{namespace script{namespace lua
 		return false;
 	}
 
-	lyramilk::data::var script_lua::call(bool permanent,lyramilk::data::var func,lyramilk::data::var::array args)
+	lyramilk::data::var script_lua::call(lyramilk::data::var func,lyramilk::data::var::array args)
 	{
 		init();
 		lua_getglobal(L, func.str().c_str());
@@ -445,7 +445,7 @@ namespace lyramilk{namespace script{namespace lua
 		}
 	}
 
-	void script_lua::define(bool permanent,lyramilk::data::string classname,functional_map m,class_builder builder,class_destoryer destoryer)
+	void script_lua::define(lyramilk::data::string classname,functional_map m,class_builder builder,class_destoryer destoryer)
 	{
 		//std::cout << "注册类：" << classname << ",构造:" << (void*)builder << ",释放" << (void*)destoryer << std::endl;
 		luaL_newmetatable(L_template,classname.c_str());
@@ -482,7 +482,7 @@ namespace lyramilk{namespace script{namespace lua
 	}
 	
 
-	void script_lua::define(bool permanent,lyramilk::data::string funcname,functional_type func)
+	void script_lua::define(lyramilk::data::string funcname,functional_type func)
 	{
 		//std::cout << "注册全局函数：" << funcname << "," << (void*)func << std::endl;
 		lua_pushlightuserdata(L_template,(void*)func);
