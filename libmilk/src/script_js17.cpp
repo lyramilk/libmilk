@@ -680,7 +680,6 @@ namespace lyramilk{namespace script{namespace js
 			JS_DestroyContext(selectedcx);
 			JS_SetRuntimePrivate(rt,nullptr);
 			scriptfilename.clear();
-			mparams["clearonreset"].clear();
 		}
 	}
 
@@ -794,12 +793,10 @@ namespace lyramilk{namespace script{namespace js
 			JS_SetOptions(cx, JSOPTION_VAROBJFIX | JSOPTION_METHODJIT);
 			JS_SetVersion(cx, JSVERSION_LATEST);
 			JS_SetErrorReporter(cx, script_js_error_report);
-
-			JSObject * template_glob = JS_GetGlobalObject(cx_template);
-
 			JSObject * glob = JS_NewGlobalObject(cx, &globalClass, NULL);
 			JS_InitStandardClasses(cx,glob);
-			JS_SetPrototype(cx,glob,template_glob);
+
+			JS_CopyPropertiesFrom(cx,glob,JS_GetGlobalObject(cx_template));
 
 			JS_SetRuntimePrivate(rt,cx);
 		}
