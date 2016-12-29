@@ -171,7 +171,7 @@ namespace lyramilk
 		void operator delete(void*);
 		void operator delete[](void*);
 	  private:
-		volatile long _rc;
+		mutable long long _rc;
 	};
 	
 	template <typename B>

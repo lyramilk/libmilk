@@ -28,6 +28,7 @@ namespace lyramilk{namespace netio
 		lyramilk::data::stringstream scache;
 		lyramilk::data::string retransmitcache;
 		int flag;
+		lyramilk::data::string peer_cert_info;
 		virtual void ondestory();
 	  protected:
 		virtual int cache_read(char* buf,int bufsize);
@@ -57,6 +58,15 @@ namespace lyramilk{namespace netio
 			return p;
 		}
 		virtual native_filedescriptor_type getfd();
+
+		/**
+			@brief 获取对端证书信息。
+		*/
+		virtual lyramilk::data::string ssl_get_peer_certificate_info();
+		/**
+			@brief 设置对端证书信息。
+		*/
+		virtual void ssl_set_peer_certificate_info(lyramilk::data::string info);
 	  protected:
 		/**
 			@brief 连接时触发
@@ -155,10 +165,26 @@ namespace lyramilk{namespace netio
 		virtual aiosession* create() = 0;
 
 		/**
+			@brief 开启客户端验证(双向认证)
+			@param clientca 客户端ca证书
+			@param force 是否强制认证。
+			@return false表示失败
+		*/
+		virtual bool ssl_use_client_verify(bool force = false);
+
+		/**
+			@brief 加载可信证书
+			@param verify_locations 客户端ca证书
+			@return false表示失败
+		*/
+		virtual bool ssl_load_verify_locations(lyramilk::data::var::array verify_locations);
+
+		/**
 			@brief 初始化SSL并自动开启SSL。
 			@param certfilename 证书
 			@param keyfilename 私钥
-			@return false标示初始化SSL失败。
+			@param verify_locations 信任链
+			@return false表示失败
 		*/
 		virtual bool init_ssl(lyramilk::data::string certfilename, lyramilk::data::string keyfilename);
 

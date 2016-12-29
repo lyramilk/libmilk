@@ -1153,6 +1153,7 @@ var::operator string () const throw(type_invalid)
 		}break;
 	  case t_double:{
 			stringstream ss;
+			ss << std::fixed;
 			ss << u.f8;
 			return ss.str();
 		}break;
@@ -1257,6 +1258,7 @@ var::operator wstring () const throw(type_invalid)
 		}break;
 	  case t_double:{
 			wstringstream ss;
+			ss << std::fixed;
 			ss << u.f8;
 			return ss.str();
 		}break;
@@ -1978,6 +1980,7 @@ var& var::type(var::vt nt) throw(type_invalid)
 	  case t_int64:
 	  case t_uint64:
 	  case t_double:
+		break;
 	  case t_array:
 		delete a;
 		break;
@@ -2562,71 +2565,47 @@ namespace std{namespace tr1{
 	template <>
 	std::size_t hash<lyramilk::data::string>::operator()(lyramilk::data::string d) const
 	{
-/* bkdr *
-		const char* p = d.c_str();
-		size_t l = d.size();
-		std::size_t r = 0;
-		for(;l > 0;--l){
-			r = r*131 + (*p++);
-		}
-		return r;
-//*/
+		const static std::size_t seed = 0xee6b27eb;
+		const static std::size_t m = 0xc6a4a7935bd1e995ULL;
+		const static int r = 47;
 
-/* djb *
-		const char* p = d.c_str();
-		size_t l = d.size();
-		std::size_t r = 5381;
-		for(;l > 0;--l){
-			r = (r << 5) + (*p++);
-		}
-		return r;
-//*/
+		const std::size_t* p = (const std::size_t*)d.c_str();
+		std::size_t l = d.size();
 
-/* ap *
-		const char* p = d.c_str();
-		size_t l = d.size();
-		std::size_t r = 0;
-		for(;l > 0;--l){
-			if(r&1){
-				r ^= (r << 7) ^ (*p++) ^ (r >> 3);
-			}else{
-				r ^= ~((r << 11) ^ (*p++) ^ (r >> 5));
-			}
-		}
-		return r;
-//*/
+		const std::size_t* end = p + (l/8);
+		std::size_t h = seed ^ (l * m);
 
-/* dek */
-		const char* p = d.c_str();
-		size_t l = d.size();
-		std::size_t r = 1315423911;
-		for(;l > 0;--l){
-			r = (r << 5) ^ (r >> 27) ^ (*p++);
-		}
-		return r;
-//*/
+		while(p != end)
+		{
+			std::size_t k = *p++;
 
-/*	fnv32 *
-		const char* p = d.c_str();
-		size_t l = d.size();
-		std::size_t r = static_cast<std::size_t>(2166136261UL);
-		for(;l > 0;--l){
-			r ^=  (std::size_t)(*p++);
-			r *= 16777619UL;
-		}
-		return r;
-//*/
+			k *= m; 
+			k ^= k >> r; 
+			k *= m; 
 
-/*	fnv64 *
-		const char* p = d.c_str();
-		size_t l = d.size();
-		std::size_t r = static_cast<std::size_t>(14695981039346656037ULL);
-		for(;l > 0;--l){
-			r ^=  (std::size_t)(*p++);
-			r *= 1099511628211ULL;
+			h ^= k;
+			h *= m; 
 		}
-		return r;
-//*/
+
+		const unsigned char * p2 = (const unsigned char*)p;
+
+		switch(l & 7)
+		{
+		  case 7: h ^= std::size_t(p2[6]) << 48;
+		  case 6: h ^= std::size_t(p2[5]) << 40;
+		  case 5: h ^= std::size_t(p2[4]) << 32;
+		  case 4: h ^= std::size_t(p2[3]) << 24;
+		  case 3: h ^= std::size_t(p2[2]) << 16;
+		  case 2: h ^= std::size_t(p2[1]) << 8;
+		  case 1: h ^= std::size_t(p2[0]);
+			h *= m;
+		};
+
+		h ^= h >> r;
+		h *= m;
+		h ^= h >> r;
+
+		return h;
 	}
 #endif
 #ifdef Z_HAVE_UNORDEREDMAP

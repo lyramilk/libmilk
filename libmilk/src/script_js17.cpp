@@ -9,7 +9,6 @@
 #include <utime.h>
 #include <math.h>
 //script_js
-#include <jsfriendapi.h>
 
 namespace lyramilk{namespace script{namespace js
 {
@@ -89,6 +88,16 @@ namespace lyramilk{namespace script{namespace js
 			return;
 		}else if(jv.isDouble()){
 			retv = jv.toDouble();
+			lyramilk::data::string str = retv.str();
+			std::size_t pos = str.find_last_not_of(".0");
+			if(pos != str.npos){
+				str.erase(str.begin() + pos + 1,str.end());
+				if(str.find('.') == str.npos){
+					retv.type(lyramilk::data::var::t_int64);
+				}
+			}else{
+				retv.type(lyramilk::data::var::t_int64);
+			}
 			return;
 		}else if(jv.isNumber()){
 			retv = jv.toNumber();
@@ -147,6 +156,7 @@ namespace lyramilk{namespace script{namespace js
 				jsval retval;
 				if(JS_TRUE == JS_CallFunctionName(cx,jo,"getTime",0,nullptr,&retval)){
 					j2v(cx,retval,retv);
+					retv.type(lyramilk::data::var::t_uint64);
 				}
 				return;
 			}else{
@@ -222,7 +232,7 @@ namespace lyramilk{namespace script{namespace js
 		}
 	}
 
-	jsval static v2j(JSContext* cx,lyramilk::data::var v)
+	jsval static v2j(JSContext* cx,const lyramilk::data::var& v)
 	{
 		switch(v.type()){
 		  case lyramilk::data::var::t_bool:
@@ -260,12 +270,13 @@ namespace lyramilk{namespace script{namespace js
 		  case lyramilk::data::var::t_str:{
 				lyramilk::data::string s = v;
 				JSString* str = JS_NewStringCopyN(cx,s.c_str(),s.size());
+				if(str == nullptr) return JSVAL_VOID;
 				return STRING_TO_JSVAL(str);
 			}break;
 		  case lyramilk::data::var::t_array:{
 				std::vector<jsval> jvs;
-				lyramilk::data::var::array& ar = v;
-				lyramilk::data::var::array::iterator it = ar.begin();
+				const lyramilk::data::var::array& ar = v;
+				lyramilk::data::var::array::const_iterator it = ar.begin();
 				jvs.reserve(ar.size());
 				for(;it!=ar.end();++it){
 					jvs.push_back(v2j(cx,*it));
@@ -275,8 +286,8 @@ namespace lyramilk{namespace script{namespace js
 			}break;
 		  case lyramilk::data::var::t_map:{
 				JSObject* jo = JS_NewObject(cx,&normalClass,NULL,JS_GetGlobalObject(cx));
-				lyramilk::data::var::map& m = v;
-				lyramilk::data::var::map::iterator it = m.begin();
+				const lyramilk::data::var::map& m = v;
+				lyramilk::data::var::map::const_iterator it = m.begin();
 				for(;it!=m.end();++it){
 					lyramilk::data::string str = it->first;
 					lyramilk::data::var v = it->second;
@@ -294,9 +305,7 @@ namespace lyramilk{namespace script{namespace js
 				JSObject* jsobj = JSID_TO_OBJECT((jsid)up);
 				return OBJECT_TO_JSVAL(jsobj);
 			}
-
-			assert((((long)(&v))&1) == 0);
-			return PRIVATE_TO_JSVAL(&v);
+			return JSVAL_VOID;
 		}
 		return JSVAL_VOID;
 	}

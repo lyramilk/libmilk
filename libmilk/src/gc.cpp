@@ -1,5 +1,9 @@
 ﻿#include "gc.h"
-#include <malloc.h>
+#ifdef Z_HAVE_JEMALLOC
+	#include <jemalloc/jemalloc.h>
+#else
+	#include <malloc.h>
+#endif
 
 #ifdef _WIN32
 	#include <windows.h>
@@ -20,6 +24,7 @@ obj::~obj()
 {
 }
 
+/*
 #ifdef _MSC_VER
 void obj::add_ref()
 {
@@ -41,6 +46,17 @@ void obj::sub_ref()
 		__sync_sub_and_fetch(&_rc, 1);
 	}
 #endif
+*/
+void obj::add_ref()
+{
+	++_rc;
+}
+
+void obj::sub_ref()
+{
+	--_rc;
+}
+
 int obj::payload() const
 {
 	return _rc;
@@ -48,12 +64,13 @@ int obj::payload() const
 
 bool obj::verify() const
 {
-	return !IsBadReadPtr(this,4);
+	return !IsBadReadPtr(this,sizeof(_rc));
 }
 
 bool obj::try_del()
 {
-	if(!__sync_bool_compare_and_swap(&_rc,0,0))return false;
+	//if(!__sync_bool_compare_and_swap(&_rc,0,0))return false;
+	if(_rc == 0) return false;
 	ondestory();
 	return true;
 }

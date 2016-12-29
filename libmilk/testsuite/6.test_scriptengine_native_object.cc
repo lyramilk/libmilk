@@ -2,27 +2,17 @@
 #include <fstream>
 #include "log.h"
 #include "multilanguage.h"
+#include "scriptengine.h"
 #include "ansi_3_64.h"
 #include "testing.h"
 #define D(x...) lyramilk::kdict(x)
-
-
-#ifdef JS17_FOUND
-	#include "script_js.h"
-#endif
-#ifdef LUA_FOUND
-	#include "script_lua.h"
-#endif
-#if (defined PYTHON_FOUND) || (defined Z_HAVE_PYTHON26)
-	#include "script_python.h"
-#endif
 
 class os
 {
 	int i;
   public:
 
-	static void* ctr(lyramilk::data::var::array ar)
+	static void* ctr(const lyramilk::data::var::array& ar)
 	{
 		return new os(ar[0]);
 	}
@@ -34,12 +24,14 @@ class os
 
 	lyramilk::data::var print(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env)
 	{
+printf("%s\n",__FUNCTION__);
 		MILK_CHECK_SCRIPT_ARGS(args,0,lyramilk::data::var::t_str);
 		std::cout << lyramilk::ansi_3_64::green << args[0] << lyramilk::ansi_3_64::reset << std::endl;
 		return true;
 	}
 	lyramilk::data::var desc(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env)
 	{
+printf("%s\n",__FUNCTION__);
 		return "test_system";
 	}
 
@@ -59,7 +51,7 @@ class number
 	int i;
 	lyramilk::log::logss log;
   public:
-	static void* ctr(lyramilk::data::var::array ar)
+	static void* ctr(const lyramilk::data::var::array& ar)
 	{
 		return new number(ar[0]);
 	}
@@ -82,6 +74,7 @@ class number
 
 	lyramilk::data::var add(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env)
 	{
+printf("%s\n",__FUNCTION__);
 		std::cout << lyramilk::ansi_3_64::green << "[add]this=" << this << "," << i << "," << args.size() << lyramilk::ansi_3_64::reset << std::endl;
 		MILK_CHECK_SCRIPT_ARGS_LOG(log,lyramilk::log::warning,__FUNCTION__,args,0,lyramilk::data::var::t_str);
 		return i + (int)args[0];
@@ -89,6 +82,7 @@ class number
 
 	lyramilk::data::var sub(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env)
 	{
+printf("%s\n",__FUNCTION__);
 		std::cout << lyramilk::ansi_3_64::green << "[sub]this=" << this << "," << i << "," << args << lyramilk::ansi_3_64::reset << std::endl;
 		MILK_CHECK_SCRIPT_ARGS_LOG(log,lyramilk::log::warning,__FUNCTION__,args,0,lyramilk::data::var::t_str);
 		return i - (int)args[0];
@@ -96,6 +90,7 @@ class number
 
 	lyramilk::data::var testmap(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env)
 	{
+printf("%s\n",__FUNCTION__);
 		std::cout << lyramilk::ansi_3_64::green << "[testmap]" << args << lyramilk::ansi_3_64::reset << std::endl;
 		lyramilk::data::var::map m;
 		m["apple"] = "苹果";
@@ -104,12 +99,14 @@ class number
 	}
 	lyramilk::data::var desc(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env)
 	{
+printf("%s\n",__FUNCTION__);
 		return "test_number";
 	}
 };
 
 lyramilk::data::var echo(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env)
 {
+printf("%s\n",__FUNCTION__);
 	MILK_CHECK_SCRIPT_ARGS(args,0,lyramilk::data::var::t_str);
 	std::cout << lyramilk::ansi_3_64::green << args[0] << lyramilk::ansi_3_64::reset << std::endl;
 	return true;
@@ -117,6 +114,7 @@ lyramilk::data::var echo(const lyramilk::data::var::array& args,const lyramilk::
 
 lyramilk::data::var add(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env)
 {
+printf("%s\n",__FUNCTION__);
 	MILK_CHECK_SCRIPT_ARGS(args,0,lyramilk::data::var::t_int32);
 	MILK_CHECK_SCRIPT_ARGS(args,1,lyramilk::data::var::t_int32);
 	return (int)args[0] + (int)args[1];
@@ -124,6 +122,7 @@ lyramilk::data::var add(const lyramilk::data::var::array& args,const lyramilk::d
 
 lyramilk::data::var addm(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env)
 {
+printf("%s\n",__FUNCTION__);
 	MILK_CHECK_SCRIPT_ARGS(args,0,lyramilk::data::var::t_map);
 	return (int)args[0]["k"] + (int)args[0]["v"];
 }
@@ -136,20 +135,20 @@ void test_script(lyramilk::data::string file,lyramilk::script::engine* eng)
 		fn["sub"] = lyramilk::script::engine::functional<number,&number::sub>;
 		fn["testmap"] = lyramilk::script::engine::functional<number,&number::testmap>;
 		fn["desc"] = lyramilk::script::engine::functional<number,&number::desc>;
-		eng->define(true,"test_number",fn,number::ctr,number::dtr);
+		eng->define("test_number",fn,number::ctr,number::dtr);
 	}
 
 	{
 		lyramilk::script::engine::functional_map fn;
 		fn["print"] = lyramilk::script::engine::functional<os,&os::print>;
 		fn["desc"] = lyramilk::script::engine::functional<os,&os::desc>;
-		eng->define(true,"test_system",fn,os::ctr,os::dtr);
+		eng->define("test_system",fn,os::ctr,os::dtr);
 	}
-	eng->define(true,"myecho",echo);
-	eng->define(true,"myadd",add);
-	eng->define(true,"myaddm",addm);
+	eng->define("myecho",echo);
+	eng->define("myadd",add);
+	eng->define("myaddm",addm);
 	{
-		eng->load_file(false,file);
+		eng->load_file(file);
 		//std::cout << "加载" << file << "完成" << std::endl;
 
 		lyramilk::data::var::array r;
@@ -171,13 +170,10 @@ int main(int argc,const char* argv[])
 
 	std::map<lyramilk::data::string,lyramilk::script::engine*> engs;
 #ifdef JS17_FOUND
-	engs["js"] = new lyramilk::script::js::script_js();
+	engs["js"] = lyramilk::script::engine::createinstance("v8js");
 #endif
 #ifdef LUA_FOUND
-	engs["lua"] = new lyramilk::script::lua::script_lua();
-#endif
-#if (defined PYTHON_FOUND) || (defined Z_HAVE_PYTHON26)
-	engs["py"] = new lyramilk::script::python::script_python();
+	engs["lua"] = lyramilk::script::engine::createinstance("lua");
 #endif
 
 	for(std::map<lyramilk::data::string,lyramilk::script::engine*>::iterator it = engs.begin();it!=engs.end();++it){

@@ -119,4 +119,4 @@ def lookup_var(val):
 #gdb.pretty_printers.insert(0,lookup_var)
 gdb.pretty_printers.append(lookup_var)
 
-print 'load lyramilk.var	'
+print '[gdb]load pretty_printers for lyramilk::data::var	'

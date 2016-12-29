@@ -67,7 +67,7 @@ namespace lyramilk{namespace script
 		/**
 			@brief 函数指针：创建脚本可访问的C++对象
 		*/
-		typedef void* (*class_builder)(lyramilk::data::var::array);
+		typedef void* (*class_builder)(const lyramilk::data::var::array& args);
 
 		/**
 			@brief 函数指针：销毁脚本可访问的C++对象

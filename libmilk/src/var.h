@@ -156,6 +156,9 @@ namespace lyramilk{namespace data
 	typedef class _lyramilk_api_ std::basic_ostream<unsigned char> bostream;
 	typedef class _lyramilk_api_ std::basic_ostream<wchar_t> wostream;
 
+
+	typedef class _lyramilk_api_ std::vector<string,allocator<string> > strings;
+
 	/**
 		@brief 这是一个超级变量，封装了对整数、小数、字符串、数组、映射表的表达，它尽可能在各种类型间进行转换。
 	*/

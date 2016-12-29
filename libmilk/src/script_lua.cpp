@@ -441,7 +441,9 @@ namespace lyramilk{namespace script{namespace lua
 	void script_lua::reset()
 	{
 		if(L){
-			lua_close(L);
+			//lua_close(L);
+			lua_gc(L_template,LUA_GCCOLLECT,0);
+			L = nullptr;
 		}
 	}
 

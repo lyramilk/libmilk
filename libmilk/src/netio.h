@@ -47,6 +47,7 @@ namespace lyramilk{namespace netio
 	{
 	  protected:
 		friend class socket_stream_buf;
+		friend class aiosession2_buf;
 		ssl_type sslobj;
 		bool sslenable;
 		native_socket_type sock;

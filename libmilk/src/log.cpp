@@ -62,24 +62,58 @@ lyramilk::data::string logb::strtime(time_t ti)
 void logb::log(time_t ti,type ty,lyramilk::data::string usr,lyramilk::data::string app,lyramilk::data::string module,lyramilk::data::string str)
 {
 	switch(ty){
-	  case debug:
-		std::cout << lyramilk::ansi_3_64::cyan << strtime(ti) << " [" << module << "] " << str << lyramilk::ansi_3_64::reset;
-		std::cout.flush();
-		break;
-	  case trace:
-		std::clog << lyramilk::ansi_3_64::white << strtime(ti) << " [" << module << "] " << str << lyramilk::ansi_3_64::reset;
-		std::clog.flush();
-		break;
-	  case warning:
-		std::clog << lyramilk::ansi_3_64::yellow << strtime(ti) << " [" << module << "] " << str << lyramilk::ansi_3_64::reset;
-		std::clog.flush();
-		break;
-	  case error:
-		std::cerr << lyramilk::ansi_3_64::red << strtime(ti) << " [" << module << "] " << str << lyramilk::ansi_3_64::reset;
-		std::cerr.flush();
-		break;
-	  default:
-		std::cout << lyramilk::ansi_3_64::reset;
+	  case debug:{
+		lyramilk::data::string cache;
+		cache.reserve(1024);
+		cache.append("\x1b[36m");
+		cache.append(strtime(ti));
+		cache.append(" [");
+		cache.append(module);
+		cache.append("] ");
+		cache.append(str);
+		cache.append("\x1b[0m");
+		//(std::cout << cache).flush();
+		fwrite(cache.c_str(),cache.size(),1,stdout);
+	  }break;
+	  case trace:{
+		lyramilk::data::string cache;
+		cache.reserve(1024);
+		cache.append("\x1b[37m");
+		cache.append(strtime(ti));
+		cache.append(" [");
+		cache.append(module);
+		cache.append("] ");
+		cache.append(str);
+		cache.append("\x1b[0m");
+		//(std::cout << cache).flush();
+		fwrite(cache.c_str(),cache.size(),1,stdout);
+	  }break;
+	  case warning:{
+		lyramilk::data::string cache;
+		cache.reserve(1024);
+		cache.append("\x1b[33m");
+		cache.append(strtime(ti));
+		cache.append(" [");
+		cache.append(module);
+		cache.append("] ");
+		cache.append(str);
+		cache.append("\x1b[0m");
+		//(std::cout << cache).flush();
+		fwrite(cache.c_str(),cache.size(),1,stdout);
+	  }break;
+	  case error:{
+		lyramilk::data::string cache;
+		cache.reserve(1024);
+		cache.append("\x1b[31m");
+		cache.append(strtime(ti));
+		cache.append(" [");
+		cache.append(module);
+		cache.append("] ");
+		cache.append(str);
+		cache.append("\x1b[0m");
+		//(std::cerr << cache).flush();
+		fwrite(cache.c_str(),cache.size(),1,stderr);
+	  }break;
 	}
 }
 
@@ -200,14 +234,18 @@ logss& logss::operator()(type ty)
 
 logss& logss::operator()(lyramilk::data::string m)
 {
-	lyramilk::threading::mutex_sync _(lock);
+	//lyramilk::threading::mutex_sync _(lock);
+	lock.lock();
+	++db.r;
 	module_suffix = m;
 	return *this;
 }
 
 logss& logss::operator()(type ty,lyramilk::data::string m)
 {
-	lyramilk::threading::mutex_sync _(lock);
+	//lyramilk::threading::mutex_sync _(lock);
+	lock.lock();
+	++db.r;
 	module_suffix = m;
 	t = ty;
 	return *this;

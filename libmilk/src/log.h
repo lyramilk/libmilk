@@ -67,6 +67,7 @@ namespace lyramilk { namespace log
 	*/
 	class _lyramilk_api_ logbuf : public std::basic_streambuf<char>
 	{
+		friend class logss;
 		lyramilk::data::vector<char,lyramilk::data::allocator<char> > buf;
 		logss& p;
 		int r;

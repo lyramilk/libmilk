@@ -196,7 +196,17 @@ namespace lyramilk{namespace netio
 	void aiosession::onfinally(lyramilk::data::ostream& os)
 	{
 	}
-	
+
+	lyramilk::data::string aiosession::ssl_get_peer_certificate_info()
+	{
+		return peer_cert_info;
+	}
+
+	void aiosession::ssl_set_peer_certificate_info(lyramilk::data::string info)
+	{
+		peer_cert_info = info;
+	}
+
 	native_filedescriptor_type aiosession::getfd()
 	{
 		return sock;
@@ -256,7 +266,18 @@ namespace lyramilk{namespace netio
 		std::streamsize ret=n;
 		while(n>0){
 			sock_write_able(fd,3000);
-			int rc = ::send(fd,s,n,0);
+			int rc = 0;
+#ifdef OPENSSL_FOUND
+			if(r->ssl()){
+				rc = SSL_write((SSL*)r->sslobj, s,n);
+			}else{
+				rc = ::send(fd,s,n,0);
+			}
+#else
+			rc = ::send(fd,s,n,0);
+#endif
+
+
 			if(rc < 1){
 				return 0;
 			}
@@ -388,6 +409,7 @@ namespace lyramilk{namespace netio
 						lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.aiolistener.EPOLLIN.ssl") << lyramilk::kdict("在自适应模式中绑定套接字失败:%s",ssl_err().c_str()) << std::endl;
 					}
 				}
+
 				if(ssl_self_adaptive){
 					if(sslptr){
 						SSL_set_accept_state(sslptr);
@@ -418,7 +440,7 @@ namespace lyramilk{namespace netio
 				}else{
 					SSL_set_accept_state(sslptr);
 					if(SSL_do_handshake(sslptr) != 1) {
-						lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.aiolistener.EPOLLIN.ssl.handshake") << lyramilk::kdict("在自适应模式中握手失败:%s",ssl_err().c_str()) << std::endl;
+						lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.aiolistener.EPOLLIN.ssl.handshake") << lyramilk::kdict("握手失败:%s",ssl_err().c_str()) << std::endl;
 						SSL_shutdown(sslptr);
 						SSL_free(sslptr);
 						::close(acceptfd);
@@ -436,6 +458,13 @@ namespace lyramilk{namespace netio
 			s->sock = acceptfd;
 #ifdef OPENSSL_FOUND
 			s->sslobj = sslptr;
+			X509* x = SSL_get_peer_certificate(sslptr);
+			if(x && X509_V_OK == SSL_get_verify_result(sslptr)){
+				char buf[8192];
+				X509_NAME *name = X509_get_subject_name(x);
+				X509_NAME_oneline(name,buf,sizeof(buf)-1);
+				s->ssl_set_peer_certificate_info(buf);
+			}
 #endif
 			s->pool = pool;
 			if(s->init()){
@@ -524,11 +553,47 @@ namespace lyramilk{namespace netio
 		return false;
 	}
 
+	bool aiolistener::ssl_use_client_verify(bool force)
+	{
+#ifdef OPENSSL_FOUND
+		if(sslctx == nullptr){
+			lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.aiolistener.ssl.init_ssl") << lyramilk::kdict("设置客户端认证失败:%s",lyramilk::kdict("SSL未初始化").c_str()) << std::endl;
+			return false;
+		}
+		if(force){
+			SSL_CTX_set_verify((SSL_CTX*)sslctx,SSL_VERIFY_PEER|SSL_VERIFY_FAIL_IF_NO_PEER_CERT,nullptr);
+		}else{
+			SSL_CTX_set_verify((SSL_CTX*)sslctx,SSL_VERIFY_PEER|SSL_VERIFY_CLIENT_ONCE,nullptr);
+		}
+		return true;
+#else
+		return false;
+#endif
+	}
+
+	bool aiolistener::ssl_load_verify_locations(lyramilk::data::var::array verify_locations)
+	{
+#ifdef OPENSSL_FOUND
+		int r = 0;
+		lyramilk::data::var::array::iterator it = verify_locations.begin();
+		for(;it!=verify_locations.end();++it){
+			r = SSL_CTX_load_verify_locations((SSL_CTX*)sslctx, it->str().c_str(), nullptr);
+			if(r != 1) {
+				lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.aiolistener.ssl.init_ssl") << lyramilk::kdict("设置可信证书失败:%s",ssl_err().c_str()) << std::endl;
+				return false;
+			}
+		}
+		return true;
+#else
+		return false;
+#endif
+	}
+
 	bool aiolistener::init_ssl(lyramilk::data::string certfilename, lyramilk::data::string keyfilename)
 	{
 #ifdef OPENSSL_FOUND
 		sslctx = SSL_CTX_new(SSLv23_server_method());
-		
+
 		int r = 0;
 		if(!certfilename.empty()){
 			r = SSL_CTX_use_certificate_file((SSL_CTX*)sslctx, certfilename.c_str(), SSL_FILETYPE_PEM);
@@ -551,7 +616,11 @@ namespace lyramilk{namespace netio
 				return false;
 			}
 		}
-		
+
+		SSL_CTX_set_tmp_rsa((SSL_CTX*)sslctx,RSA_generate_key(512,RSA_F4,NULL,NULL));
+		const unsigned char pkey[] = "www.lyramilk.com";
+		SSL_CTX_set_session_id_context((SSL_CTX*)sslctx,pkey,sizeof(pkey));
+
 		SSL_CTX_set_options((SSL_CTX*)sslctx, SSL_OP_TLS_ROLLBACK_BUG);
 		ssl(true);
 		return true;
