@@ -1,5 +1,5 @@
-﻿#ifndef _lyramilk_hash
-#define _lyramilk_hash
+﻿#ifndef _lyramilk_cryptology_hash_h_
+#define _lyramilk_cryptology_hash_h_
 
 #include <string>
 
@@ -20,6 +20,7 @@ namespace lyramilk{ namespace cryptology
 	namespace hash64{
 		unsigned long long murmur2(const char* p,std::size_t l);
 		unsigned long long fnv(const char* p,std::size_t l);
+		unsigned long long fnvX(const char* p,std::size_t l);
 	}
 }}
 #endif

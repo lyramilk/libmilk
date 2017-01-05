@@ -143,5 +143,21 @@ namespace lyramilk{ namespace cryptology
 			}
 			return r;
 		}
+
+		unsigned long long fnvX(const char* data,std::size_t l)
+		{
+			const unsigned long long* p = (const unsigned long long*)data;
+			unsigned long long r = 14695981039346656037ULL;
+			for(;l >=8;l-= 8){
+				r ^=  (*p++);
+				r *= 1099511628211ULL;
+			}
+			const char* p2 = (const char*)p;
+			for(;l > 0;--l){
+				r ^=  (std::size_t)(*p2++);
+				r *= 1099511628211ULL;
+			}
+			return r;
+		}
 	}
 }}

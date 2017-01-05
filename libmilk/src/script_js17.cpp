@@ -117,7 +117,13 @@ namespace lyramilk{namespace script{namespace js
 			lyramilk::data::string str;
 			str.reserve(len*3);
 			for(size_t i =0;i<len;++i){
-				jschar wc = cstr[i];
+				jschar jwc = cstr[i];
+				unsigned wchar_t wc = jwc;
+				if(jwc >= 0xd800 && jwc <= 0xdfff && i+1<len){
+					jschar jwc2 = cstr[++i];
+					wc = (jwc2&0x03ff) + (((jwc&0x03ff) + 0x40) << 10);
+				}
+
 				if(wc < 0x80){
 					str.push_back((unsigned char)wc);
 				}else if(wc < 0x800){
@@ -125,6 +131,24 @@ namespace lyramilk{namespace script{namespace js
 					str.push_back((unsigned char)((wc>>0)&0x3f) | 0x80);
 				}else if(wc < 0x10000){
 					str.push_back((unsigned char)((wc>>12)&0xf) | 0xe0);
+					str.push_back((unsigned char)((wc>>6)&0x3f) | 0x80);
+					str.push_back((unsigned char)((wc>>0)&0x3f) | 0x80);
+				}else if(wc < 0x200000){
+					str.push_back((unsigned char)((wc>>18)&0x7) | 0xf0);
+					str.push_back((unsigned char)((wc>>12)&0x3f) | 0x80);
+					str.push_back((unsigned char)((wc>>6)&0x3f) | 0x80);
+					str.push_back((unsigned char)((wc>>0)&0x3f) | 0x80);
+				}else if(wc < 0x4000000){
+					str.push_back((unsigned char)((wc>>24)&0x3) | 0xf8);
+					str.push_back((unsigned char)((wc>>18)&0x3f) | 0x80);
+					str.push_back((unsigned char)((wc>>12)&0x3f) | 0x80);
+					str.push_back((unsigned char)((wc>>6)&0x3f) | 0x80);
+					str.push_back((unsigned char)((wc>>0)&0x3f) | 0x80);
+				}else if(wc < 0x80000000){
+					str.push_back((unsigned char)((wc>>30)&0x1) | 0xfc);
+					str.push_back((unsigned char)((wc>>24)&0x3f) | 0xf0);
+					str.push_back((unsigned char)((wc>>18)&0x3f) | 0x80);
+					str.push_back((unsigned char)((wc>>12)&0x3f) | 0x80);
 					str.push_back((unsigned char)((wc>>6)&0x3f) | 0x80);
 					str.push_back((unsigned char)((wc>>0)&0x3f) | 0x80);
 				}
@@ -182,7 +206,12 @@ namespace lyramilk{namespace script{namespace js
 							const jschar* cstr = JS_GetStringCharsZAndLength(cx,jstr,&len);
 							skey.reserve(len*3);
 							for(size_t i =0;i<len;++i){
-								jschar wc = cstr[i];
+								jschar jwc = cstr[i];
+								unsigned wchar_t wc = jwc;
+								if(jwc >= 0xd800 && jwc <= 0xdfff && i+1<len){
+									jschar jwc2 = cstr[++i];
+									wc = (jwc2&0x03ff) + (((jwc&0x03ff) + 0x40) << 10);
+								}
 								if(wc < 0x80){
 									skey.push_back((unsigned char)wc);
 								}else if(wc < 0x800){
@@ -190,6 +219,24 @@ namespace lyramilk{namespace script{namespace js
 									skey.push_back((unsigned char)((wc>>0)&0x3f) | 0x80);
 								}else if(wc < 0x10000){
 									skey.push_back((unsigned char)((wc>>12)&0xf) | 0xe0);
+									skey.push_back((unsigned char)((wc>>6)&0x3f) | 0x80);
+									skey.push_back((unsigned char)((wc>>0)&0x3f) | 0x80);
+								}else if(wc < 0x200000){
+									skey.push_back((unsigned char)((wc>>18)&0x7) | 0xf0);
+									skey.push_back((unsigned char)((wc>>12)&0x3f) | 0x80);
+									skey.push_back((unsigned char)((wc>>6)&0x3f) | 0x80);
+									skey.push_back((unsigned char)((wc>>0)&0x3f) | 0x80);
+								}else if(wc < 0x4000000){
+									skey.push_back((unsigned char)((wc>>24)&0x3) | 0xf8);
+									skey.push_back((unsigned char)((wc>>18)&0x3f) | 0x80);
+									skey.push_back((unsigned char)((wc>>12)&0x3f) | 0x80);
+									skey.push_back((unsigned char)((wc>>6)&0x3f) | 0x80);
+									skey.push_back((unsigned char)((wc>>0)&0x3f) | 0x80);
+								}else if(wc < 0x80000000){
+									skey.push_back((unsigned char)((wc>>30)&0x1) | 0xfc);
+									skey.push_back((unsigned char)((wc>>24)&0x3f) | 0xf0);
+									skey.push_back((unsigned char)((wc>>18)&0x3f) | 0x80);
+									skey.push_back((unsigned char)((wc>>12)&0x3f) | 0x80);
 									skey.push_back((unsigned char)((wc>>6)&0x3f) | 0x80);
 									skey.push_back((unsigned char)((wc>>0)&0x3f) | 0x80);
 								}

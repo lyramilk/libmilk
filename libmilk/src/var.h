@@ -492,6 +492,7 @@ namespace lyramilk{namespace data
 			@return 返回容器类型var内部的一个var。
 		*/
 		var& path(string varpath) throw(type_invalid);
+		const var& path(string varpath) const throw(type_invalid);
 	  private:
 		union
 		{

@@ -1,5 +1,5 @@
-﻿#ifndef _lyramilk_cpu
-#define _lyramilk_cpu
+﻿#ifndef _lyramilk_debug_testing_h_
+#define _lyramilk_debug_testing_h_
 
 #include <exception>
 #include "var.h"

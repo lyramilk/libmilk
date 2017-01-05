@@ -2495,6 +2495,52 @@ var& var::path(string varpath) throw(type_invalid)
 	return *p;
 }
 
+const var& var::path(string varpath) const throw(type_invalid)
+{
+	std::vector<string> fields = pathof(varpath);
+
+	//如果前面的回退无法清除，说明想要的值越过了根，不允许。
+	if(!fields.empty() && fields.at(0).compare("..") == 0){
+		throw type_invalid(lyramilk::kdict("%s 路径错误，试图越过了根结点：%s","lyramilk::data::var::path()",varpath.c_str()));
+	}
+
+	//如果路径表达式为空或路径表达式只表达一个目录，则直接返回根。
+	if(fields.size() == 0){
+		return *this;
+	}
+
+	//此时的fields中包含且仅包含枝节点。
+	std::vector<string>::iterator it = fields.begin();
+	//如果var是空的
+	const var* p = this;
+	/*
+	if(p->type() == t_invalid){
+		p->type(t_map);
+	}
+	if((p->type() & (t_map | t_array)) == 0) throw type_invalid(lyramilk::kdict("%s 路径：根元素不是t_map或t_array(%s)","lyramilk::data::var::path()",varpath.c_str()));
+*/
+	for(;it!=fields.end();++it){
+		if(p->type() == t_array){
+			string& str = *it;
+			if(str.find_first_not_of("0123456789") != str.npos){
+				throw type_invalid(lyramilk::kdict("%s 路径：t_array类型只能接收纯整数的字符串形式(%s)","lyramilk::data::var::path()",varpath.c_str()));
+			}
+			unsigned int index = atoi(str.c_str());
+			if(p->u.a->size() == index){
+				p->u.a->push_back(nil);
+			}else if(p->u.a->size() < index){
+				throw type_invalid(lyramilk::kdict("%s 路径：t_array类型越界(%s)","lyramilk::data::var::path()",varpath.c_str()));
+			}
+			p = &p->u.a->at(index);
+		}else if(p->type() == t_map){
+			p = &p->u.m->operator[](*it);
+		}else{
+			return lyramilk::data::var::nil;
+		}
+	}
+	return *p;
+}
+
 template < >
 lyramilk::data::chunk& lyramilk::data::var::as<lyramilk::data::chunk&>() throw(type_invalid)
 {

@@ -109,6 +109,10 @@ lyramilk::data::var echo(const lyramilk::data::var::array& args,const lyramilk::
 printf("%s\n",__FUNCTION__);
 	MILK_CHECK_SCRIPT_ARGS(args,0,lyramilk::data::var::t_str);
 	std::cout << lyramilk::ansi_3_64::green << args[0] << lyramilk::ansi_3_64::reset << std::endl;
+
+	lyramilk::data::string str = args[0];
+COUT << "str.size=" << str.size() << std::endl;
+
 	return true;
 }
 
@@ -159,7 +163,7 @@ void test_script(lyramilk::data::string file,lyramilk::script::engine* eng)
 		std::cout << "调用script的test函数的结果：" << eng->call("mytest",r) << std::endl;
 		eng->gc();
 	}
-	//eng->reset();
+	eng->reset();
 	delete eng;
 }
 
@@ -170,7 +174,7 @@ int main(int argc,const char* argv[])
 
 	std::map<lyramilk::data::string,lyramilk::script::engine*> engs;
 #ifdef JS17_FOUND
-	engs["js"] = lyramilk::script::engine::createinstance("v8js");
+	engs["js"] = lyramilk::script::engine::createinstance("js");
 #endif
 #ifdef LUA_FOUND
 	engs["lua"] = lyramilk::script::engine::createinstance("lua");

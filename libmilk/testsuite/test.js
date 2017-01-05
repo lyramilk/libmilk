@@ -1,11 +1,11 @@
-var t1 = new test_system(3);
+/*var t1 = new test_system(3);
 t1.print("[js]加载脚本开始。");
 function mytest(t,v)
 {
 	myecho("[js]执行test");
 	var k = 0;
 	var tm1 = new Date().getTime();
-	for(var i=0;i<1000000;++i){
+	for(var i=0;i<100;++i){
 		k = myaddm({k:k,v:i});
 		//k = myadd(k,i);
 	}
@@ -23,3 +23,7 @@ function mytest(t,v)
 }
 
 t1.print("[js]加载脚本完成。");
+*/
+
+var str = "\ud83d\ude03";
+myecho(str);
