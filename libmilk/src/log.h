@@ -31,13 +31,14 @@ namespace lyramilk { namespace log
 	*/
 	class _lyramilk_api_ logb
 	{
+		const logb* proxy;
 	  protected:
 		/**
 			@brief 格式化时间
 			@details 将时间格式化后输出到日志中。
 			@param ti 时间整数，从1970年1月1号到现在的秒数。
 		*/
-		virtual lyramilk::data::string strtime(time_t ti);
+		virtual lyramilk::data::string strtime(time_t ti) const;
 	  public:
 		/**
 			@brief 记录日志。
@@ -50,11 +51,12 @@ namespace lyramilk { namespace log
 			@param str 日志消息。
 
 		*/
-		virtual void log(time_t ti,type ty,lyramilk::data::string usr,lyramilk::data::string app,lyramilk::data::string module,lyramilk::data::string str);
+		virtual void log(time_t ti,type ty,lyramilk::data::string usr,lyramilk::data::string app,lyramilk::data::string module,lyramilk::data::string str) const;
 		/**
 			@brief 构造函数
 		*/
 		logb();
+		void set_proxy(const logb* pr);
 		~logb();
 	};
 
@@ -70,7 +72,6 @@ namespace lyramilk { namespace log
 		friend class logss;
 		lyramilk::data::vector<char,lyramilk::data::allocator<char> > buf;
 		logss& p;
-		int r;
 	  public:
 		/**
 			@brief 构造函数，通过一个日志流来构造流缓冲。
@@ -106,7 +107,6 @@ namespace lyramilk { namespace log
 		logb* p;
 		lyramilk::data::string module;
 		lyramilk::data::string module_suffix;
-		lyramilk::threading::mutex_os lock;
 		logbuf db;
 		friend class logbuf;
 	  public:

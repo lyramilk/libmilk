@@ -17,13 +17,19 @@ logss lyramilk::klog;
 
 logb::logb()
 {
+	proxy = nullptr;
 }
 
 logb::~logb()
 {
 }
 
-lyramilk::data::string logb::strtime(time_t ti)
+void logb::set_proxy(const logb* pr)
+{
+	proxy = pr;
+}
+
+lyramilk::data::string logb::strtime(time_t ti) const
 {
 	static lyramilk::threading::mutex_rw lock;
 	static time_t last_time = 0;
@@ -59,8 +65,9 @@ lyramilk::data::string logb::strtime(time_t ti)
 
 
 
-void logb::log(time_t ti,type ty,lyramilk::data::string usr,lyramilk::data::string app,lyramilk::data::string module,lyramilk::data::string str)
+void logb::log(time_t ti,type ty,lyramilk::data::string usr,lyramilk::data::string app,lyramilk::data::string module,lyramilk::data::string str) const
 {
+	//lyramilk::threading::mutex_sync _(lock);
 	switch(ty){
 	  case debug:{
 		lyramilk::data::string cache;
@@ -70,8 +77,8 @@ void logb::log(time_t ti,type ty,lyramilk::data::string usr,lyramilk::data::stri
 		cache.append(" [");
 		cache.append(module);
 		cache.append("] ");
-		cache.append(str);
 		cache.append("\x1b[0m");
+		cache.append(str);
 		//(std::cout << cache).flush();
 		fwrite(cache.c_str(),cache.size(),1,stdout);
 	  }break;
@@ -83,8 +90,8 @@ void logb::log(time_t ti,type ty,lyramilk::data::string usr,lyramilk::data::stri
 		cache.append(" [");
 		cache.append(module);
 		cache.append("] ");
-		cache.append(str);
 		cache.append("\x1b[0m");
+		cache.append(str);
 		//(std::cout << cache).flush();
 		fwrite(cache.c_str(),cache.size(),1,stdout);
 	  }break;
@@ -96,8 +103,8 @@ void logb::log(time_t ti,type ty,lyramilk::data::string usr,lyramilk::data::stri
 		cache.append(" [");
 		cache.append(module);
 		cache.append("] ");
-		cache.append(str);
 		cache.append("\x1b[0m");
+		cache.append(str);
 		//(std::cout << cache).flush();
 		fwrite(cache.c_str(),cache.size(),1,stdout);
 	  }break;
@@ -109,8 +116,8 @@ void logb::log(time_t ti,type ty,lyramilk::data::string usr,lyramilk::data::stri
 		cache.append(" [");
 		cache.append(module);
 		cache.append("] ");
-		cache.append(str);
 		cache.append("\x1b[0m");
+		cache.append(str);
 		//(std::cerr << cache).flush();
 		fwrite(cache.c_str(),cache.size(),1,stderr);
 	  }break;
@@ -118,7 +125,7 @@ void logb::log(time_t ti,type ty,lyramilk::data::string usr,lyramilk::data::stri
 }
 
 
-logbuf::logbuf(logss& pp):buf(2048),p(pp),r(0)
+logbuf::logbuf(logss& pp):buf(2048),p(pp)
 {
 	setp(buf.data(),buf.data() + buf.size());
 }
@@ -129,22 +136,16 @@ logbuf::~logbuf()
 
 std::streamsize logbuf::sputn (const char_type* s, std::streamsize  n)
 {
-	p.lock.lock();
-	++r;
 	return std::basic_streambuf<char>::sputn(s,n);
 }
 
 logbuf::int_type logbuf::sputc (char_type c)
 {
-	p.lock.lock();
-	++r;
 	return std::basic_streambuf<char>::sputc(c);
 }
 
 std::streamsize logbuf::xsputn (const char_type* s, std::streamsize  n)
 {
-	p.lock.lock();
-	++r;
 	return std::basic_streambuf<char>::xsputn(s,n);
 }
 
@@ -156,7 +157,6 @@ logbuf::int_type logbuf::overflow(int_type _Meta)
 
 int logbuf::sync()
 {
-	lyramilk::threading::mutex_sync _(p.lock);
 	const char* pstr = pbase();
 	int len = (int)(pptr() - pbase());
 
@@ -189,9 +189,6 @@ int logbuf::sync()
 	p.t = trace;
 	p.module_suffix.clear();
 	setp(buf.data(),buf.data() + buf.size());
-	for(;r > 0;--r){
-		p.lock.unlock();
-	}
 	return 0;
 }
 
@@ -212,14 +209,15 @@ logss::logss(lyramilk::data::string m):db(*this)
 
 logss::logss(const logss& qlog,lyramilk::data::string m):db(*this)
 {
-	lyramilk::threading::mutex_sync _((lyramilk::threading::mutex_os&)qlog.lock);
+	module = qlog.module.c_str();
 	if(qlog.module.empty()){
-		module = qlog.module + m;
+		module += m;
 	}else if(!m.empty()){
-		module = qlog.module + '.' + m;
+		module += '.' + m;
 	}
 	t = qlog.t;
-	p = qlog.p;
+	p = &loger;
+	p->set_proxy(qlog.p);
 	init(&db);
 }
 
@@ -234,18 +232,12 @@ logss& logss::operator()(type ty)
 
 logss& logss::operator()(lyramilk::data::string m)
 {
-	//lyramilk::threading::mutex_sync _(lock);
-	lock.lock();
-	++db.r;
 	module_suffix = m;
 	return *this;
 }
 
 logss& logss::operator()(type ty,lyramilk::data::string m)
 {
-	//lyramilk::threading::mutex_sync _(lock);
-	lock.lock();
-	++db.r;
 	module_suffix = m;
 	t = ty;
 	return *this;
@@ -253,11 +245,9 @@ logss& logss::operator()(type ty,lyramilk::data::string m)
 
 lyramilk::log::logb* logss::rebase(lyramilk::log::logb* ploger)
 {
-	if(ploger == &loger){
-		(*this)(lyramilk::log::debug,"lyramilk.log.logss") << lyramilk::kdict("恢复默认日志状态") << std::endl;
-	}else{
-		(*this)(lyramilk::log::debug,"lyramilk.log.logss") << lyramilk::kdict("切换日志定向") << std::endl;
-	}
+	p->set_proxy(ploger);
+	(*this)(lyramilk::log::debug,"lyramilk.log.logss") << lyramilk::kdict("恢复默认日志状态") << std::endl;
+
 	logb* old = p;
 	p = ploger;
 	return old;

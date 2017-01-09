@@ -3,18 +3,16 @@
 #include "log.h"
 #include <unistd.h>
 
-int r = 10;
+int r = 100;
 
 
 class ssss:public lyramilk::threading::threads
 {
 	int svc()
 	{
-		lyramilk::data::string ttt = "ttt";
+		lyramilk::log::logss log(lyramilk::klog,"ttt");
 		for(int i=0;i<100;++i){
-			lyramilk::klog(ttt) << "百度营销大学以“让营销人都懂互联网营销”为使命";
-			lyramilk::klog(ttt) << "，";
-			lyramilk::klog(ttt) << "致力于推动中国营销人员互联网营销水平的不断提升！" << std::endl;
+			log << "百度" << "营销" << "大学" << "以" << "“让营销人都懂互联网营销”" << "为" << "使命" << "，" << "致力于" << "推动" << "中国" << "营销人员" << "互联网" << "营销水平" << "的" << "不断提升" << "！" << std::endl;
 		}
 		__sync_sub_and_fetch(&r,1);
 		return 0;
@@ -27,5 +25,6 @@ int main(int argc,const char* argv[])
 	ss.active(r);
 
 	while(r);
+	printf("结束\n");
 	return 0;
 }
