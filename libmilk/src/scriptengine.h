@@ -2,7 +2,7 @@
 #define _lyramilk_script_engine_h_
 
 #include "var.h"
-#include "thread.h"
+#include "atom.h"
 #include "exception.h"
 
 /**

@@ -60,7 +60,7 @@ namespace lyramilk { namespace log
 		~logb();
 	};
 
-	class _lyramilk_api_ logss;
+	class _lyramilk_api_ logss2;
 #ifdef WIN32
 	template class _lyramilk_api_ lyramilk::data::vector<char, lyramilk::data::allocator<char> >;
 #endif
@@ -69,22 +69,19 @@ namespace lyramilk { namespace log
 	*/
 	class _lyramilk_api_ logbuf : public std::basic_streambuf<char>
 	{
-		friend class logss;
+		friend class logss2;
 		lyramilk::data::vector<char,lyramilk::data::allocator<char> > buf;
-		logss& p;
+		logss2& p;
 	  public:
 		/**
 			@brief 构造函数，通过一个日志流来构造流缓冲。
 			@param pp 日志流。
 		*/
-		logbuf(logss& pp);
+		logbuf(logss2& pp);
 		/**
 			@brief 析构函数
 		*/
 		virtual ~logbuf();
-		virtual std::streamsize sputn (const char_type* s, std::streamsize  n);
-		virtual int_type sputc (char_type c);
-		virtual std::streamsize xsputn (const char_type* s, std::streamsize  n);
 		/**
 			@brief 继承于template std::basic_streambuf，当写入缓冲发生溢出时触发。
 			@param _Meta 缓冲区溢出时正在写入的字符，这个字符尚未写入到缓冲区中，因此清理完缓冲区后需要将它写到缓冲区里。
@@ -96,19 +93,28 @@ namespace lyramilk { namespace log
 		virtual int sync();
 	};
 
+
+	class _lyramilk_api_ logss2 : public lyramilk::data::ostringstream
+	{
+		logb loger;
+		logbuf db;
+		friend class logbuf;
+		friend class logss;
+		lyramilk::data::string module;
+		type t;
+	  public:
+		logss2();
+		virtual ~logss2();
+	};
+
 	/**
 		@brief 日志流
 		@details 提供符合C++标准流的日志承载功能，默认输出到控制台，可以通过tie绑定一定输出到其它位置的logb实例。
 	*/
-	class _lyramilk_api_ logss : public lyramilk::data::ostringstream
+	class _lyramilk_api_ logss
 	{
-		type t;
-		logb loger;
 		logb* p;
-		lyramilk::data::string module;
-		lyramilk::data::string module_suffix;
-		logbuf db;
-		friend class logbuf;
+		lyramilk::data::string prefix;
 	  public:
 		/**
 			@brief 构造函数。
@@ -136,7 +142,7 @@ namespace lyramilk { namespace log
 			@param ty 日志类型
 			@return 返回日志流自身以方便 << 运算符表现。
 		*/
-		logss& operator()(type ty);
+		logss2& operator()(type ty) const;
 		/**
 			@brief 模拟一个函数。通过这个函数来设置子模块。
 			@details 例如
@@ -147,7 +153,7 @@ namespace lyramilk { namespace log
 			@param m 子模块名称
 			@return 返回日志流自身以方便 << 运算符表现。
 		*/
-		logss& operator()(lyramilk::data::string m);
+		logss2& operator()(lyramilk::data::string m) const;
 		/**
 			@brief 模拟一个函数。通过这个函数来设置日志类型和子模块。
 			@details 例如
@@ -159,7 +165,7 @@ namespace lyramilk { namespace log
 			@param ty 日志类型
 			@return 返回日志流自身以方便 << 运算符表现。
 		*/
-		logss& operator()(type ty,lyramilk::data::string m);
+		logss2& operator()(type ty,lyramilk::data::string m) const;
 		/**
 			@brief 将日志输出到指定的logb实现中。
 			@details 将该日志流定向到指定的ploger中，可以改变日志的表现形式以及存储方式。

@@ -67,7 +67,10 @@ lyramilk::data::string logb::strtime(time_t ti) const
 
 void logb::log(time_t ti,type ty,lyramilk::data::string usr,lyramilk::data::string app,lyramilk::data::string module,lyramilk::data::string str) const
 {
-	//lyramilk::threading::mutex_sync _(lock);
+	if(proxy){
+		proxy->log(ti,ty,usr,app,module,str);
+		return;
+	}
 	switch(ty){
 	  case debug:{
 		lyramilk::data::string cache;
@@ -77,9 +80,8 @@ void logb::log(time_t ti,type ty,lyramilk::data::string usr,lyramilk::data::stri
 		cache.append(" [");
 		cache.append(module);
 		cache.append("] ");
-		cache.append("\x1b[0m");
 		cache.append(str);
-		//(std::cout << cache).flush();
+		cache.append("\x1b[0m");
 		fwrite(cache.c_str(),cache.size(),1,stdout);
 	  }break;
 	  case trace:{
@@ -90,9 +92,8 @@ void logb::log(time_t ti,type ty,lyramilk::data::string usr,lyramilk::data::stri
 		cache.append(" [");
 		cache.append(module);
 		cache.append("] ");
-		cache.append("\x1b[0m");
 		cache.append(str);
-		//(std::cout << cache).flush();
+		cache.append("\x1b[0m");
 		fwrite(cache.c_str(),cache.size(),1,stdout);
 	  }break;
 	  case warning:{
@@ -103,9 +104,8 @@ void logb::log(time_t ti,type ty,lyramilk::data::string usr,lyramilk::data::stri
 		cache.append(" [");
 		cache.append(module);
 		cache.append("] ");
-		cache.append("\x1b[0m");
 		cache.append(str);
-		//(std::cout << cache).flush();
+		cache.append("\x1b[0m");
 		fwrite(cache.c_str(),cache.size(),1,stdout);
 	  }break;
 	  case error:{
@@ -116,37 +116,21 @@ void logb::log(time_t ti,type ty,lyramilk::data::string usr,lyramilk::data::stri
 		cache.append(" [");
 		cache.append(module);
 		cache.append("] ");
-		cache.append("\x1b[0m");
 		cache.append(str);
-		//(std::cerr << cache).flush();
+		cache.append("\x1b[0m");
 		fwrite(cache.c_str(),cache.size(),1,stderr);
 	  }break;
 	}
 }
 
 
-logbuf::logbuf(logss& pp):buf(2048),p(pp)
+logbuf::logbuf(logss2& pp):buf(2048),p(pp)
 {
 	setp(buf.data(),buf.data() + buf.size());
 }
 
 logbuf::~logbuf()
 {
-}
-
-std::streamsize logbuf::sputn (const char_type* s, std::streamsize  n)
-{
-	return std::basic_streambuf<char>::sputn(s,n);
-}
-
-logbuf::int_type logbuf::sputc (char_type c)
-{
-	return std::basic_streambuf<char>::sputc(c);
-}
-
-std::streamsize logbuf::xsputn (const char_type* s, std::streamsize  n)
-{
-	return std::basic_streambuf<char>::xsputn(s,n);
 }
 
 logbuf::int_type logbuf::overflow(int_type _Meta)
@@ -161,13 +145,6 @@ int logbuf::sync()
 	int len = (int)(pptr() - pbase());
 
 	lyramilk::data::string module = p.module;
-	if(!module.empty()){
-		if(!p.module_suffix.empty()){
-			module += '.' + p.module_suffix;
-		}
-	}else{
-		module = p.module_suffix;
-	}
 
 #ifdef __linux__
 	/**/
@@ -181,72 +158,114 @@ int logbuf::sync()
 		}
 	}
 
-	p.p->log(time(NULL),p.t,getlogin(),str.c_str(),module,lyramilk::data::string(pstr,len));
+	p.loger.log(time(NULL),p.t,getlogin(),str.c_str(),module,lyramilk::data::string(pstr,len));
 	/*/
 	p.p->log(time(NULL),p.t,"user","app",module,lyramilk::data::string(pstr,len));
 	/ **/
 #endif
-	p.t = trace;
-	p.module_suffix.clear();
 	setp(buf.data(),buf.data() + buf.size());
 	return 0;
 }
 
-logss::logss():db(*this)
+
+
+logss2::logss2():db(*this)
 {
-	t = trace;
-	p = &loger;
 	init(&db);
+	t = trace;
 }
 
-logss::logss(lyramilk::data::string m):db(*this)
+logss2::~logss2()
 {
-	module = m;
-	t = trace;
-	p = &loger;
-	init(&db);
 }
 
-logss::logss(const logss& qlog,lyramilk::data::string m):db(*this)
+logss::logss()
 {
-	module = qlog.module.c_str();
-	if(qlog.module.empty()){
-		module += m;
-	}else if(!m.empty()){
-		module += '.' + m;
-	}
-	t = qlog.t;
-	p = &loger;
-	p->set_proxy(qlog.p);
-	init(&db);
+	p = nullptr;
+}
+
+logss::logss(lyramilk::data::string m)
+{
+	prefix = m;
+	p = nullptr;
+}
+
+logss::logss(const logss& qlog,lyramilk::data::string m)
+{
+	prefix = m;
+	p = qlog.p;
 }
 
 logss::~logss()
 {}
 
-logss& logss::operator()(type ty)
+void static logssclean(void* parg)
 {
-	t = ty;
-	return *this;
+	logss2* plogss2 = (logss2*)parg;
+	delete plogss2;
 }
 
-logss& logss::operator()(lyramilk::data::string m)
+static pthread_key_t logss2_key;
+
+static __attribute__ ((constructor)) void __init()
 {
-	module_suffix = m;
-	return *this;
+	pthread_key_create(&logss2_key,logssclean);
 }
 
-logss& logss::operator()(type ty,lyramilk::data::string m)
+logss2& logss::operator()(type ty) const
 {
-	module_suffix = m;
-	t = ty;
-	return *this;
+	logss2* plogss2 = (logss2*)pthread_getspecific(logss2_key);
+	if(!plogss2){
+		plogss2 = new logss2;
+		pthread_setspecific(logss2_key,plogss2);
+	}
+	plogss2->t = ty;
+	plogss2->module = prefix;
+	plogss2->loger.set_proxy(p);
+	return *plogss2;
+}
+
+logss2& logss::operator()(lyramilk::data::string m) const
+{
+	logss2* plogss2 = (logss2*)pthread_getspecific(logss2_key);
+	if(!plogss2){
+		plogss2 = new logss2;
+		pthread_setspecific(logss2_key,plogss2);
+	}
+	if(prefix.empty()){
+		plogss2->module = m;
+	}else{
+		plogss2->module = prefix + "." + m;
+	}
+	plogss2->loger.set_proxy(p);
+	return *plogss2;
+}
+
+logss2& logss::operator()(type ty,lyramilk::data::string m) const
+{
+	logss2* plogss2 = (logss2*)pthread_getspecific(logss2_key);
+	if(!plogss2){
+		plogss2 = new logss2;
+		pthread_setspecific(logss2_key,plogss2);
+	}
+	plogss2->t = ty;
+	if(prefix.empty()){
+		plogss2->module = m;
+	}else{
+		plogss2->module = prefix + "." + m;
+	}
+	plogss2->loger.set_proxy(p);
+	return *plogss2;
 }
 
 lyramilk::log::logb* logss::rebase(lyramilk::log::logb* ploger)
 {
-	p->set_proxy(ploger);
-	(*this)(lyramilk::log::debug,"lyramilk.log.logss") << lyramilk::kdict("恢复默认日志状态") << std::endl;
+	if(ploger == p) return ploger;
+	if(ploger){
+		(*this)(lyramilk::log::debug,"lyramilk.log.logss") << lyramilk::kdict("切换日志状态") << std::endl;
+	}else{
+		(*this)(lyramilk::log::debug,"lyramilk.log.logss") << lyramilk::kdict("恢复默认日志状态") << std::endl;
+	}
 
 	logb* old = p;
 	p = ploger;
