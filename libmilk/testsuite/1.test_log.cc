@@ -29,7 +29,7 @@ int main(int argc,const char* argv[])
 	ssss ss;
 	ss.active(r);
 
-	while(r);
+	while(!__sync_bool_compare_and_swap(&r,0,0));
 	printf("结束\n");
 	return 0;
 }

@@ -133,14 +133,8 @@ namespace lyramilk{namespace script{namespace lua
 		  case lyramilk::data::var::t_bool:
 			lua_pushboolean(L,v);
 			break;
-		  case lyramilk::data::var::t_int8:
-		  case lyramilk::data::var::t_uint8:
-		  case lyramilk::data::var::t_int16:
-		  case lyramilk::data::var::t_uint16:
-		  case lyramilk::data::var::t_int32:
-		  case lyramilk::data::var::t_uint32:
-		  case lyramilk::data::var::t_int64:
-		  case lyramilk::data::var::t_uint64:
+		  case lyramilk::data::var::t_int:
+		  case lyramilk::data::var::t_uint:
 			lua_pushinteger(L,v);
 			break;
 		  case lyramilk::data::var::t_double:

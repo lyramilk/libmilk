@@ -130,6 +130,7 @@ namespace lyramilk{namespace netio
 
 	bool socket::isalive()
 	{
+		if(sock == 0) return false;
 		pollfd pfd;
 		pfd.fd = sock;
 		pfd.events = POLLOUT;

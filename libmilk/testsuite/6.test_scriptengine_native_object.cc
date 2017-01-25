@@ -119,8 +119,8 @@ COUT << "str.size=" << str.size() << std::endl;
 lyramilk::data::var add(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env)
 {
 printf("%s\n",__FUNCTION__);
-	MILK_CHECK_SCRIPT_ARGS(args,0,lyramilk::data::var::t_int32);
-	MILK_CHECK_SCRIPT_ARGS(args,1,lyramilk::data::var::t_int32);
+	MILK_CHECK_SCRIPT_ARGS(args,0,lyramilk::data::var::t_int);
+	MILK_CHECK_SCRIPT_ARGS(args,1,lyramilk::data::var::t_int);
 	return (int)args[0] + (int)args[1];
 }
 

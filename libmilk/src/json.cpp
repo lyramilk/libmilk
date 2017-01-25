@@ -105,42 +105,12 @@ namespace lyramilk{namespace data
 				return json_object_new_boolean(v);
 			}
 			break;
-		  case var::t_int8:
-			{
-				return json_object_new_int(v);
-			}
-			break;
-		  case var::t_uint8:
-			{
-				return json_object_new_int(v);
-			}
-			break;
-		  case var::t_int16:
-			{
-				return json_object_new_int(v);
-			}
-			break;
-		  case var::t_uint16:
-			{
-				return json_object_new_int(v);
-			}
-			break;
-		  case var::t_int32:
-			{
-				return json_object_new_int(v);
-			}
-			break;
-		  case var::t_uint32:
-			{
-				return json_object_new_int(v);
-			}
-			break;
-		  case var::t_int64:
+		  case var::t_int:
 			{
 				return json_object_new_int64(v);
 			}
 			break;
-		  case var::t_uint64:
+		  case var::t_uint:
 			{
 				return json_object_new_int64(v);
 			}

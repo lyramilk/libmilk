@@ -465,28 +465,10 @@ var& var::operator +=(const var& v) throw(type_invalid)
 	  case t_bool:{
 			u.b |= (bool)v;
 		}break;
-	  case t_int8:{
-			u.i += (int8)v;
-		}break;
-	  case t_uint8:{
-			u.u += (uint8)v;
-		}break;
-	  case t_int16:{
-			u.i2 += (int16)v;
-		}break;
-	  case t_uint16:{
-			u.u2 += (uint16)v;
-		}break;
-	  case t_int32:{
-			u.i4 += (int32)v;
-		}break;
-	  case t_uint32:{
-			u.u4 += (uint32)v;
-		}break;
-	  case t_int64:{
+	  case t_int:{
 			u.i8 += (int64)v;
 		}break;
-	  case t_uint64:{
+	  case t_uint:{
 			u.u8 += (uint64)v;
 		}break;
 	  case t_double:{
@@ -549,28 +531,10 @@ bool var::operator ==(const var& v) const throw(type_invalid)
 	  case t_bool:{
 			return u.b == (bool)v;
 		}break;
-	  case t_int8:{
-			return u.i == (int8)v;
-		}break;
-	  case t_uint8:{
-			return u.u == (uint8)v;
-		}break;
-	  case t_int16:{
-			return u.i2 == (int16)v;
-		}break;
-	  case t_uint16:{
-			return u.u2 == (uint16)v;
-		}break;
-	  case t_int32:{
-			return u.i4 == (int32)v;
-		}break;
-	  case t_uint32:{
-			return u.u4 == (uint32)v;
-		}break;
-	  case t_int64:{
+	  case t_int:{
 			return u.i8 == (int64)v;
 		}break;
-	  case t_uint64:{
+	  case t_uint:{
 			return u.u8 == (uint64)v;
 		}break;
 	  case t_double:{
@@ -652,28 +616,10 @@ bool var::operator <(const var& v) const throw(type_invalid)
 	  case t_bool:{
 			return u.b < (bool)v;
 		}break;
-	  case t_int8:{
-			return u.i < (int32)v;
-		}break;
-	  case t_uint8:{
-			return u.u < (uint32)v;
-		}break;
-	  case t_int16:{
-			return u.i2 < (int32)v;
-		}break;
-	  case t_uint16:{
-			return u.u2 < (uint32)v;
-		}break;
-	  case t_int32:{
-			return u.i4 < (int32)v;
-		}break;
-	  case t_uint32:{
-			return u.u4 < (uint32)v;
-		}break;
-	  case t_int64:{
+	  case t_int:{
 			return u.i8 < (int64)v;
 		}break;
-	  case t_uint64:{
+	  case t_uint:{
 			return u.u8 < (uint64)v;
 		}break;
 	  case t_double:{
@@ -706,7 +652,7 @@ var& var::at(lyramilk::data::uint64 index) throw(type_invalid)
 	if(t == t_array){
 		return u.a->at(index);
 	}
-	throw type_invalid(lyramilk::kdict("%s：错误的索引类型%s[%s]","lyramilk::data::var::at()",type_name(t).c_str(),"t_uint64"));
+	throw type_invalid(lyramilk::kdict("%s：错误的索引类型%s[%s]","lyramilk::data::var::at()",type_name(t).c_str(),"t_uint"));
 }
 
 var& var::at(const string& index) throw(type_invalid)
@@ -731,7 +677,7 @@ const var& var::at(lyramilk::data::uint64 index) const throw(type_invalid)
 	if(t == t_array){
 		return u.a->at(index);
 	}
-	throw type_invalid(lyramilk::kdict("%s：错误的索引类型%s[%s]","lyramilk::data::var::at()",type_name(t).c_str(),"t_uint64"));
+	throw type_invalid(lyramilk::kdict("%s：错误的索引类型%s[%s]","lyramilk::data::var::at()",type_name(t).c_str(),"t_uint"));
 }
 
 const var& var::at(const string& index) const throw(type_invalid)
@@ -900,48 +846,48 @@ var& var::assign(bool v)
 var& var::assign(int8 v)
 {
 	clear();
-	t = t_int8;
-	u.i = v;
+	t = t_int;
+	u.i8 = v;
 	return *this;
 }
 
 var& var::assign(uint8 v)
 {
 	clear();
-	t = t_uint8;
-	u.u = v;
+	t = t_uint;
+	u.u8 = v;
 	return *this;
 }
 
 var& var::assign(int16 v)
 {
 	clear();
-	t = t_int16;
-	u.i2 = v;
+	t = t_int;
+	u.i8 = v;
 	return *this;
 }
 
 var& var::assign(uint16 v)
 {
 	clear();
-	t = t_uint16;
-	u.u2 = v;
+	t = t_uint;
+	u.u8 = v;
 	return *this;
 }
 
 var& var::assign(int32 v)
 {
 	clear();
-	t = t_int32;
-	u.i4 = v;
+	t = t_int;
+	u.i8 = v;
 	return *this;
 }
 
 var& var::assign(uint32 v)
 {
 	clear();
-	t = t_uint32;
-	u.u4 = v;
+	t = t_uint;
+	u.u8 = v;
 	return *this;
 }
 
@@ -960,7 +906,7 @@ var& var::assign(unsigned long v)
 var& var::assign(int64 v)
 {
 	clear();
-	t = t_int64;
+	t = t_int;
 	u.i8 = v;
 	return *this;
 }
@@ -968,7 +914,7 @@ var& var::assign(int64 v)
 var& var::assign(uint64 v)
 {
 	clear();
-	t = t_uint64;
+	t = t_uint;
 	u.u8 = v;
 	return *this;
 }
@@ -1047,33 +993,11 @@ var::operator chunk() const throw(type_invalid)
 	  case t_bool:{
 			return chunk((const unsigned char*)&u.b,sizeof(u.b));
 		}break;
-	  case t_int8:{
-			return chunk((const unsigned char*)&u.i,sizeof(u.i));
-		}break;
-	  case t_uint8:{
-			return chunk((const unsigned char*)&u.u,sizeof(u.u));
-		}break;
-	  case t_int16:{
-			int16 i2 = reverse_order(u.i2);
-			return chunk((const unsigned char*)&i2,sizeof(i2));
-		}break;
-	  case t_uint16:{
-			uint16 u2 = reverse_order(u.u2);
-			return chunk((const unsigned char*)&u2,sizeof(u2));
-		}break;
-	  case t_int32:{
-			int32 i4 = reverse_order(u.i4);
-			return chunk((const unsigned char*)&i4,sizeof(i4));
-		}break;
-	  case t_uint32:{
-			uint32 u4 = reverse_order(u.u4);
-			return chunk((const unsigned char*)&u4,sizeof(u4));
-		}break;
-	  case t_int64:{
+	  case t_int:{
 			int64 i8 = reverse_order(u.i8);
 			return chunk((const unsigned char*)&i8,sizeof(i8));
 		}break;
-	  case t_uint64:{
+	  case t_uint:{
 			uint64 u8 = reverse_order(u.u8);
 			return chunk((const unsigned char*)&u8,sizeof(u8));
 		}break;
@@ -1111,42 +1035,12 @@ var::operator string () const throw(type_invalid)
 	  case t_bool:{
 			return u.b?"true":"false";
 		}break;
-	  case t_int8:{
-			stringstream ss;
-			ss << (unsigned int)u.i;
-			return ss.str();
-		}break;
-	  case t_uint8:{
-			stringstream ss;
-			ss << (unsigned int)u.u;
-			return ss.str();
-		}break;
-	  case t_int16:{
-			stringstream ss;
-			ss << (unsigned int)u.i2;
-			return ss.str();
-		}break;
-	  case t_uint16:{
-			stringstream ss;
-			ss << (unsigned int)u.u2;
-			return ss.str();
-		}break;
-	  case t_int32:{
-			stringstream ss;
-			ss << u.i4;
-			return ss.str();
-		}break;
-	  case t_uint32:{
-			stringstream ss;
-			ss << u.u4;
-			return ss.str();
-		}break;
-	  case t_int64:{
+	  case t_int:{
 			stringstream ss;
 			ss << u.i8;
 			return ss.str();
 		}break;
-	  case t_uint64:{
+	  case t_uint:{
 			stringstream ss;
 			ss << u.u8;
 			return ss.str();
@@ -1216,42 +1110,12 @@ var::operator wstring () const throw(type_invalid)
 	  case t_bool:{
 			return u.b?L"true":L"false";
 		}break;
-	  case t_int8:{
-			wstringstream ss;
-			ss << (unsigned int)u.i;
-			return ss.str();
-		}break;
-	  case t_uint8:{
-			wstringstream ss;
-			ss << (unsigned int)u.u;
-			return ss.str();
-		}break;
-	  case t_int16:{
-			wstringstream ss;
-			ss << (unsigned int)u.i2;
-			return ss.str();
-		}break;
-	  case t_uint16:{
-			wstringstream ss;
-			ss << (unsigned int)u.u2;
-			return ss.str();
-		}break;
-	  case t_int32:{
-			wstringstream ss;
-			ss << u.i4;
-			return ss.str();
-		}break;
-	  case t_uint32:{
-			wstringstream ss;
-			ss << u.u4;
-			return ss.str();
-		}break;
-	  case t_int64:{
+	  case t_int:{
 			wstringstream ss;
 			ss << u.i8;
 			return ss.str();
 		}break;
-	  case t_uint64:{
+	  case t_uint:{
 			wstringstream ss;
 			ss << u.u8;
 			return ss.str();
@@ -1321,14 +1185,8 @@ var::operator bool () const throw(type_invalid)
 			throw type_invalid(lyramilk::kdict("%s：错误的子类型%s","lyramilk::data::var::operator bool()",type_name(t).c_str()));
 		}break;
 	  case t_bool:
-	  case t_int8:
-	  case t_uint8:
-	  case t_int16:
-	  case t_uint16:
-	  case t_int32:
-	  case t_uint32:
-	  case t_int64:
-	  case t_uint64:
+	  case t_int:
+	  case t_uint:
 	  case t_double:{
 			return (int64)*this != 0;
 		}break;
@@ -1355,14 +1213,8 @@ var::operator int8 () const throw(type_invalid)
 	  case t_str:
 	  case t_wstr:
 	  case t_bool:
-	  case t_int8:
-	  case t_uint8:
-	  case t_int16:
-	  case t_uint16:
-	  case t_int32:
-	  case t_uint32:
-	  case t_int64:
-	  case t_uint64:
+	  case t_int:
+	  case t_uint:
 	  case t_double:{
 			return (int8)(int64)*this;
 		}break;
@@ -1383,14 +1235,8 @@ var::operator uint8 () const throw(type_invalid)
 	  case t_str:
 	  case t_wstr:
 	  case t_bool:
-	  case t_int8:
-	  case t_uint8:
-	  case t_int16:
-	  case t_uint16:
-	  case t_int32:
-	  case t_uint32:
-	  case t_int64:
-	  case t_uint64:
+	  case t_int:
+	  case t_uint:
 	  case t_double:{
 			return (uint8)(int64)*this;
 		}break;
@@ -1411,14 +1257,8 @@ var::operator int16 () const throw(type_invalid)
 	  case t_str:
 	  case t_wstr:
 	  case t_bool:
-	  case t_int8:
-	  case t_uint8:
-	  case t_int16:
-	  case t_uint16:
-	  case t_int32:
-	  case t_uint32:
-	  case t_int64:
-	  case t_uint64:
+	  case t_int:
+	  case t_uint:
 	  case t_double:{
 			return (int16)(int64)*this;
 		}break;
@@ -1439,14 +1279,8 @@ var::operator uint16 () const throw(type_invalid)
 	  case t_str:
 	  case t_wstr:
 	  case t_bool:
-	  case t_int8:
-	  case t_uint8:
-	  case t_int16:
-	  case t_uint16:
-	  case t_int32:
-	  case t_uint32:
-	  case t_int64:
-	  case t_uint64:
+	  case t_int:
+	  case t_uint:
 	  case t_double:{
 			return (uint16)(int64)*this;
 		}break;
@@ -1467,14 +1301,8 @@ var::operator int32 () const throw(type_invalid)
 	  case t_str:
 	  case t_wstr:
 	  case t_bool:
-	  case t_int8:
-	  case t_uint8:
-	  case t_int16:
-	  case t_uint16:
-	  case t_int32:
-	  case t_uint32:
-	  case t_int64:
-	  case t_uint64:
+	  case t_int:
+	  case t_uint:
 	  case t_double:{
 			return (int32)(int64)*this;
 		}break;
@@ -1506,6 +1334,12 @@ var::operator unsigned long () const throw(type_invalid)
 var::operator int64 () const throw(type_invalid)
 {
 	switch(t){
+	  case t_int:{
+			return u.i8;
+		}break;
+	  case t_uint:{
+			return u.u8;
+		}break;
 	  case t_bin:{
 			int64 value = 0;
 			string str((const char*)u.p->c_str(),u.p->size());
@@ -1527,30 +1361,6 @@ var::operator int64 () const throw(type_invalid)
 		}break;
 	  case t_bool:{
 			return u.b;
-		}break;
-	  case t_int8:{
-			return u.i;
-		}break;
-	  case t_uint8:{
-			return u.u;
-		}break;
-	  case t_int16:{
-			return u.i2;
-		}break;
-	  case t_uint16:{
-			return u.u2;
-		}break;
-	  case t_int32:{
-			return u.i4;
-		}break;
-	  case t_uint32:{
-			return u.u4;
-		}break;
-	  case t_int64:{
-			return u.i8;
-		}break;
-	  case t_uint64:{
-			return u.u8;
 		}break;
 	  case t_double:{
 			return (int64)u.f8;
@@ -1596,28 +1406,10 @@ var::operator double () const throw(type_invalid)
 	  case t_bool:{
 			return u.b;
 		}break;
-	  case t_int8:{
-			return u.i;
-		}break;
-	  case t_uint8:{
-			return u.u;
-		}break;
-	  case t_int16:{
-			return u.i2;
-		}break;
-	  case t_uint16:{
-			return u.u2;
-		}break;
-	  case t_int32:{
-			return u.i4;
-		}break;
-	  case t_uint32:{
-			return u.u4;
-		}break;
-	  case t_int64:{
+	  case t_int:{
 			return (double)u.i8;
 		}break;
-	  case t_uint64:{
+	  case t_uint:{
 			return (double)u.u8;
 		}break;
 	  case t_double:{
@@ -1850,22 +1642,10 @@ string var::type_name(vt nt)
 		return "t_wstr";
 	  case t_bool:
 		return "t_bool";
-	  case t_int8:
-		return "t_int8";
-	  case t_uint8:
-		return "t_uint8";
-	  case t_int16:
-		return "t_int16";
-	  case t_uint16:
-		return "t_uint16";
-	  case t_int32:
-		return "t_int32";
-	  case t_uint32:
-		return "t_uint32";
-	  case t_int64:
-		return "t_int64";
-	  case t_uint64:
-		return "t_uint64";
+	  case t_int:
+		return "t_int";
+	  case t_uint:
+		return "t_uint";
 	  case t_double:
 		return "t_double";
 	  case t_array:
@@ -1910,28 +1690,10 @@ var& var::type(var::vt nt) throw(type_invalid)
 	  case t_bool:{
 			u.b = *this;
 		}break;
-	  case t_int8:{
-			u.i = *this;
-		}break;
-	  case t_uint8:{
-			u.u = *this;
-		}break;
-	  case t_int16:{
-			u.i2 = *this;
-		}break;
-	  case t_uint16:{
-			u.u2 = *this;
-		}break;
-	  case t_int32:{
-			u.i4 = *this;
-		}break;
-	  case t_uint32:{
-			u.u4 = *this;
-		}break;
-	  case t_int64:{
+	  case t_int:{
 			u.i8 = *this;
 		}break;
-	  case t_uint64:{
+	  case t_uint:{
 			u.u8 = *this;
 		}break;
 	  case t_double:{
@@ -1971,14 +1733,8 @@ var& var::type(var::vt nt) throw(type_invalid)
 		delete w;
 		break;
 	  case t_bool:
-	  case t_int8:
-	  case t_uint8:
-	  case t_int16:
-	  case t_uint16:
-	  case t_int32:
-	  case t_uint32:
-	  case t_int64:
-	  case t_uint64:
+	  case t_int:
+	  case t_uint:
 	  case t_double:
 		break;
 	  case t_array:
@@ -1999,12 +1755,12 @@ var& var::type(var::vt nt) throw(type_invalid)
 
 bool var::type_like(vt nt) const
 {
-	if((nt == t_bin || nt == t_str || nt == t_wstr) && (t == t_bin || t == t_str || t == t_wstr || t == t_int8 ||  t == t_uint8 ||  t == t_int16 ||  t == t_uint16 ||  t == t_int32 ||  t == t_uint32 ||  t == t_int64 ||  t == t_uint64 ||  t == t_double)){
+	if((nt == t_bin || nt == t_str || nt == t_wstr) && (t == t_bin || t == t_str || t == t_wstr ||   t == t_int ||  t == t_uint ||  t == t_double)){
 		return true;
 	}
 
-	if((nt == t_int8 || nt == t_uint8 || nt == t_int16 || nt == t_uint16 || nt == t_int32 || nt == t_uint32 || nt == t_int64 || nt == t_uint64 || nt == t_double) &&
-		(t == t_int8 ||  t == t_uint8 ||  t == t_int16 ||  t == t_uint16 ||  t == t_int32 ||  t == t_uint32 ||  t == t_int64 ||  t == t_uint64 ||  t == t_double)){
+	if((nt == t_int || nt == t_uint || nt == t_double) &&
+		(t == t_int ||  t == t_uint ||  t == t_double)){
 		return true;
 	}
 
@@ -2048,14 +1804,8 @@ void var::clear()
 
 	switch(t){
 	  case t_bool:
-	  case t_int8:
-	  case t_uint8:
-	  case t_int16:
-	  case t_uint16:
-	  case t_int32:
-	  case t_uint32:
-	  case t_int64:
-	  case t_uint64:
+	  case t_int:
+	  case t_uint:
 	  case t_double:
 	  case t_invalid:
 		break;
@@ -2151,26 +1901,8 @@ bool var::_serialize(ostream& os) const throw(type_invalid)
 			return true;
 		}break;
 	  case t_bool:
-	  case t_int8:
-	  case t_uint8:{
-			write(os,m);
-			write(os,u.u);
-			return true;
-		}break;
-	  case t_int16:
-	  case t_uint16:{
-			write(os,m);
-			write(os,u.u2);
-			return true;
-		}break;
-	  case t_int32:
-	  case t_uint32:{
-			write(os,m);
-			write(os,u.u4);
-			return true;
-		}break;
-	  case t_int64:
-	  case t_uint64:{
+	  case t_int:
+	  case t_uint:{
 			write(os,m);
 			write(os,u.u8);
 			return true;
@@ -2266,28 +1998,8 @@ bool var::_deserialize(istream& is)
 			return false;
 		}break;
 	  case t_bool:
-	  case t_int8:
-	  case t_uint8:{
-			if(!read(is,u.u)) return false;
-			t = ts;
-			return true;
-		}break;
-	  case t_int16:
-	  case t_uint16:{
-			if(!read(is,u.u2)) return false;
-			if(r) u.u2 = reverse_order(u.u2);
-			t = ts;
-			return true;
-		}break;
-	  case t_int32:
-	  case t_uint32:{
-			if(!read(is,u.u4)) return false;
-			if(r) u.u4 = reverse_order(u.u4);
-			t = ts;
-			return true;
-		}break;
-	  case t_int64:
-	  case t_uint64:{
+	  case t_int:
+	  case t_uint:{
 			if(!read(is,u.u8)) return false;
 			if(r) u.u8 = reverse_order(u.u8);
 			t = ts;

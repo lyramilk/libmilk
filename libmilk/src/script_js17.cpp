@@ -93,10 +93,10 @@ namespace lyramilk{namespace script{namespace js
 			if(pos != str.npos){
 				str.erase(str.begin() + pos + 1,str.end());
 				if(str.find('.') == str.npos){
-					retv.type(lyramilk::data::var::t_int64);
+					retv.type(lyramilk::data::var::t_int);
 				}
 			}else{
-				retv.type(lyramilk::data::var::t_int64);
+				retv.type(lyramilk::data::var::t_int);
 			}
 			return;
 		}else if(jv.isNumber()){
@@ -180,7 +180,7 @@ namespace lyramilk{namespace script{namespace js
 				jsval retval;
 				if(JS_TRUE == JS_CallFunctionName(cx,jo,"getTime",0,nullptr,&retval)){
 					j2v(cx,retval,retv);
-					retv.type(lyramilk::data::var::t_uint64);
+					retv.type(lyramilk::data::var::t_uint);
 				}
 				return;
 			}else{
@@ -284,15 +284,8 @@ namespace lyramilk{namespace script{namespace js
 		switch(v.type()){
 		  case lyramilk::data::var::t_bool:
 			return BOOLEAN_TO_JSVAL((bool)v);
-		  case lyramilk::data::var::t_int8:
-		  case lyramilk::data::var::t_int16:
-		  case lyramilk::data::var::t_int32:
-		  case lyramilk::data::var::t_uint8:
-		  case lyramilk::data::var::t_uint16:
-		  case lyramilk::data::var::t_uint32:
-			return INT_TO_JSVAL(v);
-		  case lyramilk::data::var::t_int64:
-		  case lyramilk::data::var::t_uint64:{
+		  case lyramilk::data::var::t_int:
+		  case lyramilk::data::var::t_uint:{
 				double dv = v;
 				if(floor(v) == dv){
 					if(dv > JSVAL_INT_MIN && dv < JSVAL_INT_MAX){

@@ -194,14 +194,8 @@ namespace lyramilk{namespace data
 			t_str = 0x30,
 			t_wstr = 0x31,
 			t_bool = 0x21,
-			t_int8 = 0x40,
-			t_uint8 = 0x41,
-			t_int16 = 0x42,
-			t_uint16 = 0x43,
-			t_int32 = 0x44,
-			t_uint32 = 0x45,
-			t_int64 = 0x46,
-			t_uint64 = 0x47,
+			t_int = 0x46,
+			t_uint = 0x47,
 			t_double = 0x48,
 			t_array = 0x51,
 			t_map = 0x52
@@ -497,12 +491,6 @@ namespace lyramilk{namespace data
 		union
 		{
 			bool b;
-			int8 i;
-			uint8 u;
-			int16 i2;
-			uint16 u2;
-			int32 i4;
-			uint32 u4;
 			int64 i8;
 			uint64 u8;
 			double f8;
