@@ -3,6 +3,7 @@
 #include "log.h"
 //#include "testing.h"
 #include <gc/Root.h>
+#include <jsfriendapi.h>
 #include <fstream>
 #include <cassert>
 #include <sys/stat.h>
@@ -183,6 +184,12 @@ namespace lyramilk{namespace script{namespace js
 					retv.type(lyramilk::data::var::t_uint);
 				}
 				return;
+			}else if(JS_IsArrayBufferObject(jo,cx)){
+				uint8_t * p = JS_GetArrayBufferData(jo,cx);
+				uint32_t l = JS_GetArrayBufferByteLength(jo,cx);
+				lyramilk::data::chunk cb(p,l);
+				retv = cb;
+				return;
 			}else{
 				JSObject *iter = JS_NewPropertyIterator(cx,jo);
 				if(iter){
@@ -296,14 +303,10 @@ namespace lyramilk{namespace script{namespace js
 		  case lyramilk::data::var::t_double:
 			return DOUBLE_TO_JSVAL(v);
 		  case lyramilk::data::var::t_bin:{
-				JSObject* jo = JS_NewObject(cx,&varClass,NULL,JS_GetGlobalObject(cx));
-				lyramilk::data::var* pv = new lyramilk::data::var;
-				*pv = v;
-				jsval jv = PRIVATE_TO_JSVAL(pv);
-				if(JS_TRUE != JS_SetProperty(cx,jo,"__script_var",&jv)){
-					delete pv;
-					return JSVAL_NULL;
-				}
+				const lyramilk::data::chunk& cb = v;
+				JSObject* jo = JS_NewArrayBuffer(cx,cb.size());
+				uint8_t * p = JS_GetArrayBufferData(jo,cx);
+				cb.copy(p,cb.size());
 				return OBJECT_TO_JSVAL(jo);
 			}
 		  case lyramilk::data::var::t_wstr:
