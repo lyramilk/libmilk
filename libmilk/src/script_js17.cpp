@@ -15,7 +15,6 @@ namespace lyramilk{namespace script{namespace js
 {
 	JSBool static jsctr(JSContext *cx, unsigned argc, jsval *vp);
 	void static jsdtr(JSFreeOp *fop, JSObject *obj);
-	void static jsdtrvar(JSFreeOp *fop, JSObject *obj);
 	JSBool static jsinstanceof(JSContext *cx, JSHandleObject obj, const jsval *v, JSBool *bp);
 
 	static JSClass globalClass = { "global", JSCLASS_GLOBAL_FLAGS,
@@ -35,11 +34,6 @@ namespace lyramilk{namespace script{namespace js
 	static JSClass normalClass = { "normal", 0,
 			JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
             JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub};
-
-	static JSClass varClass = { "lyramilk::data::var", 0,
-			JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
-			JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
-			jsdtrvar};
 
 	static void script_js_error_report(JSContext *cx, const char *message, JSErrorReport *report)
 	{
@@ -263,14 +257,6 @@ namespace lyramilk{namespace script{namespace js
 								retv.userdata(engine::s_user_nativeobject(),ppack->pthis);
 								return;
 							}
-						}else if(skey == "__script_var"){
-							if(!jv.isNullOrUndefined()){
-								void* p = JSVAL_TO_PRIVATE(jv);
-								if(p){
-									retv = *(lyramilk::data::var*)p;
-									return;
-								}
-							}
 						}else{
 							j2v(cx,jv,m[skey]);
 						}
@@ -466,20 +452,6 @@ namespace lyramilk{namespace script{namespace js
 			*bp = JS_FALSE;
 		}
 		return JS_TRUE;
-	}
-
-	void jsdtrvar(JSFreeOp *fop, JSObject *obj)
-	{
-		JSRuntime* rt = fop->runtime();
-		JSContext *cx = (JSContext *)JS_GetRuntimePrivate(rt);
-
-		jsval jv;
-		if(JS_TRUE == JS_GetProperty(cx,obj,"__script_var",&jv)){
-			if(!JSVAL_IS_VOID(jv)){
-				void* p = JSVAL_TO_PRIVATE(jv);
-				delete (lyramilk::data::var*)p;
-			}
-		}
 	}
 
 	JSBool static js_func_adapter(JSContext *cx, unsigned argc, jsval *vp)
@@ -785,6 +757,7 @@ namespace lyramilk{namespace script{namespace js
 		if(!pfun) return lyramilk::data::var::nil;
 
 		pnewobj = pfun(args);
+		if(pnewobj == nullptr) return lyramilk::data::var::nil;
 		JSObject* jsret = JS_NewObject(selectedcx,&nativeClass,jsobj,global);
 
 		js_obj_pack *ppack = new js_obj_pack((engine::class_destoryer)pfuncdel,this,pnewobj);

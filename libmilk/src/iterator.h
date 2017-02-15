@@ -52,7 +52,7 @@ namespace lyramilk{ namespace data{
 		
 		T& operator*()
 		{
-			return *get();
+			return get();
 		}
 
 		T* operator->()
@@ -61,7 +61,7 @@ namespace lyramilk{ namespace data{
 		}
 	  protected:
 		/// 获取当前数据的指针
-		virtual T* get() = 0;
+		virtual T& get() = 0;
 		/// 数据指针指向下一个迭代器
 		virtual void tonext() = 0;
 		/// 比较两个迭代器是否相等
@@ -117,16 +117,16 @@ namespace lyramilk{ namespace data{
 
 		T& operator*()
 		{
-			return *get();
+			return get();
 		}
 
 		T* operator->()
 		{
-			return get();
+			return &get();
 		}
 	  protected:
 		/// 获取当前数据的指针
-		virtual T* get() = 0;
+		virtual T& get() = 0;
 		/// 数据指针指向下一个迭代器
 		virtual void tonext() = 0;
 		/// 比较两个迭代器是否相等
@@ -182,16 +182,16 @@ namespace lyramilk{ namespace data{
 
 		T& operator*()
 		{
-			return *get();
+			return get();
 		}
 
 		T* operator->()
 		{
-			return get();
+			return &get();
 		}
 	  protected:
 		/// 获取当前数据的指针
-		virtual T* get() = 0;
+		virtual T& get() = 0;
 		/// 数据指针指向下一个迭代器
 		virtual void tonext() = 0;
 		/// 比较两个迭代器是否相等
@@ -260,16 +260,16 @@ namespace lyramilk{ namespace data{
 
 		T& operator*()
 		{
-			return *get();
+			return get();
 		}
 
 		T* operator->()
 		{
-			return get();
+			return &get();
 		}
 	  protected:
 		/// 获取当前数据的指针
-		virtual T* get() = 0;
+		virtual T& get() = 0;
 		/// 数据指针指向下一个迭代器
 		virtual void tonext() = 0;
 		/// 数据指针指向上一个迭代器
@@ -401,16 +401,17 @@ namespace lyramilk{ namespace data{
 
 		T& operator*()
 		{
-			return *get();
+			return get();
 		}
 
 		T* operator->()
 		{
-			return get();
+			return &get();
 		}
 	  protected:
 		/// 获取当前数据的指针
-		virtual T* get() = 0;
+		virtual T& get() = 0;
+		/// 获取当前数据的指针
 		/// 将当前迭代器指向指定索引位置
 		virtual void to(key_type i) = 0;
 		/// 取得当前数据指针的索引值

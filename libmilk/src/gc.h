@@ -2,13 +2,7 @@
 #define _lyramilk_gc_
 
 #include "config.h"
-#include <cstddef>
-
-#if defined _MSC_VER
-	#define _lyramilk_novtab_ __declspec(novtable)
-#else
-	#define _lyramilk_novtab_
-#endif
+#include <new>
 
 /**
 	@namespace lyramilk
@@ -172,43 +166,6 @@ namespace lyramilk
 		void operator delete[](void*);
 	  private:
 		mutable long long _rc;
-	};
-	
-	template <typename B>
-	class gcobj:public obj,public B
-	{
-	  public:
-		gcobj(){}
-
-		template <typename A1>
-		gcobj(A1 a1):B(a1){}
-
-		template <typename A1,typename A2>
-		gcobj(A1 a1,A2 a2):B(a1,a2){}
-
-		template <typename A1,typename A2,typename A3>
-		gcobj(A1 a1,A2 a2,A3 a3):B(a1,a2,a3){}
-
-		template <typename A1,typename A2,typename A3,typename A4>
-		gcobj(A1 a1,A2 a2,A3 a3,A4 a4):B(a1,a2,a3,a4){}
-
-		template <typename A1,typename A2,typename A3,typename A4,typename A5>
-		gcobj(A1 a1,A2 a2,A3 a3,A4 a4,A5 a5):B(a1,a2,a3,a4,a5){}
-
-		template <typename A1,typename A2,typename A3,typename A4,typename A5,typename A6>
-		gcobj(A1 a1,A2 a2,A3 a3,A4 a4,A5 a5,A6 a6):B(a1,a2,a3,a4,a5){}
-
-		template <typename A1,typename A2,typename A3,typename A4,typename A5,typename A6,typename A7>
-		gcobj(A1 a1,A2 a2,A3 a3,A4 a4,A5 a5,A6 a6,A7 a7):B(a1,a2,a3,a4,a5,a6,a7){}
-
-		template <typename A1,typename A2,typename A3,typename A4,typename A5,typename A6,typename A7,typename A8>
-		gcobj(A1 a1,A2 a2,A3 a3,A4 a4,A5 a5,A6 a6,A7 a7,A8 a8):B(a1,a2,a3,a4,a5,a6,a7,a8){}
-
-		template <typename A1,typename A2,typename A3,typename A4,typename A5,typename A6,typename A7,typename A8,typename A9>
-		gcobj(A1 a1,A2 a2,A3 a3,A4 a4,A5 a5,A6 a6,A7 a7,A8 a8,A9 a9):B(a1,a2,a3,a4,a5,a6,a7,a8,a9){}
-
-		template <typename A1,typename A2,typename A3,typename A4,typename A5,typename A6,typename A7,typename A8,typename A9,typename A10>
-		gcobj(A1 a1,A2 a2,A3 a3,A4 a4,A5 a5,A6 a6,A7 a7,A8 a8,A9 a9,A10 a10):B(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10){}
 	};
 
 	//  以下是lang::ptr的实现。
