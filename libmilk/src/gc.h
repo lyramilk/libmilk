@@ -2,7 +2,7 @@
 #define _lyramilk_gc_
 
 #include "config.h"
-#include <new>
+#include <cstddef>
 
 /**
 	@namespace lyramilk

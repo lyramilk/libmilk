@@ -2,7 +2,6 @@
 #include "multilanguage.h"
 #include "log.h"
 //#include "testing.h"
-#include <gc/Root.h>
 #include <jsfriendapi.h>
 #include <fstream>
 #include <cassert>
@@ -16,6 +15,7 @@ namespace lyramilk{namespace script{namespace js
 	JSBool static jsctr(JSContext *cx, unsigned argc, jsval *vp);
 	void static jsdtr(JSFreeOp *fop, JSObject *obj);
 	JSBool static jsinstanceof(JSContext *cx, JSHandleObject obj, const jsval *v, JSBool *bp);
+	static void j2v(JSContext* cx,jsval jv,lyramilk::data::var& retv);
 
 	static JSClass globalClass = { "global", JSCLASS_GLOBAL_FLAGS,
 			JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
@@ -37,7 +37,21 @@ namespace lyramilk{namespace script{namespace js
 
 	static void script_js_error_report(JSContext *cx, const char *message, JSErrorReport *report)
 	{
-		lyramilk::klog(lyramilk::log::warning,"lyramilk.script.js") << lyramilk::kdict("%s(%d)%s",(report->filename ? report->filename : "<no name>"),report->lineno,message) << std::endl;
+		jsval jve;
+		if(JS_IsExceptionPending(cx) && JS_GetPendingException(cx,&jve)){
+			JSObject *jo = jve.toObjectOrNull();
+			if(jo){
+				jsval __prop;
+				if(JS_GetProperty(cx,jo,"stack",&__prop)){
+					lyramilk::data::var retv;
+					j2v(cx,__prop,retv);
+					lyramilk::klog(lyramilk::log::warning,"lyramilk.script.js") << lyramilk::kdict("%s(%d:%d)%s",(report->filename ? report->filename : "<no name>"),report->lineno,report->column,message) << "\n" << retv << std::endl;
+					return;
+				}
+			}
+		}
+
+		lyramilk::klog(lyramilk::log::warning,"lyramilk.script.js") << lyramilk::kdict("%s(%d:%d)%s",(report->filename ? report->filename : "<no name>"),report->lineno,report->column,message) << std::endl;
 	}
 
 	static bool js_set_property_ptr(JSContext *cx,JSObject* o,lyramilk::data::string name,void* ptr)

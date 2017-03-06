@@ -1,6 +1,6 @@
 ﻿#定义工程名及版本
 project(milk)
-set(version 1.1.30)
+set(version 1.1.31)
 set(soversion 1.1)
 
 cmake_minimum_required (VERSION 2.8.11) 
@@ -188,7 +188,7 @@ else()
 	add_library(${PROJECT_NAME} ${share_type} ${src_cpps} ${src_hs})
 endif()
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "${PROJECT_NAME}")
-set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${version} SOVERSION 1.1)
+set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${version} SOVERSION ${soversion})
 if(UNIX)
 	 target_link_libraries(${PROJECT_NAME} -lpthread  -lrt -ldl ${CMAKE_LIBS_DEPENDS})
 else()
