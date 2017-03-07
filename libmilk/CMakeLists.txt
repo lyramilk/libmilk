@@ -1,6 +1,6 @@
 ﻿#定义工程名及版本
 project(milk)
-set(version 1.1.31)
+set(version 1.1.32)
 set(soversion 1.1)
 
 cmake_minimum_required (VERSION 2.8.11) 
@@ -25,11 +25,11 @@ enable_testing()
 #定制编译选项
 
 if(release)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O4 -DNDEBUG -Wall --std=c++0x ")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O4 -DNDEBUG -Wall ")
 	set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} -g -O4 -Wall ")
 	message("Build as release")
 else()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall --std=c++0x -fstack-protector ")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -fstack-protector ")
 	set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} -g -Wall -fstack-protector ")
 	message("Build as debug")
 endif()

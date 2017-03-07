@@ -640,6 +640,12 @@ namespace lyramilk{namespace script{namespace js
 		return false;
 	}
 
+		struct bytecode
+		{
+			time_t tm;
+			std::string code;
+		};
+
 	bool script_js::load_file(lyramilk::data::string scriptfile)
 	{
 		if(scriptfilename.empty()){
@@ -651,10 +657,55 @@ namespace lyramilk{namespace script{namespace js
 		JSContext* selectedcx = (JSContext *)JS_GetRuntimePrivate(rt);
 		JS::RootedObject global(selectedcx,JS_GetGlobalObject(selectedcx));
 
+		/*
 		JSScript* script = nullptr;
 		script = JS_CompileUTF8File(selectedcx,global,scriptfile.c_str());
 		if(!script)return false;
 		return !!JS_ExecuteScript(selectedcx,global,script,nullptr);
+		*/
+		static std::map<lyramilk::data::string,bytecode> bytecodemap;
+		static lyramilk::threading::mutex_rw bytecodelock;
+		JSScript* script = nullptr;
+
+		struct stat st = {0};
+		if(0 !=::stat(scriptfile.c_str(),&st)){
+			return false;
+		}
+		{
+			//尝试读取
+			lyramilk::threading::mutex_sync _(bytecodelock.r());
+			std::map<lyramilk::data::string,bytecode>::const_iterator it = bytecodemap.find(scriptfile);
+			if(it!=bytecodemap.end()){
+				const bytecode& c = it->second;
+				if(st.st_mtime == c.tm){
+					script = JS_DecodeScript(selectedcx,(const void*)c.code.c_str(),c.code.size(),NULL,NULL);
+				}
+			}
+		}
+		if(script){
+			return !!JS_ExecuteScript(selectedcx,global,script,nullptr);
+		}else{
+			JS::CompileOptions options(selectedcx);
+			options.setSourcePolicy(JS::CompileOptions::NO_SOURCE);
+
+			script = JS::Compile(selectedcx,global,options,scriptfile.c_str());
+			if(!script)return false;
+			if(JS_ExecuteScript(selectedcx,global,script,nullptr)){
+				uint32_t len = 0;
+				void* p = JS_EncodeScript(selectedcx,script,&len);
+				if(p && len){
+					bytecode c;
+					c.tm = st.st_mtime;
+					c.code.assign((const char*)p,len);
+					{
+						lyramilk::threading::mutex_sync _(bytecodelock.w());
+						bytecodemap[scriptfile] = c;
+					}
+				}
+				return true;
+			}
+			return false;
+		}
 	}
 
 	lyramilk::data::var script_js::call(lyramilk::data::var func,lyramilk::data::var::array args)
