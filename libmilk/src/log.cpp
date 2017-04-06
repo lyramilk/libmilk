@@ -43,7 +43,8 @@ lyramilk::data::string logb::strtime(time_t ti) const
 	}
 
 #ifdef __GNUC__
-	tm *t = localtime(&ti);
+	tm __t;
+	tm *t = localtime_r(&ti,&__t);
 #else
 	tm __t;
 	tm* t = &__t;

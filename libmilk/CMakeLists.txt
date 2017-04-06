@@ -1,6 +1,6 @@
 ﻿#定义工程名及版本
 project(milk)
-set(version 1.1.32)
+set(version 1.1.33)
 set(soversion 1.1)
 
 cmake_minimum_required (VERSION 2.8.11) 
@@ -187,6 +187,7 @@ if(PROJECT_LIBRARY_BOTH)
 else()
 	add_library(${PROJECT_NAME} ${share_type} ${src_cpps} ${src_hs})
 endif()
+
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "${PROJECT_NAME}")
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${version} SOVERSION ${soversion})
 if(UNIX)
@@ -200,6 +201,7 @@ install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/pkg/lib${PROJECT_NAME}.pc DESTINATION 
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/pkg/lib${PROJECT_NAME}_gdb.py DESTINATION ${install_dir})
 install(FILES ${src_hs} DESTINATION ${install_dir})
 install(TARGETS ${PROJECT_NAME} DESTINATION ${install_dir})
+
 if(PROJECT_LIBRARY_BOTH)
 	install(TARGETS ${PROJECT_NAME}_static DESTINATION ${install_dir})
 	target_link_libraries(${PROJECT_NAME}_static -lpthread -lrt -ldl ${CMAKE_LIBS_DEPENDS})
