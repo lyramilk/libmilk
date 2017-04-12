@@ -686,7 +686,7 @@ namespace lyramilk{namespace script{namespace js
 			return !!JS_ExecuteScript(selectedcx,global,script,nullptr);
 		}else{
 			JS::CompileOptions options(selectedcx);
-			options.setSourcePolicy(JS::CompileOptions::NO_SOURCE);
+			//options.setSourcePolicy(JS::CompileOptions::NO_SOURCE);
 
 			script = JS::Compile(selectedcx,global,options,scriptfile.c_str());
 			if(!script)return false;
