@@ -554,7 +554,18 @@ bool var::operator ==(const var& v) const throw(type_invalid)
 			}
 		}break;
 	  case t_map:{
-			return false;
+			if(v.t != t_map){
+				return false;
+			}else{
+				map::size_type size = u.m->size();
+				if(size != v.u.m->size()) return false;
+				for(map::iterator it = v.u.m->begin();it != v.u.m->end();++it){
+					map::iterator it2 = u.m->find(it->first);
+					if(it2 == u.m->end()) return false;
+					if(it->second != it2->second) return false;
+				}
+				return true;
+			}
 		}break;
 	  case t_user:{
 			return false;

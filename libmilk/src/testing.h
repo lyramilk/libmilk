@@ -109,15 +109,6 @@ namespace lyramilk{ namespace debug
 		~timer();
 		operator bool();
 	};
-
-#ifdef _DEBUG
-	/**
-		@breif 宏，用来在_DEBUG模式下显示当前代码的执行所消耗的CPU时钟周期数。
-	*/
-	#define TT(x) lyramilk::debug::clocktester(#x " 耗时：%lld"),x
-#else
-	#define TT(x) x
-#endif
 }}
 #endif
 

@@ -1,6 +1,6 @@
 ﻿#ifndef _lyramilk_util_factory_h_
 #define _lyramilk_util_factory_h_
-
+#include "var.h"
 
 namespace lyramilk{ namespace util
 {

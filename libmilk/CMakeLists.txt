@@ -1,6 +1,6 @@
 ﻿#定义工程名及版本
 project(milk)
-set(version 1.1.34)
+set(version 1.1.35)
 set(soversion 1.1)
 
 cmake_minimum_required (VERSION 2.8.11) 
@@ -59,7 +59,6 @@ endif()
 
 ## 搜索可选的外部依赖
 if(UNIX)
-	pkg_check_modules(JSON_C json-c)
 	pkg_search_module(OPENSSL openssl)
 	pkg_search_module(LZ4 liblz4)
 	pkg_search_module(LUA lua)
@@ -71,14 +70,6 @@ if(UNIX)
 	check_include_file_cxx(tr1/unordered_map	Z_HAVE_TR1_UNORDEREDMAP)
 	check_include_file_cxx(jemalloc/jemalloc.h	Z_HAVE_JEMALLOC)
 	check_include_file_cxx(v8.h	Z_HAVE_V8)
-endif()
-
-if(JSON_C_FOUND)
-	list(APPEND BUILD_DEPENDS json-c-devel)
-	list(APPEND RUN_DEPENDS json-c)
-	list(APPEND LIBS_DEPENDS ${JSON_C_LDFLAGS})
-	list(APPEND INCS_DEPENDS ${JSON_C_CFLAGS})
-	list(APPEND CONFIG_MACROS JSON_C_FOUND)
 endif()
 
 if(OPENSSL_FOUND)

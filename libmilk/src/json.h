@@ -20,9 +20,10 @@ namespace lyramilk{ namespace data
 
 		lyramilk::data::string str() const;
 		bool str(lyramilk::data::string s);
+
+		static bool stringify(const lyramilk::data::var& v,lyramilk::data::string& str);
+		static bool parse(lyramilk::data::string str,lyramilk::data::var& v);
 	};
-
-
 }}
 
 _lyramilk_api_ std::ostream& operator << (std::ostream& os, const lyramilk::data::json& t);
