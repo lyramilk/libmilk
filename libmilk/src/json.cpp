@@ -325,32 +325,20 @@ label_repeat:
 				}
 				token.t = t;
 			  }break;	//STRING
-			  case jsontoken::INTEGER:{
-				char* ive;
-				token.u.i = strtoll(p,&ive,10);
-				if(*ive == 'E' || *ive == 'e' || *ive =='.') goto label_double;
-				p = ive;
-				token.t = t;
-				return true;
-			  }break;
+			  case jsontoken::INTEGER:
 			  case jsontoken::DOUBLE:{
-label_double:
-				token.t = jsontoken::DOUBLE;
-				char* ive;
-				token.u.d = strtod(p,&ive);
-				p = ive;
-				if(*p == 'e' || *p =='E'){
-					++p;
-					bool plus = true;
-					if(*p == '+'){
-						++p;
-					}else if(*p =='-'){
-						plus = false;
-						++p;
+				const char* k = p;
+				for(;k<e;++k){
+					if(*k == 'e' || *k =='E' || *k =='.'){
+						token.t = jsontoken::DOUBLE;
+						token.u.d = strtod(p,(char**)&p);
+						return true;
 					}
-					double iv = strtod(p,&ive);
-					p = ive;
-					token.u.d *= pow(10,iv);
+					if(*k < '0' || *k > '9'){
+						token.t = jsontoken::INTEGER;
+						token.u.i = strtoll(p,(char**)&p,10);
+						return true;
+					}
 				}
 				return true;
 			  }break;

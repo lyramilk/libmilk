@@ -3,6 +3,7 @@
 #include <vector>
 #include <sstream>
 #include <algorithm>
+#include <stdio.h>
 
 #ifndef null
 #define null nullptr
@@ -1047,20 +1048,19 @@ var::operator string () const throw(type_invalid)
 			return u.b?"true":"false";
 		}break;
 	  case t_int:{
-			stringstream ss;
-			ss << u.i8;
-			return ss.str();
+			char buff[256];
+			sprintf(buff,"%lld",u.i8);
+			return buff;
 		}break;
 	  case t_uint:{
-			stringstream ss;
-			ss << u.u8;
-			return ss.str();
+			char buff[256];
+			sprintf(buff,"%llu",u.u8);
+			return buff;
 		}break;
 	  case t_double:{
-			stringstream ss;
-			ss << std::fixed;
-			ss << u.f8;
-			return ss.str();
+			char buff[256];
+			sprintf(buff,"%f",u.f8);
+			return buff;
 		}break;
 	  case t_array:{
 			//if(u.a->size() == 1) return u.a->at(0);
@@ -1122,20 +1122,19 @@ var::operator wstring () const throw(type_invalid)
 			return u.b?L"true":L"false";
 		}break;
 	  case t_int:{
-			wstringstream ss;
-			ss << u.i8;
-			return ss.str();
+			wchar_t buff[256];
+			swprintf(buff,sizeof(buff),L"%lld",u.i8);
+			return buff;
 		}break;
 	  case t_uint:{
-			wstringstream ss;
-			ss << u.u8;
-			return ss.str();
+			wchar_t buff[256];
+			swprintf(buff,sizeof(buff),L"%llu",u.u8);
+			return buff;
 		}break;
 	  case t_double:{
-			wstringstream ss;
-			ss << std::fixed;
-			ss << u.f8;
-			return ss.str();
+			wchar_t buff[256];
+			swprintf(buff,sizeof(buff),L"%f",u.f8);
+			return buff;
 		}break;
 	  case t_array:{
 			//if(u.a->size() == 1) return u.a->at(0);
@@ -1352,23 +1351,16 @@ var::operator int64 () const throw(type_invalid)
 			return u.u8;
 		}break;
 	  case t_bin:{
-			int64 value = 0;
-			string str((const char*)u.p->c_str(),u.p->size());
-			istringstream is(str);
-			is >> value;
-			return value;
+			char* p;
+			return strtoll((const char*)u.p->c_str(),&p,10);
 		}break;
 	  case t_str:{
-			int64 value = 0;
-			istringstream is(*u.s);
-			is >> value;
-			return value;
+			char* p;
+			return strtoll(u.s->c_str(),&p,10);
 		}break;
 	  case t_wstr:{
-			int64 value = 0;
-			wistringstream is(*u.w);
-			is >> value;
-			return value;
+			wchar_t* p;
+			return wcstoll(u.w->c_str(),&p,10);
 		}break;
 	  case t_bool:{
 			return u.b;
@@ -1396,23 +1388,16 @@ var::operator double () const throw(type_invalid)
 {
 	switch(t){
 	  case t_bin:{
-			double value = 0.0f;
-			string str((const char*)u.p->c_str(),u.p->size());
-			istringstream is(str);
-			is >> value;
-			return value;
+			char* p;
+			return strtod((const char*)u.p->c_str(),&p);
 		}break;
 	  case t_str:{
-			double value = 0.0f;
-			istringstream is(*u.s);
-			is >> value;
-			return value;
+			char* p;
+			return strtod(u.s->c_str(),&p);
 		}break;
 	  case t_wstr:{
-			double value = 0.0f;
-			wistringstream is(*u.w);
-			is >> value;
-			return value;
+			wchar_t* p;
+			return wcstod(u.w->c_str(),&p);
 		}break;
 	  case t_bool:{
 			return u.b;

@@ -13,6 +13,7 @@ namespace lyramilk{namespace script{namespace js
 {
 	class script_js : public lyramilk::script::engine
 	{
+	  protected:
 		JSRuntime* rt;
 		JSContext* cx_template;
 

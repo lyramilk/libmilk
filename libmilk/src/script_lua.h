@@ -13,6 +13,7 @@ namespace lyramilk{namespace script{namespace lua
 {
 	class script_lua : public lyramilk::script::engine
 	{
+	  protected:
 		lua_State *L;
 		lua_State *L_template;
 		lyramilk::data::string scriptfilename;
