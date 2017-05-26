@@ -23,6 +23,9 @@ namespace lyramilk{ namespace data
 
 		static bool stringify(const lyramilk::data::var& v,lyramilk::data::string& str);
 		static bool parse(lyramilk::data::string str,lyramilk::data::var& v);
+
+		static lyramilk::data::string stringify(const lyramilk::data::var& v);
+		static lyramilk::data::var parse(lyramilk::data::string str);
 	};
 }}
 

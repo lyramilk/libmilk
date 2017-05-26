@@ -629,6 +629,25 @@ label_badchar:
 		jsontokenizer z(str);
 		return zparse(token,z,v,0);
 	}
+
+	lyramilk::data::string json::stringify(const lyramilk::data::var& v)
+	{
+		lyramilk::data::string jsonstr;
+		if(stringify(v,jsonstr)){
+			return jsonstr;
+		}
+		return "";
+	}
+
+	lyramilk::data::var json::parse(lyramilk::data::string str)
+	{
+		lyramilk::data::var v;
+		if(parse(str,v)){
+			return v;
+		}
+		return lyramilk::data::var::nil;
+	}
+
 }}
 
 std::ostream& operator << (std::ostream& os, const lyramilk::data::json& t)

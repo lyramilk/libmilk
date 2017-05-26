@@ -13,15 +13,27 @@ namespace lyramilk{namespace script{namespace js
 {
 	class script_js : public lyramilk::script::engine
 	{
+	  public:
+		struct func_handler
+		{
+			functional_type func;
+			script_js* eng;
+		};
+
+		struct class_handler
+		{
+			class_builder ctr;
+			class_destoryer dtr;
+			script_js* eng;
+		};
+	  private:
+		std::list<func_handler> fcache;
+		std::list<class_handler> scache;
 	  protected:
 		JSRuntime* rt;
 		JSContext* cx_template;
-
-		std::map<lyramilk::data::string,jsid> mdefs;
 		lyramilk::data::string scriptfilename;
-
 		lyramilk::data::var::map info;
-
 		JSBool static js_func_adapter_noclass(JSContext *cx, unsigned argc, jsval *vp);
 	  public:
 		script_js();

@@ -37,19 +37,8 @@ namespace lyramilk{namespace script
 			return "__script_function_id";
 		}
 
-		// 环境变量：this指针。
-		static lyramilk::data::string s_env_this()
-		{
-			return "__this";
-		}
 		// 环境变量：脚本引擎对象指针。
 		static lyramilk::data::string s_env_engine()
-		{
-			return "__engine";
-		}
-
-		// 环境变量：脚本引擎对象指针的var用户变量名。
-		static lyramilk::data::string s_user_engineptr()
 		{
 			return "__engine";
 		}
@@ -57,7 +46,7 @@ namespace lyramilk{namespace script
 		/**
 			@brief 函数指针：适配脚本可访问的C++对象中的函数
 		*/
-		typedef lyramilk::data::var (*functional_type)(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env);
+		typedef lyramilk::data::var (*functional_type)(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env,void* nativeptr);
 
 		/**
 			@brief functional_type的map
@@ -157,10 +146,10 @@ namespace lyramilk{namespace script
 			@brief 该模板用于适配C++可访问的对象的成员函数到脚本引擎支持的形式。
 			@details 该模板用于适配C++可访问的对象的成员函数到脚本引擎支持的形式。举例，如果number是一个C++类，而number的普通成员函数add函数符合functional_type形式，那么 lyramilk::script::engine::functional<number,&number::add>可以将该函数适配到非成员的functional_type形式。
 		*/
-		template <typename T,lyramilk::data::var (T::*Q)(const lyramilk::data::var::array& ,const lyramilk::data::var::map& )>
-		static inline lyramilk::data::var functional(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env)
+		template <typename T,lyramilk::data::var (T::*Q)(const lyramilk::data::var::array& ,const lyramilk::data::var::map&)>
+		static inline lyramilk::data::var functional(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env,void* nativeptr)
 		{
-			T* pthis = (T*)env.find(engine::s_env_this())->second.userdata(engine::s_user_nativeobject());
+			T* pthis = (T*)nativeptr;
 			return (pthis->*(Q))(args,env);
 		}
 

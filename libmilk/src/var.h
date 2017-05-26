@@ -53,10 +53,10 @@ namespace lyramilk{namespace data
 	typedef unsigned long long uint64;
 
 
-
 	_lyramilk_api_ void* milk_malloc(size_t size);
 	_lyramilk_api_ void milk_free(void* p, size_t size);
 
+#ifdef USEMILKALLOC
 	/**
 		@brief 这是一个支持标准库的内存分配器，可用于标准库中各种容器对象的安全跨库使用。
 	*/
@@ -127,6 +127,10 @@ namespace lyramilk{namespace data
 
 	template <typename T> inline bool operator==(const allocator<T>&, const std::allocator<T>&) { return true; }
 	template <typename T> inline bool operator!=(const allocator<T>&, const std::allocator<T>&) { return false; }
+#else
+	using std::allocator;
+#endif
+
 
 	typedef class _lyramilk_api_ std::basic_string<char, std::char_traits<char>, allocator<char> > string;
 	typedef class _lyramilk_api_ std::basic_string<unsigned char, std::char_traits<unsigned char>, allocator<unsigned char> > chunk;
@@ -159,6 +163,24 @@ namespace lyramilk{namespace data
 
 	typedef class _lyramilk_api_ std::vector<string,allocator<string> > strings;
 
+
+
+#ifdef USEMILKALLOC
+	std::string inline str(lyramilk::data::string str)
+	{
+		return std::string(str.c_str(),str.size());
+	}
+
+	lyramilk::data::string inline str(std::string str)
+	{
+		return lyramilk::data::string(str.c_str(),str.size());
+	}
+#else
+	std::string inline str(lyramilk::data::string str)
+	{
+		return str;
+	}
+#endif
 	/**
 		@brief 这是一个超级变量，封装了对整数、小数、字符串、数组、映射表的表达，它尽可能在各种类型间进行转换。
 	*/
