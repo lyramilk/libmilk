@@ -235,7 +235,7 @@ namespace lyramilk{namespace script{namespace lua
 			lua_pop(L,1);
 
 			lyramilk::data::var::map env;
-			env[engine::s_env_engine()].assign(engine::s_user_engineptr(),penv);
+			env[engine::s_env_engine()].assign(engine::s_env_engine(),penv);
 			lyramilk::data::var ret = func(params,env,nullptr);
 			luaset(L,ret);
 			return 1;
@@ -258,7 +258,7 @@ namespace lyramilk{namespace script{namespace lua
 
 			lyramilk::data::var::map env;
 			//env[engine::s_env_this()].assign(engine::s_user_nativeobject(),(*pthis)->userdata(engine::s_user_nativeobject()));
-			env[engine::s_env_engine()].assign(engine::s_user_engineptr(),mi->env);
+			env[engine::s_env_engine()].assign(engine::s_env_engine(),mi->env);
 			lyramilk::data::var ret = func(params,env,(void*)(*pthis)->userdata(engine::s_user_nativeobject()));
 			luaset(L,ret);
 			return 1;
