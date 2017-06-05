@@ -89,7 +89,7 @@ namespace lyramilk{namespace script{namespace js
 
 	void inline jsstr2str(const jschar* cstr,size_t len,lyramilk::data::string& str)
 	{
-		const jschar* streof = &cstr[len+1];
+		const jschar* streof = &cstr[len];
 		str.reserve(len*3);
 
 		for(;cstr < streof;){
@@ -233,6 +233,11 @@ namespace lyramilk{namespace script{namespace js
 							const jschar* cstr = JS_GetStringCharsZAndLength(cx,jstr,&len);
 							jsstr2str(cstr,len,skey);
 						}
+						if(skey == "__script_var"){
+							void* p = jv.toUnmarkedPtr();
+							retv = *(lyramilk::data::var*)p;
+							return;
+						}
 						j2v(cx,jv,m[skey]);
 					}
 				}
@@ -319,6 +324,13 @@ namespace lyramilk{namespace script{namespace js
 					ret.setObject(*jsobj);
 					return;
 				}
+
+				JSObject* jo = JS_NewObject(cx,&normalClass,NULL,JS_GetGlobalObject(cx));
+				jsval jv;
+				jv.setUnmarkedPtr((void*)&v);
+				JS_SetProperty(cx,jo,"__script_var",&jv);
+				ret.setObject(*jo);
+				return;
 			}
 		  case lyramilk::data::var::t_invalid:
 			ret.setUndefined();
@@ -419,7 +431,7 @@ namespace lyramilk{namespace script{namespace js
 				j2v(cx,args[i],params[i]);
 			}
 			try{
-				lyramilk::data::var ret = pfun(params,ppack->info,ppack->eng);
+				lyramilk::data::var ret = pfun(params,ppack->info,ppack->pthis);
 				jsval jsret;
 				v2j(cx,ret,jsret);
 				args.rval().set(jsret);
@@ -717,7 +729,7 @@ namespace lyramilk{namespace script{namespace js
 
 		jsval jo;
 		JS_GetProperty(selectedcx,global,classname.c_str(),&jo);
-
+		if(!jo.isObject()) return lyramilk::data::var::nil;
 		std::vector<jsval> jvs;
 		jvs.resize(args.size());
 		for(std::size_t i=0;i < args.size();++i){

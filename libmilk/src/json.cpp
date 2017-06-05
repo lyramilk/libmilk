@@ -8,7 +8,7 @@
 namespace lyramilk{namespace data
 {
 	//转义
-	lyramilk::data::string inline escape(lyramilk::data::string s)
+	lyramilk::data::string json::escape(const lyramilk::data::string& s)
 	{
 		if(s.empty()) return s;
 		lyramilk::data::string ret;
@@ -65,9 +65,8 @@ namespace lyramilk{namespace data
 		if(i < 16) return i;
 		throw lyramilk::exception("转换16进制数字出错");
 	}
-	/*
 	//去转义
-	lyramilk::data::string inline unescape(lyramilk::data::string s)
+	lyramilk::data::string json::unescape(const lyramilk::data::string& s)
 	{
 		if(s.empty()) return s;
 		lyramilk::data::string ret;
@@ -104,6 +103,13 @@ namespace lyramilk{namespace data
 					break;
 				  case 'v':
 					ret.push_back('\v');
+					break;
+				  case 'x':
+					if(_IsHexChar(p[2]) && _IsHexChar(p[3])){
+						unsigned char byte;
+						byte =(_ToHex(p[2]) << 4) | (_ToHex(p[3]));
+						ret.push_back(byte);
+					}
 					break;
 				  case 'u':
 					if(_IsHexChar(p[2]) && _IsHexChar(p[3]) && _IsHexChar(p[4]) && _IsHexChar(p[5])){
@@ -155,7 +161,7 @@ namespace lyramilk{namespace data
 			}
 		}
 		return ret;
-	}*/
+	}
 
 	struct jsontoken
 	{
@@ -335,11 +341,11 @@ label_repeat:
 						return true;
 					}
 					if(*k < '0' || *k > '9'){
-						token.t = jsontoken::INTEGER;
-						token.u.i = strtoll(p,(char**)&p,10);
-						return true;
+						break;
 					}
 				}
+				token.t = jsontoken::INTEGER;
+				token.u.i = strtoll(p,(char**)&p,10);
 				return true;
 			  }break;
 			  case jsontoken::COLON:
@@ -399,7 +405,7 @@ label_badchar:
 		while(z.next(token)){
 			switch(token.t){
 			  case jsontoken::STRING:{
-				v.push_back(token.s);
+				v.push_back(json::unescape(token.s));
 			  }break;
 			  case jsontoken::INTEGER:{
 				v.push_back(token.u.i);
@@ -444,7 +450,7 @@ label_badchar:
 		while(z.next(token)){
 			switch(token.t){
 			  case jsontoken::STRING:{
-				lyramilk::data::string key = token.s;
+				lyramilk::data::string key = json::unescape(token.s);
 				if(z.next(token) && token.t == jsontoken::COLON){
 					lyramilk::data::var subvalue;
 					if(!zparse(token,z,subvalue,deep + 1)) return false;
@@ -470,7 +476,7 @@ label_badchar:
 		if(z.next(token)){
 			switch(token.t){
 			  case jsontoken::STRING:{
-				v = token.s;
+				v = json::unescape(token.s);
 			  }break;
 			  case jsontoken::INTEGER:{
 				v = token.u.i;
@@ -550,21 +556,22 @@ label_badchar:
 	lyramilk::data::string json::str() const
 	{
 		lyramilk::data::string jsonstr;
-		if(!stringify(v,jsonstr)) throw lyramilk::exception("json生成错误");
+		if(!stringify(v,&jsonstr)) throw lyramilk::exception("json生成错误");
 		return jsonstr;
 	}
 
 	bool json::str(lyramilk::data::string s)
 	{
-		if(!parse(s,v)){
+		if(!parse(s,&v)){
 			v.type(lyramilk::data::var::t_invalid);
 			return false;
 		}
 		return true;
 	}
 
-	bool json::stringify(const lyramilk::data::var& v,lyramilk::data::string& str)
+	bool json::stringify(const lyramilk::data::var& v,lyramilk::data::string* pstr)
 	{
+		lyramilk::data::string& str = *pstr;
 		switch(v.type()){
 		  case lyramilk::data::var::t_str:
 		  case lyramilk::data::var::t_wstr:{
@@ -586,12 +593,13 @@ label_badchar:
 				str += v.str();
 			}break;
 		  case lyramilk::data::var::t_array:{
+				lyramilk::data::string jsonstr;
+				jsonstr.reserve(4096);
 				str.push_back('[');
 				const lyramilk::data::var::array& ar = v;
 				for(lyramilk::data::var::array::const_iterator it=ar.begin();it!=ar.end();++it){
-					lyramilk::data::string jsonstr;
-					jsonstr.reserve(4096);
-					if(json::stringify(*it,jsonstr)){
+					jsonstr.clear();
+					if(json::stringify(*it,&jsonstr)){
 						str += jsonstr + ',';
 					}
 				}
@@ -599,13 +607,13 @@ label_badchar:
 				str.push_back(']');
 			}break;
 		  case lyramilk::data::var::t_map:{
+				lyramilk::data::string jsonstr;
+				jsonstr.reserve(4096);
 				str.push_back('{');
 				const lyramilk::data::var::map& m = v;
 				for(lyramilk::data::var::map::const_iterator it=m.begin();it!=m.end();++it){
-					lyramilk::data::string jsonstr;
-					jsonstr.reserve(4096);
-					if(json::stringify(it->second,jsonstr)){
-						str.reserve(str.size() + jsonstr.size() + it->first.size() + 4);
+					jsonstr.clear();
+					if(json::stringify(it->second,&jsonstr)){
 						str += '"' + escape(it->first) + "\":" + jsonstr + ',';
 					}
 				}
@@ -622,18 +630,18 @@ label_badchar:
 		return true;
 	}
 
-	bool json::parse(lyramilk::data::string str,lyramilk::data::var& v)
+	bool json::parse(lyramilk::data::string str,lyramilk::data::var* v)
 	{
 		jsontoken token;
 		token.s.reserve(65536);
 		jsontokenizer z(str);
-		return zparse(token,z,v,0);
+		return zparse(token,z,*v,0);
 	}
 
 	lyramilk::data::string json::stringify(const lyramilk::data::var& v)
 	{
 		lyramilk::data::string jsonstr;
-		if(stringify(v,jsonstr)){
+		if(stringify(v,&jsonstr)){
 			return jsonstr;
 		}
 		return "";
@@ -642,7 +650,7 @@ label_badchar:
 	lyramilk::data::var json::parse(lyramilk::data::string str)
 	{
 		lyramilk::data::var v;
-		if(parse(str,v)){
+		if(parse(str,&v)){
 			return v;
 		}
 		return lyramilk::data::var::nil;

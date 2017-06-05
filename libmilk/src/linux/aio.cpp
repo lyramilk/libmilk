@@ -116,18 +116,13 @@ namespace lyramilk{namespace io
 	void aiopoll::onevent(aioselector* r,uint32 events)
 	{
 		assert(r);
-		if(events & EPOLLHUP){
-			if(!r->notify_hup()){
-				remove(r);
-			}
-			return;
-		}else if(events & EPOLLERR){
-			if(!r->notify_err()){
-				remove(r);
-			}
-			return;
-		}else if(events & EPOLLPRI){
+		if(events & EPOLLPRI){
 			if(!r->notify_pri()){
+				remove(r);
+			}
+			return;
+		}else if(events & EPOLLIN){
+			if(!r->notify_in()){
 				remove(r);
 			}
 			return;
@@ -136,8 +131,13 @@ namespace lyramilk{namespace io
 				remove(r);
 			}
 			return;
-		}else if(events & EPOLLIN){
-			if(!r->notify_in()){
+		}else if(events & EPOLLHUP){
+			if(!r->notify_hup()){
+				remove(r);
+			}
+			return;
+		}else if(events & EPOLLERR){
+			if(!r->notify_err()){
 				remove(r);
 			}
 			return;

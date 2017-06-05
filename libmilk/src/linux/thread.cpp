@@ -15,6 +15,7 @@ namespace lyramilk{namespace threading
 
 	threads::threads()
 	{
+		c = 0;
 	}
 
 	threads:: ~threads()

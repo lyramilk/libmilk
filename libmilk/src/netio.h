@@ -98,10 +98,13 @@ namespace lyramilk{namespace netio
 	class _lyramilk_api_ socket_stream : public lyramilk::data::stringstream
 	{
 		socket_stream_buf sbuf;
-		socket& c;
+		int flags;
 	  public:
+		socket_stream();
 		socket_stream(socket& ac);
 		virtual ~socket_stream();
+		void init(socket& ac);
+		virtual std::streamsize in_avail();
 	};
 
 	/// 客户端套接字

@@ -17,7 +17,6 @@
 #include <iostream>
 #include <streambuf>
 
-
 #ifdef OPENSSL_FOUND
 	#include <openssl/bio.h>
 	#include <openssl/crypto.h>
@@ -238,15 +237,37 @@ namespace lyramilk{namespace netio
 	}
 
 	/* socket_stream */
-	socket_stream::socket_stream(socket& ac):c(ac)
+	socket_stream::socket_stream()
 	{
-		sbuf.psock = &ac;
-		lyramilk::data::stringstream::init(&sbuf);
+		sbuf.psock = nullptr;
+	}
+
+	socket_stream::socket_stream(socket& ac)
+	{
+		init(ac);
 	}
 
 	socket_stream::~socket_stream()
 	{
-	
+		/*
+		if(sbuf.psock){
+			fcntl(sbuf.psock->fd(),F_SETFL,flags);
+		}*/
+	}
+
+	void socket_stream::init(socket& ac)
+	{
+		sbuf.psock = &ac;
+		lyramilk::data::stringstream::init(&sbuf);
+		/*
+		flags = fcntl(sbuf.psock->fd(),F_GETFL,0);
+
+		int flags_nonblock = flags & ~O_NONBLOCK;
+		fcntl(sbuf.psock->fd(),F_SETFL,flags_nonblock);*/
+	}
+	std::streamsize socket_stream::in_avail()
+	{
+		return sbuf.in_avail();
 	}
 
 	/* client */
