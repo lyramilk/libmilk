@@ -46,12 +46,13 @@ namespace lyramilk{namespace script
 		/**
 			@brief 函数指针：适配脚本可访问的C++对象中的函数
 		*/
-		typedef lyramilk::data::var (*functional_type)(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env,void* nativeptr);
+		typedef lyramilk::data::var (*functional_type_inclass)(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env,void* nativeptr);
+		typedef lyramilk::data::var (*functional_type)(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env);
 
 		/**
 			@brief functional_type的map
 		*/
-		typedef std::map<lyramilk::data::string,functional_type,std::less<lyramilk::data::string>,lyramilk::data::allocator<lyramilk::data::string> > functional_map;
+		typedef std::map<lyramilk::data::string,functional_type_inclass,std::less<lyramilk::data::string>,lyramilk::data::allocator<lyramilk::data::string> > functional_map;
 
 		/**
 			@brief 函数指针：创建脚本可访问的C++对象

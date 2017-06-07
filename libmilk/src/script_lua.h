@@ -2,7 +2,7 @@
 #define _lyramilk_script_lua_engine_h_
 
 #include "scriptengine.h"
-#include <lua.hpp>
+#include <luajit-2.0/lua.hpp>
 
 /**
 	@namespace lyramilk::script::lua

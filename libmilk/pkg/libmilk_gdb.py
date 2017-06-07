@@ -77,22 +77,10 @@ class LibmilkVarPrinter:
 			return 't_wstr:%s' % self.val['u']['w'].dereference()
 		if s_t == 'lyramilk::data::var::t_bool':
 			return 't_bool:%s' % self.val['u']['b']
-		if s_t == 'lyramilk::data::var::t_int8':
-			return 't_int8:%s' % self.val['u']['i']
-		if s_t == 'lyramilk::data::var::t_int16':
-			return 't_int16:%s' % self.val['u']['i2']
-		if s_t == 'lyramilk::data::var::t_int32':
-			return 't_int32:%s' % self.val['u']['i4']
-		if s_t == 'lyramilk::data::var::t_int64':
-			return 't_int64:%s' % self.val['u']['i8']
-		if s_t == 'lyramilk::data::var::t_uint8':
-			return 't_uint8:%s' % self.val['u']['u']
-		if s_t == 'lyramilk::data::var::t_uint16':
-			return 't_uint16:%s' % self.val['u']['u2']
-		if s_t == 'lyramilk::data::var::t_uint32':
-			return 't_uint32:%s' % self.val['u']['u4']
-		if s_t == 'lyramilk::data::var::t_uint64':
-			return 't_uint64:%s' % self.val['u']['u8']
+		if s_t == 'lyramilk::data::var::t_int':
+			return 't_int:%s' % self.val['u']['i8']
+		if s_t == 'lyramilk::data::var::t_uint':
+			return 't_uint:%s' % self.val['u']['u8']
 		if s_t == 'lyramilk::data::var::t_double':
 			return 't_double:%s' % self.val['u']['f8']
 		if s_t == 'lyramilk::data::var::t_array':

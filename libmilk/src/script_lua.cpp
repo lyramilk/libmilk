@@ -236,7 +236,7 @@ namespace lyramilk{namespace script{namespace lua
 
 			lyramilk::data::var::map env;
 			env[engine::s_env_engine()].assign(engine::s_env_engine(),penv);
-			lyramilk::data::var ret = func(params,env,nullptr);
+			lyramilk::data::var ret = func(params,env);
 			luaset(L,ret);
 			return 1;
 		}
@@ -251,7 +251,7 @@ namespace lyramilk{namespace script{namespace lua
 		script_lua::metainfo* mi = (script_lua::metainfo*)lua_touserdata(L,lua_upvalueindex(2));
 
 		if(pfunc && pthis && mi){
-			script_lua::functional_type func = (script_lua::functional_type)pfunc;
+			script_lua::functional_type_inclass func = (script_lua::functional_type_inclass)pfunc;
 
 			lyramilk::data::var::array params = stov(L);
 			lua_pop(L,lua_gettop(L));
@@ -435,9 +435,10 @@ namespace lyramilk{namespace script{namespace lua
 	void script_lua::reset()
 	{
 		if(L){
-			//lua_close(L);
+			lua_pop(L_template,1);
 			lua_gc(L_template,LUA_GCCOLLECT,0);
 			L = nullptr;
+			scriptfilename.clear();
 		}
 	}
 

@@ -91,11 +91,10 @@ namespace lyramilk{namespace script{namespace js
 	{
 		const jschar* streof = &cstr[len];
 		str.reserve(len*3);
-
 		for(;cstr < streof;){
 			jschar jwc = *cstr++;
 			unsigned wchar_t wc = jwc;
-			if(jwc >= 0xd800 && jwc <= 0xdfff && cstr + 1<streof){
+			if(jwc >= 0xd800 && jwc <= 0xdfff && cstr<streof){
 				jschar jwc2 = *cstr++;
 				wc = (jwc2&0x03ff) + (((jwc&0x03ff) + 0x40) << 10);
 			}
@@ -421,7 +420,7 @@ namespace lyramilk{namespace script{namespace js
 	JSBool static js_func_adapter(JSContext *cx, unsigned argc, Value *vp)
 	{
 		CallArgs args = CallArgsFromVp(argc, vp);
-		engine::functional_type pfun = (engine::functional_type)js_get_func_native(cx,&args.callee());
+		engine::functional_type_inclass pfun = (engine::functional_type_inclass)js_get_func_native(cx,&args.callee());
 		js_obj_pack *ppack = (js_obj_pack*)JS_GetPrivate(&args.thisv().toObject());
 
 		if(pfun && ppack && ppack->pthis){
@@ -465,7 +464,7 @@ namespace lyramilk{namespace script{namespace js
 			j2v(cx,args[i],params[i]);
 		}
 		try{
-			lyramilk::data::var ret = h->func(params,h->eng->info,nullptr);
+			lyramilk::data::var ret = h->func(params,h->eng->info);
 			jsval jsret;
 			v2j(cx,ret,jsret);
 			args.rval().set(jsret);
