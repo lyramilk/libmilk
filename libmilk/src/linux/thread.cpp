@@ -266,13 +266,6 @@ namespace lyramilk{namespace threading
 		return *pw;
 	}
 
-
-	struct thread_cleaner_param
-	{
-		void (*routine)(void*);
-		void* arg;
-	};
-
 	void thread_cleanup_push(void (*routine)(void*),void* arg)
 	{
 		pthread_key_t key;

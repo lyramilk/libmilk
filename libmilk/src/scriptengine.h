@@ -172,7 +172,7 @@ namespace lyramilk{namespace script
 		static void destoryinstance(lyramilk::data::string scriptname,lyramilk::script::engine* eng);
 	};
 
-	class _lyramilk_api_ engines : public lyramilk::threading::exclusive::list<lyramilk::script::engine>
+	class _lyramilk_api_ engines : public lyramilk::threading::rentlist<lyramilk::script::engine>
 	{
 	  public:
 		engines();
