@@ -184,23 +184,26 @@ namespace lyramilk{namespace netio
 		const char* p = pbase();
 		int l = pptr() - pbase();
 		int r = 0;
+		do{
 #ifdef OPENSSL_FOUND
-		if(psock->ssl()){
-			r = SSL_write((SSL*)psock->sslobj, p,l);
-		}else{
-			r = ::send(psock->sock,p,l,0);
-		}
+			if(psock->ssl()){
+				r = SSL_write((SSL*)psock->sslobj, p,l);
+			}else{
+				r = ::send(psock->sock,p,l,0);
+			}
 #else
-		r = ::send(psock->sock,p,l,0);
+			r = ::send(psock->sock,p,l,0);
 #endif
+		}while(r == -1 && errno == EAGAIN);
 		if(r>0){
-//COUT.write(p,r) << std::endl;
+			seq_w += r;
 			setp(putbuf + l - r,putbuf + sizeof(putbuf));
 			if(c != traits_type::eof()){
 				sputc(c);
 			}
 			return 0;
 		}
+		lyramilk::klog(lyramilk::log::error,"lyramilk.socket_stream_buf.overflow") << lyramilk::kdict("发送：%d\t错误：%s",r,strerror(errno)) << std::endl;
 		return traits_type::eof();
 	}
 
@@ -209,20 +212,23 @@ namespace lyramilk{namespace netio
 		char* p = getbuf;
 		int l = sizeof(getbuf);
 		int r = 0;
+		do{
 #ifdef OPENSSL_FOUND
-		if(psock->ssl()){
-			r = SSL_read((SSL*)psock->sslobj, p,l);
-		}else{
-			r = ::recv(psock->sock,p,l,0);
-		}
+			if(psock->ssl()){
+				r = SSL_read((SSL*)psock->sslobj, p,l);
+			}else{
+				r = ::recv(psock->sock,p,l,0);
+			}
 #else
-		r = ::recv(psock->sock,p,l,0);
+			r = ::recv(psock->sock,p,l,0);
 #endif
+		}while(r == -1 && errno == EAGAIN);
 		if(r>0){
-//COUT.write(p,r) << std::endl;
+			seq_r += r;
 			setg(getbuf,getbuf,getbuf + r);
 			return sgetc();
 		}
+		lyramilk::klog(lyramilk::log::error,"lyramilk.socket_stream_buf.underflow") << lyramilk::kdict("接收：%d\t错误：%s",r,strerror(errno)) << std::endl;
 		return traits_type::eof();
 	}
 
@@ -257,6 +263,7 @@ namespace lyramilk{namespace netio
 
 	void socket_stream::init(socket& ac)
 	{
+		sbuf.seq_r = sbuf.seq_w = 0;
 		sbuf.psock = &ac;
 		lyramilk::data::stringstream::init(&sbuf);
 		/*
@@ -268,6 +275,16 @@ namespace lyramilk{namespace netio
 	std::streamsize socket_stream::in_avail()
 	{
 		return sbuf.in_avail();
+	}
+
+	lyramilk::data::uint64 socket_stream::rseq()
+	{
+		return sbuf.seq_r - in_avail();
+	}
+
+	lyramilk::data::uint64 socket_stream::wseq()
+	{
+		return sbuf.seq_w;
 	}
 
 	/* client */

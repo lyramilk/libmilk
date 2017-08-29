@@ -79,6 +79,8 @@ namespace lyramilk{namespace netio
 	class _lyramilk_api_ socket_stream_buf : public std::basic_streambuf<char>
 	{
 		friend class socket_stream;
+		lyramilk::data::uint64 seq_r;
+		lyramilk::data::uint64 seq_w;
 	  protected:
 		lyramilk::netio::socket* psock;
 		char putbuf[2048];
@@ -105,6 +107,8 @@ namespace lyramilk{namespace netio
 		virtual ~socket_stream();
 		void init(socket& ac);
 		virtual std::streamsize in_avail();
+		lyramilk::data::uint64 rseq();
+		lyramilk::data::uint64 wseq();
 	};
 
 	/// 客户端套接字

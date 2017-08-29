@@ -46,6 +46,10 @@ namespace lyramilk{namespace data
 				ret.push_back('\\');
 				ret.push_back('"');
 				break;
+			  case '\\':
+				ret.push_back('\\');
+				ret.push_back('\\');
+				break;
 			  default:
 				ret.push_back(*p);
 			}
@@ -153,7 +157,7 @@ namespace lyramilk{namespace data
 					}
 					break;
 				  default:
-					throw lyramilk::exception("错误的json字符");
+					ret.push_back(p[1]);
 				}
 				++p;
 			}else{
@@ -398,7 +402,7 @@ label_badchar:
 
 	bool zparsearray(jsontoken& token,jsontokenizer& z,lyramilk::data::var::array& v,int deep);
 	bool zparseobject(jsontoken& token,jsontokenizer& z,lyramilk::data::var::map& v,int deep);
-	bool zparse(jsontoken& token,jsontokenizer& z,lyramilk::data::var::var& v,int deep);
+	bool zparse(jsontoken& token,jsontokenizer& z,lyramilk::data::var& v,int deep);
 
 	bool zparsearray(jsontoken& token,jsontokenizer& z,lyramilk::data::var::array& v,int deep)
 	{

@@ -7,8 +7,8 @@
 
 namespace lyramilk{ namespace data{
 
-	template <typename C,typename T>
-	class output_iterator:public std::iterator<std::output_iterator_tag,T,int>
+	template <typename C,typename T,typename L= ptrdiff_t>
+	class output_iterator:public std::iterator<std::output_iterator_tag,T,L>
 	{
 	  public:
 		virtual ~output_iterator()
@@ -39,7 +39,7 @@ namespace lyramilk{ namespace data{
 
 		C& operator ++()
 		{
-			tonext();
+			next();
 			return *(C*)this;
 		}
 
@@ -63,17 +63,15 @@ namespace lyramilk{ namespace data{
 		/// 获取当前数据的指针
 		virtual T& get() = 0;
 		/// 数据指针指向下一个迭代器
-		virtual void tonext() = 0;
+		virtual void next() = 0;
 		/// 比较两个迭代器是否相等
 		virtual bool equal(const C& c) const = 0;
 		/// 以新的迭代器重置当前迭代器
 		virtual C& assign(const C &o) = 0;
-		/// 返回一个空的迭代器
-		virtual C& eof() const = 0;
 	};
 
-	template <typename C,typename T>
-	class input_iterator:public std::iterator<std::output_iterator_tag,T,int>
+	template <typename C,typename T,typename L=ptrdiff_t>
+	class input_iterator:public std::iterator<std::output_iterator_tag,T,L>
 	{
 	  public:
 		virtual ~input_iterator()
@@ -102,9 +100,9 @@ namespace lyramilk{ namespace data{
 			return !equal(o);
 		}
 
-		C& operator ++()
+		const C& operator ++()
 		{
-			tonext();
+			next();
 			return *(C*)this;
 		}
 
@@ -115,30 +113,28 @@ namespace lyramilk{ namespace data{
 			return c;
 		}
 
-		T& operator*()
+		const T& operator*()
 		{
 			return get();
 		}
 
-		T* operator->()
+		const T* operator->()
 		{
 			return &get();
 		}
 	  protected:
 		/// 获取当前数据的指针
-		virtual T& get() = 0;
+		virtual const T& get() const = 0;
 		/// 数据指针指向下一个迭代器
-		virtual void tonext() = 0;
+		virtual void next() = 0;
 		/// 比较两个迭代器是否相等
 		virtual bool equal(const C& c) const = 0;
 		/// 以新的迭代器重置当前迭代器
 		virtual C& assign(const C &o) = 0;
-		/// 返回一个空的迭代器
-		virtual C& eof() const = 0;
 	};
 
-	template <typename C,typename T>
-	class foward_iterator:public std::iterator<std::forward_iterator_tag,T,int>
+	template <typename C,typename T,typename L=ptrdiff_t>
+	class foward_iterator:public std::iterator<std::forward_iterator_tag,T,L>
 	{
 	  public:
 		virtual ~foward_iterator()
@@ -169,7 +165,7 @@ namespace lyramilk{ namespace data{
 
 		C& operator ++()
 		{
-			tonext();
+			next();
 			return *(C*)this;
 		}
 
@@ -193,17 +189,15 @@ namespace lyramilk{ namespace data{
 		/// 获取当前数据的指针
 		virtual T& get() = 0;
 		/// 数据指针指向下一个迭代器
-		virtual void tonext() = 0;
+		virtual void next() = 0;
 		/// 比较两个迭代器是否相等
 		virtual bool equal(const C& c) const = 0;
 		/// 以新的迭代器重置当前迭代器
 		virtual C& assign(const C &o) = 0;
-		/// 返回一个空的迭代器
-		virtual C& eof() const = 0;
 	};
 
-	template <typename C,typename T>
-	class bidirectional_iterator:public std::iterator<std::bidirectional_iterator_tag,T,int>
+	template <typename C,typename T,typename L=ptrdiff_t>
+	class bidirectional_iterator:public std::iterator<std::bidirectional_iterator_tag,T,L>
 	{
 	  public:
 		virtual ~bidirectional_iterator()
@@ -234,7 +228,7 @@ namespace lyramilk{ namespace data{
 
 		C& operator ++()
 		{
-			tonext();
+			next();
 			return *(C*)this;
 		}
 
@@ -247,7 +241,7 @@ namespace lyramilk{ namespace data{
 
 		C& operator --()
 		{
-			toprev();
+			prev();
 			return *(C*)this;
 		}
 
@@ -271,23 +265,19 @@ namespace lyramilk{ namespace data{
 		/// 获取当前数据的指针
 		virtual T& get() = 0;
 		/// 数据指针指向下一个迭代器
-		virtual void tonext() = 0;
+		virtual void next() = 0;
 		/// 数据指针指向上一个迭代器
-		virtual void toprev() = 0;
+		virtual void prev() = 0;
 		/// 比较两个迭代器是否相等
 		virtual bool equal(const C& c) const = 0;
 		/// 以新的迭代器重置当前迭代器
 		virtual C& assign(const C &o) = 0;
-		/// 返回一个空的迭代器
-		virtual C& eof() const = 0;
 	};
 
-	template <typename C,typename T,typename L=int>
-	class random_access_iterator:public std::iterator<std::random_access_iterator_tag,T,int>
+	template <typename C,typename T,typename L=ptrdiff_t>
+	class random_access_iterator:public std::iterator<std::random_access_iterator_tag,T,L>
 	{
 	  public:
-		typedef L key_type;
-
 		virtual ~random_access_iterator()
 		{}
 
@@ -317,11 +307,7 @@ namespace lyramilk{ namespace data{
 		C& operator ++()
 		{
 			L ci = index() + 1;
-			if(hittest(ci)){
-				to(ci);
-				return *(C*)this;
-			}
-			*(C*)this = eof();
+			to(ci);
 			return *(C*)this;
 		}
 
@@ -334,11 +320,8 @@ namespace lyramilk{ namespace data{
 
 		C& operator --()
 		{
-			key_type ci = index() - 1;
-			if(hittest(ci)){
-				return to(ci);
-			}
-			*(C*)this = eof();
+			L ci = index() - 1;
+			to(ci);
 			return *(C*)this;
 		}
 
@@ -349,37 +332,29 @@ namespace lyramilk{ namespace data{
 			return c;
 		}
 
-		C operator +(key_type i)
+		C operator +(L i)
 		{
 			C c = *(C*)this;
 			return c+=i;
 		}
 
-		C operator -(key_type i)
+		C operator -(L i)
 		{
 			C c = *(C*)this;
 			return c-=i;
 		}
 
-		C& operator +=(key_type i)
+		C& operator +=(L i)
 		{
-			key_type ci = index() + i;
-			if(hittest(ci)){
-				to(ci);
-				return *(C*)this;
-			}
-			*(C*)this = eof();
+			L ci = index() + i;
+			to(ci);
 			return *(C*)this;
 		}
 
-		C& operator -=(key_type i)
+		C& operator -=(L i)
 		{
-			key_type ci = index() - i;
-			if(hittest(ci)){
-				to(ci);
-				return *(C*)this;
-			}
-			*(C*)this = eof();
+			L ci = index() - i;
+			to(ci);
 			return *(C*)this;
 		}
 
@@ -389,14 +364,11 @@ namespace lyramilk{ namespace data{
 		bool operator <=(const C &o);
 		bool operator >=(const C &o);
 
-		T* operator [](key_type i)
+		T* operator [](L i)
 		{
-			key_type ci = 1;
-			if(hittest(ci)){
-				to(ci);
-				return *(C*)this;
-			}
-			return get();
+			L ci = 1;
+			to(ci);
+			return *(C*)this;
 		}
 
 		T& operator*()
@@ -413,17 +385,13 @@ namespace lyramilk{ namespace data{
 		virtual T& get() = 0;
 		/// 获取当前数据的指针
 		/// 将当前迭代器指向指定索引位置
-		virtual void to(key_type i) = 0;
+		virtual void to(L i) = 0;
 		/// 取得当前数据指针的索引值
-		virtual key_type index() const = 0;
+		virtual L index() const = 0;
 		/// 比较两个迭代器是否相等
 		virtual bool equal(const C& c) const = 0;
 		/// 以新的迭代器重置当前迭代器
 		virtual C& assign(const C &o) = 0;
-		/// 测试当前索引是否有较
-		virtual bool hittest(key_type i) const = 0;
-		/// 返回一个空的迭代器
-		virtual C& eof() const = 0;
 	};
 }}
 

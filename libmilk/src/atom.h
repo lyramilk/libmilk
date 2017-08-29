@@ -4,8 +4,6 @@
 #include "config.h"
 #include "thread.h"
 #include <unistd.h>
-#include <stdio.h>
-#include <iostream>
 
 /**
 	@namespace lyramilk::threading
@@ -72,28 +70,24 @@ namespace lyramilk{namespace threading
 		
 		atomic& operator ++()
 		{
-			__sync_fetch_and_add(&t,1);
+			__sync_add_and_fetch(&t,1);
 			return *this;
 		}
 		
 		atomic& operator --()
 		{
-			__sync_fetch_and_sub(&t,1);
+			__sync_sub_and_fetch(&t,1);
 			return *this;
 		}
 		
 		atomic operator ++(int)
 		{
-			atomic tmp(t);
-			++*this;
-			return t;
+			return __sync_fetch_and_add(&t,1);
 		}
 		
 		atomic operator --(int)
 		{
-			atomic tmp(t);
-			--*this;
-			return t;
+			return __sync_fetch_and_sub(&t,1);
 		}
 		
 		bool operator ==(const T& o)

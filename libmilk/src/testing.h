@@ -29,29 +29,6 @@ namespace lyramilk{ namespace debug
 		void mark();
 		long long diff();
 	};
-	/**
-		@breif 时间间隔计算。这里的时间数都是以CPU时钟周期为计算单位。
-	*/
-	class _lyramilk_api_ clockdiff : public timediff
-	{
-		/// 时钟周期数时间戳
-		long long timestamp;
-	  public:
-		/**
-			@brief 构造函数，构造函数在调用的时候会初始化调用差和时间戳
-		*/
-		clockdiff();
-
-		/**
-			@brief 标记时间戳。
-		*/
-		void mark();
-
-		/**
-			@brief 计算上一次标记时间戳到现在为止经过的CPU时钟周期数。
-		*/
-		long long diff();
-	};
 
 	/**
 		@brief 测试从构造到析构所用掉的cpu时钟周期数。

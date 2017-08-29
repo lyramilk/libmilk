@@ -78,6 +78,7 @@ class coding_url:public lyramilk::data::coding
 					p+=2;
 				}
 			}else if(c == '+'){
+				//因为rfc3986中不会出现+，所以按htm4来做，把+解析成空格。
 				*pout++ = ' ';
 			}else{
 				*pout++ = c;
@@ -98,8 +99,9 @@ class coding_url:public lyramilk::data::coding
 			const char& c = *p;
 			if(isalpha(c) || isdigit(c)){
 				*pout++ = c;
-			}else if(c == ' '){
-				*pout++ = '+';
+			/*}else if(c == ' '){
+				因为html4和rfc3986的冲突，不把空格编码成+，而是编码成%20。这样无论html4还是rfc9386都可以解。
+				*pout++ = '+';*/
 			}else if(c == '$' || c == '-' || c == '_' || c == '.' || c == '!' || c == '*' || c == '\''){
 				*pout++ = c;
 			}else if(c == ';' || c == '/' || c == '?' || c == ':' || c == '@' || c == '=' || c == '&'){
@@ -205,8 +207,8 @@ class coding_urlcomponent:public lyramilk::data::coding
 			const char& c = *p;
 			if(isalpha(c) || isdigit(c)){
 				*pout++ = c;
-			}else if(c == ' '){
-				*pout++ = '+';
+			/*}else if(c == ' '){
+				*pout++ = '+';*/
 			}else if(c == '$' || c == '-' || c == '_' || c == '.' || c == '!' || c == '*' || c == '\''){
 				*pout++ = c;
 			}else{
