@@ -41,10 +41,10 @@ namespace lyramilk{namespace netio
 			if(ssl()){
 				i = SSL_read((SSL*)sslobj, buff,4096);
 			}else{
-				i = ::recv(sock,buff,4096,0);
+				i = ::recv(fd(),buff,4096,0);
 			}
 #else
-			i = ::recv(sock,buff,4096,0);
+			i = ::recv(fd(),buff,4096,0);
 #endif
 			if(i == 0) return false;
 			if(i == -1){
@@ -84,10 +84,10 @@ namespace lyramilk{namespace netio
 			if(ssl()){
 				rt = SSL_write((SSL*)sslobj, buff,sendcount);
 			}else{
-				rt = ::send(sock,buff,sendcount,0);
+				rt = ::send(fd(),buff,sendcount,0);
 			}
 #else
-			rt = ::send(sock,buff,sendcount,0);
+			rt = ::send(fd(),buff,sendcount,0);
 #endif
 			if(rt == 0) return false;
 			if(rt == -1){
@@ -170,7 +170,7 @@ namespace lyramilk{namespace netio
 
 	aiosession::aiosession()
 	{
-		flag = EPOLLIN | EPOLLPRI | EPOLLERR | EPOLLHUP | EPOLLONESHOT;
+		flag = EPOLLIN | EPOLLPRI | EPOLLERR | EPOLLHUP | EPOLLRDHUP | EPOLLONESHOT;
 	}
 
 	aiosession::~aiosession()
@@ -209,7 +209,7 @@ namespace lyramilk{namespace netio
 
 	native_filedescriptor_type aiosession::getfd()
 	{
-		return sock;
+		return socket::fd();
 	}
 
 	bool aiosession::read(void* buf, lyramilk::data::uint32 len,lyramilk::data::uint32 delay)
@@ -348,10 +348,10 @@ namespace lyramilk{namespace netio
 			if(ssl()){
 				i = SSL_read((SSL*)sslobj, buff,4096);
 			}else{
-				i = ::recv(sock,buff,4096,0);
+				i = ::recv(fd(),buff,4096,0);
 			}
 #else
-			i = ::recv(sock,buff,4096,0);
+			i = ::recv(fd(),buff,4096,0);
 #endif
 			if(i == 0) return false;
 			if(i == -1){
@@ -391,7 +391,7 @@ namespace lyramilk{namespace netio
 	{
 		sockaddr_in addr;
 		socklen_t addr_size = sizeof(addr);
-		native_socket_type acceptfd = ::accept(sock,(sockaddr*)&addr,&addr_size);
+		native_socket_type acceptfd = ::accept(fd(),(sockaddr*)&addr,&addr_size);
 		if(acceptfd > 0){
 #ifdef OPENSSL_FOUND
 			SSL* sslptr = nullptr;
@@ -455,7 +455,7 @@ namespace lyramilk{namespace netio
 				::close(acceptfd);
 				return true;
 			}
-			s->sock = acceptfd;
+			s->fd(acceptfd);
 #ifdef OPENSSL_FOUND
 			s->sslobj = sslptr;
 			X509* x = SSL_get_peer_certificate(sslptr);
@@ -517,13 +517,13 @@ namespace lyramilk{namespace netio
 
 	bool aiolistener::open(lyramilk::data::uint16 port)
 	{
-		if(sock){
+		if(fd()){
 			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiolistener.open") << lyramilk::kdict("打开监听套件字失败，因为该套接字己打开。") << std::endl;
 			return false;
 		}
 
-		sock = ::socket(AF_INET,SOCK_STREAM, IPPROTO_IP);
-		if(!sock){
+		native_socket_type tmpsock = ::socket(AF_INET,SOCK_STREAM, IPPROTO_IP);
+		if(!tmpsock){
 			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiolistener.open") << lyramilk::kdict("监听时发生错误：%s",strerror(errno)) << std::endl;
 			return false;
 		}
@@ -533,23 +533,24 @@ namespace lyramilk{namespace netio
 		addr.sin_family = AF_INET;
 		addr.sin_port = htons(port);
 		int opt = 1;
-		setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,&opt,sizeof(opt));
-		if(::bind(sock,(const sockaddr*)&addr,sizeof(addr))){
-			close();
+		setsockopt(tmpsock,SOL_SOCKET,SO_REUSEADDR,&opt,sizeof(opt));
+		if(::bind(tmpsock,(const sockaddr*)&addr,sizeof(addr))){
+			::close(tmpsock);
 			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiolistener.open") << lyramilk::kdict("绑定地址(%s:%d)时发生错误：%s",inet_ntoa(addr.sin_addr),port,strerror(errno)) << std::endl;
 			return false;
 		}
 		unsigned int argp = 1;
-		ioctl(sock,FIONBIO,&argp);
+		ioctl(tmpsock,FIONBIO,&argp);
 
 
-		int ret = listen(sock,5);
+		int ret = listen(tmpsock,5);
 		if(ret == 0){
 			lyramilk::klog(lyramilk::log::debug,"lyramilk.netio.aiolistener.open") << lyramilk::kdict("监听：%d",port) << std::endl;
 			//signal(SIGPIPE, SIG_IGN);
+			fd(tmpsock);
 			return true;
 		}
-		close();
+		::close(tmpsock);
 		return false;
 	}
 
@@ -592,7 +593,11 @@ namespace lyramilk{namespace netio
 	bool aiolistener::init_ssl(lyramilk::data::string certfilename, lyramilk::data::string keyfilename)
 	{
 #ifdef OPENSSL_FOUND
-		sslctx = SSL_CTX_new(SSLv23_server_method());
+		if(sslctx == nullptr){
+			sslctx = SSL_CTX_new(SSLv23_server_method());
+		}
+
+		SSL_CTX_set_mode((SSL_CTX*)sslctx, SSL_MODE_RELEASE_BUFFERS);
 
 		int r = 0;
 		if(!certfilename.empty()){
@@ -641,9 +646,19 @@ namespace lyramilk{namespace netio
 		return use_ssl && sslobj;
 	}
 
+	ssl_ctx_type aiolistener::get_ssl_ctx()
+	{
+#ifdef OPENSSL_FOUND
+		if(sslctx == nullptr){
+			sslctx = SSL_CTX_new(SSLv23_server_method());
+		}
+#endif
+		return sslctx;
+	}
+
 	native_filedescriptor_type aiolistener::getfd()
 	{
-		return sock;
+		return socket::fd();
 	}
 
 	

@@ -210,7 +210,9 @@ char c_utf32[] = "utf32";
 
 static bool ___init()
 {
+#ifdef LZ4_FOUND
 	lyramilk::data::codes::instance()->define("lz4",coding_lz4::getter);
+#endif
 	lyramilk::data::codes::instance()->define(c_gbk,coding_t<c_gbk>::getter);
 	lyramilk::data::codes::instance()->define(c_gb2312,coding_t<c_gb2312>::getter);
 	lyramilk::data::codes::instance()->define(c_big5,coding_t<c_big5>::getter);

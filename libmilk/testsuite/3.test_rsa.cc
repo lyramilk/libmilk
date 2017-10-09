@@ -1,5 +1,4 @@
 #include <iostream>
-#include "lua.h"
 #include "log.h"
 #include "bigint.h"
 #include "codes.h"

@@ -40,6 +40,45 @@ namespace lyramilk{ namespace debug
 		return s * 1000000000 + n;
 	}
 
+	clocktester::clocktester(timediff& _td):td(_td),outer(std::cout)
+	{
+		printable = true;
+		td.mark();
+	}
+	clocktester::clocktester(timediff& _td,lyramilk::data::string msg):td(_td),outer(std::cout)
+	{
+		printable = true;
+		str = msg;
+		td.mark();
+	}
+	clocktester::clocktester(timediff& _td,std::ostream& os,lyramilk::data::string msg):td(_td),outer(os)
+	{
+		printable = true;
+		str = msg;
+		td.mark();
+	}
+	clocktester::~clocktester()
+	{
+		if(printable){
+			long long des = td.diff();
+			outer << str << D("耗时：%lld(纳秒)",des) << std::endl;
+		}
+	}
+
+	void clocktester::cancel()
+	{
+		printable = false;
+	}
+
+	void clocktester::resume()
+	{
+		printable = true;
+	}
+
+	void clocktester::setmsg(lyramilk::data::string msg)
+	{
+		str = msg;
+	}
 	timer::timer()
 	{
 		l = v = time(0);

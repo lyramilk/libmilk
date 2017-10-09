@@ -45,17 +45,20 @@ namespace lyramilk{namespace netio
 
 	class _lyramilk_api_ socket
 	{
+		native_socket_type sock;
 	  protected:
 		friend class socket_stream_buf;
 		friend class aiosession2_buf;
 		ssl_type sslobj;
 		bool sslenable;
-		native_socket_type sock;
 	  public:
 		socket();
 		virtual ~socket();
 		//检查该套接字的通信是否己加密
 		virtual bool ssl();
+
+		///	取得SSL*
+		virtual ssl_type get_ssl_obj();
 
 		//判断套接字是否可用
 		virtual bool isalive();
@@ -71,6 +74,7 @@ namespace lyramilk{namespace netio
 
 		/// 取得套接字
 		virtual native_socket_type fd() const;
+		virtual void fd(native_socket_type tmpfd);
 	};
 
 	class _lyramilk_api_ socket_stream;
@@ -127,6 +131,9 @@ namespace lyramilk{namespace netio
 		virtual void ssl(bool use_ssl);
 		virtual bool init_ssl(lyramilk::data::string certfilename = "", lyramilk::data::string keyfilename = "");
 
+		///	取得SSL_CTX*
+		virtual ssl_ctx_type get_ssl_ctx();
+
 		/*
 			@brief 从套接字中读取数据
 			@param buf 从套接字中读取的数据将写入该缓冲区。
@@ -135,7 +142,7 @@ namespace lyramilk{namespace netio
 			@return 实际读取得字符数。小于1时表示读取失败。
 		*/
 
-		virtual lyramilk::data::int32 read(char* buf, lyramilk::data::int32 len,lyramilk::data::uint32 delay = 3000);
+		virtual lyramilk::data::int32 read(char* buf, lyramilk::data::int32 len);
 
 		/*
 			@brief 向套接字写入数据
@@ -144,7 +151,7 @@ namespace lyramilk{namespace netio
 			@param delay 等待的毫秒数。
 			@return 在delay毫秒内如果套接字可写则返回true。
 		*/
-		virtual lyramilk::data::int32 write(const char* buf, lyramilk::data::int32 len,lyramilk::data::uint32 delay = 3000);
+		virtual lyramilk::data::int32 write(const char* buf, lyramilk::data::int32 len);
 
 		/*
 			@brief 检查套接字是否可读

@@ -126,6 +126,10 @@ namespace lyramilk{namespace netio
 		return sslobj != nullptr;
 	}
 
+	ssl_type socket::get_ssl_obj()
+	{
+		return sslobj;
+	}
 
 	bool socket::isalive()
 	{
@@ -172,6 +176,11 @@ namespace lyramilk{namespace netio
 	native_socket_type socket::fd() const
 	{
 		return sock;
+	}
+
+	void socket::fd(native_socket_type tmpfd)
+	{
+		sock = tmpfd;
 	}
 
 	/* socket_stream_buf */
@@ -301,7 +310,7 @@ namespace lyramilk{namespace netio
 
 	bool client::open(lyramilk::data::string host,lyramilk::data::uint16 port)
 	{
-		if(sock){
+		if(fd()){
 			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开监听套件字失败，因为该套接字己打开。") << std::endl;
 			return false;
 		}
@@ -349,10 +358,11 @@ namespace lyramilk{namespace netio
 				this->sslobj = sslptr;
 			}
 #endif
+			/*
 			unsigned int argp = 1;
-			//ioctlsocket(sock,FIONBIO,&argp);
-			ioctl(sock,FIONBIO,&argp);
-			this->sock = tmpsock;
+			//ioctlsocket(fd(),FIONBIO,&argp);
+			ioctl(fd(),FIONBIO,&argp);*/
+			this->fd(tmpsock);
 			return true;
 		}
 		::close(tmpsock);
@@ -372,7 +382,9 @@ namespace lyramilk{namespace netio
 	bool client::init_ssl(lyramilk::data::string certfilename, lyramilk::data::string keyfilename)
 	{
 #ifdef OPENSSL_FOUND
-		sslctx = SSL_CTX_new(SSLv23_client_method());
+		if(sslctx == nullptr){
+			sslctx = SSL_CTX_new(SSLv23_client_method());
+		}
 		int r = 0;
 		if(!certfilename.empty()){
 			r = SSL_CTX_use_certificate_file((SSL_CTX*)sslctx, certfilename.c_str(), SSL_FILETYPE_PEM);
@@ -404,21 +416,27 @@ namespace lyramilk{namespace netio
 #endif
 	}
 
-	lyramilk::data::int32 client::read(char* buf, lyramilk::data::int32 len,lyramilk::data::uint32 delay)
+	ssl_ctx_type client::get_ssl_ctx()
 	{
-		if(!check_read(delay)){
-			errno = EAGAIN;
-			return -1;
+#ifdef OPENSSL_FOUND
+		if(sslctx == nullptr){
+			sslctx = SSL_CTX_new(SSLv23_client_method());
 		}
+#endif
+		return sslctx;
+	}
+
+	lyramilk::data::int32 client::read(char* buf, lyramilk::data::int32 len)
+	{
 		int rt = 0;
 #ifdef OPENSSL_FOUND
 		if(ssl()){
 			rt = SSL_read((SSL*)sslobj, buf, len);
 		}else{
-			rt = ::recv(sock,buf,len,0);
+			rt = ::recv(fd(),buf,len,0);
 		}
 #else
-		rt = ::recv(sock,buf,len,0);
+		rt = ::recv(fd(),buf,len,0);
 #endif
 		if(rt < 0){
 			lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.client.read") << lyramilk::kdict("从套接字中读取数据时发生错误:%s",strerror(errno)) << std::endl;
@@ -428,21 +446,17 @@ namespace lyramilk{namespace netio
 		return rt;
 	}
 
-	lyramilk::data::int32 client::write(const char* buf, lyramilk::data::int32 len,lyramilk::data::uint32 delay)
+	lyramilk::data::int32 client::write(const char* buf, lyramilk::data::int32 len)
 	{
-		if(!check_write(delay)){
-			errno = EAGAIN;
-			return -1;
-		}
 		int rt = 0;
 #ifdef OPENSSL_FOUND
 		if(ssl()){
 			rt = SSL_write((SSL*)sslobj, buf, len);
 		}else{
-			rt = ::send(sock,buf,len,0);
+			rt = ::send(fd(),buf,len,0);
 		}
 #else
-		rt = ::send(sock,buf,len,0);
+		rt = ::send(fd(),buf,len,0);
 #endif
 		if(rt < 0){
 			lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.client.write") << lyramilk::kdict("发生了错误:%s",strerror(errno)) << std::endl;
@@ -453,7 +467,7 @@ namespace lyramilk{namespace netio
 	bool client::check_read(lyramilk::data::uint32 delay)
 	{
 		pollfd pfd;
-		pfd.fd = sock;
+		pfd.fd = fd();
 		pfd.events = POLLIN;
 		pfd.revents = 0;
 		int ret = ::poll(&pfd,1,delay);
@@ -468,7 +482,7 @@ namespace lyramilk{namespace netio
 	bool client::check_write(lyramilk::data::uint32 delay)
 	{
 		pollfd pfd;
-		pfd.fd = sock;
+		pfd.fd = fd();
 		pfd.events = POLLOUT;
 		pfd.revents = 0;
 		int ret = ::poll(&pfd,1,delay);
@@ -483,7 +497,7 @@ namespace lyramilk{namespace netio
 	bool client::check_error()
 	{
 		pollfd pfd;
-		pfd.fd = sock;
+		pfd.fd = fd();
 		pfd.events = POLLHUP | POLLERR;
 		pfd.revents = 0;
 		int ret = ::poll(&pfd,1,0);

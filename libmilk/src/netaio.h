@@ -198,6 +198,8 @@ namespace lyramilk{namespace netio
 		/// 检查该套接字的通信是否己加密。
 		virtual bool ssl();
 
+		///	取得SSL_CTX*
+		virtual ssl_ctx_type get_ssl_ctx();
 
 		virtual native_filedescriptor_type getfd();
 

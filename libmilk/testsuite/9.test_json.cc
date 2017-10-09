@@ -20,15 +20,15 @@ int main(int argc,const char* argv[])
 		std::vector<lyramilk::data::string>::const_iterator it = jsons.begin();
 		for(;it!=jsons.end();++it){
 			lyramilk::data::var v;
-			lyramilk::data::json::parse(*it,v);
+			lyramilk::data::json::parse(*it,&v);
 			std::cout << "-------------------------\n测试json:" << *it << "\n\x1b[33m结果:" << v << "\x1b[0m" << std::endl;
 
 			lyramilk::data::string jsonstr;
-			lyramilk::data::json::stringify(v,jsonstr);
+			lyramilk::data::json::stringify(v,&jsonstr);
 			lyramilk::data::var v2;
-			lyramilk::data::json::parse(jsonstr,v2);
+			lyramilk::data::json::parse(jsonstr,&v2);
 			lyramilk::data::string jsonstr2;
-			lyramilk::data::json::stringify(v2,jsonstr2);
+			lyramilk::data::json::stringify(v2,&jsonstr2);
 
 			if(v == v2){
 				std::cout << "序列化/串行化验证成功" << std::endl;

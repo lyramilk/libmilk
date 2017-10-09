@@ -131,7 +131,7 @@ namespace lyramilk{namespace io
 				remove(r);
 			}
 			return;
-		}else if(events & EPOLLHUP){
+		}else if(events & (EPOLLHUP | EPOLLRDHUP)){
 			if(!r->notify_hup()){
 				remove(r);
 			}

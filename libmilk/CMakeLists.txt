@@ -1,6 +1,6 @@
 ﻿#定义工程名及版本
 project(milk)
-set(version 1.1.42)
+set(version 1.1.43)
 set(soversion 1.1)
 
 cmake_minimum_required (VERSION 2.8.11) 
@@ -65,9 +65,10 @@ if(UNIX)
 	pkg_check_modules(JS17 mozjs-17.0)
 	pkg_search_module(LEVELDB leveldb)
 	#set(CMAKE_REQUIRED_INCLUDES /usr/include/)
-	#check_include_file_cxx(unordered_map	Z_HAVE_UNORDEREDMAP)
+	#check_include_file_cxx(unordered_map		Z_HAVE_UNORDEREDMAP)
 	check_include_file_cxx(tr1/unordered_map	Z_HAVE_TR1_UNORDEREDMAP)
 	check_include_file_cxx(jemalloc/jemalloc.h	Z_HAVE_JEMALLOC)
+	check_include_file_cxx(tinyxml.h		Z_HAVE_TINYXML)
 endif()
 
 if(OPENSSL_FOUND)
@@ -129,6 +130,16 @@ if(Z_HAVE_JEMALLOC)
 	list(APPEND CONFIG_MACROS Z_HAVE_JEMALLOC)
 endif()
 
+if(Z_HAVE_TINYXML)
+	list(APPEND BUILD_DEPENDS tinyxml)
+	list(APPEND RUN_DEPENDS tinyxml-devel)
+	list(APPEND LIBS_DEPENDS -ltinyxml)
+	list(APPEND CONFIG_MACROS Z_HAVE_TINYXML)
+else()
+	list(REMOVE_ITEM src_hs src/xml.h)
+	list(REMOVE_ITEM src_cpps src/xml.cpp)
+endif()
+
 if(UNIX)
 	set(LIBRARIES -lpthread)
 else()
@@ -147,6 +158,8 @@ endforeach()
 foreach(v ${INCS_DEPENDS})
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${v}")
 endforeach()
+
+message(${LIBS_DEPENDS})
 
 set(CMAKE_LIBS_DEPENDS ${LIBS_DEPENDS})
 

@@ -2,6 +2,7 @@
 #include <fstream>
 #include <unistd.h>
 #include "thread.h"
+#include "atom.h"
 #include "var.h"
 #include "log.h"
 #include <cassert>
@@ -35,7 +36,7 @@ class wer
 	}
 };
 
-class atomiclist:public lyramilk::threading::exclusive::list<wer>
+class atomiclist:public lyramilk::threading::rentlist<wer>
 {
 
 	lyramilk::threading::mutex_os l;
@@ -59,7 +60,7 @@ class atomiclist:public lyramilk::threading::exclusive::list<wer>
 	}
 };
 
-atomiclist c;
+atomiclist acc;
 
 
 
@@ -75,7 +76,7 @@ class ssss:public lyramilk::threading::threads
 	int svc()
 	{
 		for(int i=0;i<100;++i){
-			atomiclist::ptr p = c.get();
+			atomiclist::ptr p = acc.get();
 			qqqq(p);
 		}
 		__sync_sub_and_fetch(&r,1);
@@ -93,6 +94,6 @@ int main(int argc,const char* argv[])
 		usleep(1000);
 		while(r);
 	}
-	c.test();
+	acc.test();
 	return 0;
 }

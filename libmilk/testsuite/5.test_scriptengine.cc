@@ -1,6 +1,8 @@
 #include <iostream>
 #include <fstream>
-#include "lua.h"
+#ifdef LUA_FOUND
+	#include <lua.h>
+#endif
 #include "log.h"
 #include "multilanguage.h"
 #define D(x...) lyramilk::kdict(x)
@@ -14,7 +16,7 @@
 class os
 {
   public:
-	static void* ctr(lyramilk::data::var::array)
+	static void* ctr(const lyramilk::data::var::array& args)
 	{
 		return new os();
 	}
@@ -22,10 +24,10 @@ class os
 	{
 		delete (os*)p;
 	}
-	lyramilk::data::var print(lyramilk::data::var::array params,lyramilk::data::var::map env)
+	lyramilk::data::var print(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env)
 	{
-		MILK_CHECK_SCRIPT_ARGS(params,0,lyramilk::data::var::t_str);
-		std::cout << params[0] << std::endl;
+		MILK_CHECK_SCRIPT_ARGS(args,0,lyramilk::data::var::t_str);
+		std::cout << args[0] << std::endl;
 		return true;
 	}
 
@@ -46,7 +48,7 @@ class number
 	int i;
 	lyramilk::log::logss log;
   public:
-	static void* ctr(lyramilk::data::var::array)
+	static void* ctr(const lyramilk::data::var::array& args)
 	{
 		return new number();
 	}
@@ -66,23 +68,23 @@ std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++析构number " << this << std::endl;
 	}
 
-	lyramilk::data::var add(lyramilk::data::var::array params,lyramilk::data::var::map env)
+	lyramilk::data::var add(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env)
 	{
-		std::cout << "[add]this=" << this << "," << i << "," << params.size() << std::endl;
-		MILK_CHECK_SCRIPT_ARGS_LOG(log,lyramilk::log::warning,__FUNCTION__,params,0,lyramilk::data::var::t_str);
-		return i + (int)params[0];
+		std::cout << "[add]this=" << this << "," << i << "," << args.size() << std::endl;
+		MILK_CHECK_SCRIPT_ARGS_LOG(log,lyramilk::log::warning,__FUNCTION__,args,0,lyramilk::data::var::t_str);
+		return i + (int)args[0];
 	}
 
-	lyramilk::data::var sub(lyramilk::data::var::array params,lyramilk::data::var::map env)
+	lyramilk::data::var sub(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env)
 	{
-		std::cout << "[sub]this=" << this << "," << i << "," << params << std::endl;
-		MILK_CHECK_SCRIPT_ARGS_LOG(log,lyramilk::log::warning,__FUNCTION__,params,0,lyramilk::data::var::t_str);
-		return i - (int)params[0];
+		std::cout << "[sub]this=" << this << "," << i << "," << args << std::endl;
+		MILK_CHECK_SCRIPT_ARGS_LOG(log,lyramilk::log::warning,__FUNCTION__,args,0,lyramilk::data::var::t_str);
+		return i - (int)args[0];
 	}
 
-	lyramilk::data::var testmap(lyramilk::data::var::array params,lyramilk::data::var::map env)
+	lyramilk::data::var testmap(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env)
 	{
-		std::cout << "[testmap]" << params << std::endl;
+		std::cout << "[testmap]" << args << std::endl;
 		lyramilk::data::var::map m;
 		m["apple"] = "苹果";
 		m["orange"] = 333;
@@ -92,6 +94,7 @@ std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 
+#ifdef LUA_FOUND
 class lua_engines:public lyramilk::script::engines
 {
 	virtual lyramilk::script::engine* underflow()
@@ -114,6 +117,7 @@ class lua_engines:public lyramilk::script::engines
 		return p;
 	}
 };
+#endif
 
 class js_engines:public lyramilk::script::engines
 {
@@ -142,9 +146,12 @@ class js_engines:public lyramilk::script::engines
 
 int main(int argc,const char* argv[])
 {
+#ifdef LUA_FOUND
 	lua_engines engs_lua;
+#endif
 	js_engines engs_js;
 
+#ifdef LUA_FOUND
 	{
 		lyramilk::script::engines::ptr eng = engs_lua.get();
 		lyramilk::script::engines::ptr eng1 = engs_lua.get();
@@ -154,36 +161,28 @@ int main(int argc,const char* argv[])
 
 		if(eng){
 			std::cout << "取得了eng" << std::endl;
-			eng->load_file(TESTLUA);
-
 			lyramilk::data::var::array r;
 			r.push_back("Hello World!!!!肚子");
-			eng->pcall();
-			
-
+			eng->load_file(TESTLUA);
 			std::cout << "调用script的test函数的结果：" << eng->call("test",r) << std::endl;
 		}
 
 		if(eng1){
 			std::cout << "取得了eng1" << std::endl;
-			eng1->load_file(TESTLUA);
 
 			lyramilk::data::var::array r;
 			r.push_back("Hello World!!!!肚子");
-			eng1->pcall();
-			
+			eng1->load_file(TESTLUA);
 
 			std::cout << "调用script的test函数的结果：" << eng1->call("test",r) << std::endl;
 		}
 
 		if(eng2){
 			std::cout << "取得了eng2" << std::endl;
-			eng2->load_file(TESTLUA);
 
 			lyramilk::data::var::array r;
 			r.push_back("Hello World!!!!肚子");
-			eng2->pcall();
-			
+			eng2->load_file(TESTLUA);
 
 			std::cout << "调用script的test函数的结果：" << eng2->call("test",r) << std::endl;
 		}
@@ -191,12 +190,10 @@ int main(int argc,const char* argv[])
 
 		if(eng3){
 			std::cout << "取得了eng3" << std::endl;
-			eng3->load_file(TESTLUA);
 
 			lyramilk::data::var::array r;
 			r.push_back("Hello World!!!!肚子");
-			eng3->pcall();
-			
+			eng3->load_file(TESTLUA);
 
 			std::cout << "调用script的test函数的结果：" << eng3->call("test",r) << std::endl;
 		}
@@ -204,80 +201,72 @@ int main(int argc,const char* argv[])
 
 		if(eng4){
 			std::cout << "取得了eng4" << std::endl;
-			eng4->load_file(TESTLUA);
 
 			lyramilk::data::var::array r;
 			r.push_back("Hello World!!!!肚子");
-			eng4->pcall();
-			
+			eng4->load_file(TESTLUA);
 
 			std::cout << "调用script的test函数的结果：" << eng4->call("test",r) << std::endl;
 		}
 	}
+#endif
 	{
+#ifdef LUA_FOUND
 		lyramilk::script::engines::ptr eng = engs_lua.get();
 		lyramilk::script::engines::ptr eng1 = engs_lua.get();
 		lyramilk::script::engines::ptr eng2 = engs_lua.get();
+#endif
 		lyramilk::script::engines::ptr eng3 = engs_js.get();
 		lyramilk::script::engines::ptr eng4 = engs_js.get();
 
+#ifdef LUA_FOUND
 		if(eng){
 			std::cout << "取得了eng" << std::endl;
-			eng->load_file(TESTLUA);
 
 			lyramilk::data::var::array r;
 			r.push_back("Hello World!!!!肚子");
-			eng->pcall();
-			
+			eng->load_file(TESTLUA);
 
 			std::cout << "调用script的test函数的结果：" << eng->call("test",r) << std::endl;
 		}
 
 		if(eng1){
 			std::cout << "取得了eng1" << std::endl;
-			eng1->load_file(TESTLUA);
 
 			lyramilk::data::var::array r;
 			r.push_back("Hello World!!!!肚子");
-			eng1->pcall();
-			
+			eng1->load_file(TESTLUA);
 
 			std::cout << "调用script的test函数的结果：" << eng1->call("test",r) << std::endl;
 		}
 
 		if(eng2){
 			std::cout << "取得了eng2" << std::endl;
-			eng2->load_file(TESTLUA);
 
 			lyramilk::data::var::array r;
 			r.push_back("Hello World!!!!肚子");
-			eng2->pcall();
-			
+			eng2->load_file(TESTLUA);
 
 			std::cout << "调用script的test函数的结果：" << eng2->call("test",r) << std::endl;
 		}
-
+#endif
 
 		if(eng3){
 			std::cout << "取得了eng3" << std::endl;
-			eng3->load_file(TESTJS);
 
 			lyramilk::data::var::array r;
 			r.push_back("Hello World!!!!肚子");
-			eng3->pcall();
-			
+			eng3->load_file(TESTJS);
 
 			std::cout << "调用script的test函数的结果：" << eng3->call("test",r) << std::endl;
 		}
 
 		if(eng4){
 			std::cout << "取得了eng4" << std::endl;
-			eng4->load_file(TESTJS);
 
 			lyramilk::data::var::array r;
 			r.push_back("Hello World!!!!肚子");
-			eng4->pcall();
-			
+			eng4->load_file(TESTJS);
 
 			std::cout << "调用script的test函数的结果：" << eng4->call("test",r) << std::endl;
 		}

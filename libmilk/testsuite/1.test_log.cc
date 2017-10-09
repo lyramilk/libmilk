@@ -3,6 +3,7 @@
 #include "testing.h"
 #include "log.h"
 #include <unistd.h>
+#include <stdio.h>
 
 int r = 100;
 
