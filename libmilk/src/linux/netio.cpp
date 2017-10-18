@@ -251,6 +251,12 @@ namespace lyramilk{namespace netio
 	{
 	}
 
+	void socket_stream_buf::reset()
+	{
+		setp(putbuf,putbuf + sizeof(putbuf));
+		setg(getbuf,getbuf + sizeof(getbuf),getbuf + sizeof(getbuf));
+	}
+
 	/* socket_stream */
 	socket_stream::socket_stream()
 	{
@@ -275,6 +281,8 @@ namespace lyramilk{namespace netio
 		sbuf.seq_r = sbuf.seq_w = 0;
 		sbuf.psock = &ac;
 		lyramilk::data::stringstream::init(&sbuf);
+		sbuf.reset();
+		clear();
 		/*
 		flags = fcntl(sbuf.psock->fd(),F_GETFL,0);
 

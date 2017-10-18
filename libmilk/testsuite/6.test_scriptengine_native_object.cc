@@ -176,7 +176,7 @@ int main(int argc,const char* argv[])
 #ifdef JS17_FOUND
 	engs["js"] = lyramilk::script::engine::createinstance("js");
 #endif
-#ifdef LUA_FOUND
+#ifdef LUAJIT_FOUND
 	engs["lua"] = lyramilk::script::engine::createinstance("lua");
 #endif
 

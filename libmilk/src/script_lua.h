@@ -1,4 +1,5 @@
-﻿#if (defined LUA_FOUND) && (!defined _lyramilk_script_lua_engine_h_)
+﻿#include "config.h"
+#if (defined LUAJIT_FOUND) && (!defined _lyramilk_script_lua_engine_h_)
 #define _lyramilk_script_lua_engine_h_
 
 #include "scriptengine.h"

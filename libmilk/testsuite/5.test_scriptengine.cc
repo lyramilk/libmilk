@@ -1,6 +1,6 @@
 #include <iostream>
 #include <fstream>
-#ifdef LUA_FOUND
+#ifdef LUAJIT_FOUND
 	#include <lua.h>
 #endif
 #include "log.h"
@@ -94,7 +94,7 @@ std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 
-#ifdef LUA_FOUND
+#ifdef LUAJIT_FOUND
 class lua_engines:public lyramilk::script::engines
 {
 	virtual lyramilk::script::engine* underflow()
@@ -146,12 +146,12 @@ class js_engines:public lyramilk::script::engines
 
 int main(int argc,const char* argv[])
 {
-#ifdef LUA_FOUND
+#ifdef LUAJIT_FOUND
 	lua_engines engs_lua;
 #endif
 	js_engines engs_js;
 
-#ifdef LUA_FOUND
+#ifdef LUAJIT_FOUND
 	{
 		lyramilk::script::engines::ptr eng = engs_lua.get();
 		lyramilk::script::engines::ptr eng1 = engs_lua.get();
@@ -211,7 +211,7 @@ int main(int argc,const char* argv[])
 	}
 #endif
 	{
-#ifdef LUA_FOUND
+#ifdef LUAJIT_FOUND
 		lyramilk::script::engines::ptr eng = engs_lua.get();
 		lyramilk::script::engines::ptr eng1 = engs_lua.get();
 		lyramilk::script::engines::ptr eng2 = engs_lua.get();
@@ -219,7 +219,7 @@ int main(int argc,const char* argv[])
 		lyramilk::script::engines::ptr eng3 = engs_js.get();
 		lyramilk::script::engines::ptr eng4 = engs_js.get();
 
-#ifdef LUA_FOUND
+#ifdef LUAJIT_FOUND
 		if(eng){
 			std::cout << "取得了eng" << std::endl;
 

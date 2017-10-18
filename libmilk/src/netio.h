@@ -93,6 +93,7 @@ namespace lyramilk{namespace netio
 		virtual int_type overflow (int_type c = traits_type::eof());
 		virtual int_type underflow();
 	  public:
+		void reset();
 		socket_stream_buf();
 		virtual ~socket_stream_buf();
 	};

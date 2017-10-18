@@ -1,6 +1,6 @@
 ﻿#定义工程名及版本
 project(milk)
-set(version 1.1.43)
+set(version 1.1.44)
 set(soversion 1.1)
 
 cmake_minimum_required (VERSION 2.8.11) 
@@ -131,8 +131,8 @@ if(Z_HAVE_JEMALLOC)
 endif()
 
 if(Z_HAVE_TINYXML)
-	list(APPEND BUILD_DEPENDS tinyxml)
-	list(APPEND RUN_DEPENDS tinyxml-devel)
+	list(APPEND BUILD_DEPENDS tinyxml-devel)
+	list(APPEND RUN_DEPENDS tinyxml)
 	list(APPEND LIBS_DEPENDS -ltinyxml)
 	list(APPEND CONFIG_MACROS Z_HAVE_TINYXML)
 else()
