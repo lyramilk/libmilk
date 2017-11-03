@@ -232,7 +232,8 @@ label_repeat:
 				while(p < e){
 					c = *p++;
 					if(c == '"'){
-						break;
+						token.t = t;
+						return true;
 					}else if(c == '\\'){
 						c = *p++;
 						switch(c){
@@ -338,7 +339,7 @@ label_repeat:
 						token.s.push_back(c);
 					}
 				}
-				token.t = t;
+				goto label_badchar;
 			  }break;	//STRING
 			  case jsontoken::INTEGER:
 			  case jsontoken::DOUBLE:{
