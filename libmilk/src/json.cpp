@@ -220,7 +220,7 @@ namespace lyramilk{namespace data
 		bool next(jsontoken& token)
 		{
 label_repeat:
-			if(p + 1 > e) return false;
+			if(p >= e) return false;
 			char c = *p;
 
 			jsontoken::type t = tokentable[(unsigned int)c&0xff];
@@ -229,7 +229,7 @@ label_repeat:
 			  case jsontoken::STRING:{
 				token.s.clear();
 				++p;
-				while(true){
+				while(p < e){
 					c = *p++;
 					if(c == '"'){
 						break;
@@ -244,6 +244,7 @@ label_repeat:
 						  case 'v': c = '\v'; break;
 						  case '\n': continue;
 						  case 'u':{
+							if(p + 4 >= e) goto label_badchar;
 							std::char_traits<char>::int_type c1 = *p++;
 							if(!_IsHexChar(c1)) goto label_badchar;
 							std::char_traits<char>::int_type c2 = *p++;
@@ -254,6 +255,7 @@ label_repeat:
 							if(!_IsHexChar(c4)) goto label_badchar;
 							unsigned wchar_t wc = (_ToHex(c1) << 12) | (_ToHex(c2) << 8) | (_ToHex(c3) << 4) | (_ToHex(c4) << 0);
 							if(wc >= 0xd800 && wc <= 0xdfff){
+								if(p + 6 >= e) goto label_badchar;
 								if(*p++ != '\\') goto label_badchar;
 								if(*p++ != 'u') goto label_badchar;
 								std::char_traits<char>::int_type c1 = *p++;
@@ -298,9 +300,10 @@ label_repeat:
 							continue;
 						  }break;
 						  case 'x':{
-							std::char_traits<char>::int_type c1 = getchar();
+							if(p + 2 >= e) goto label_badchar;
+							std::char_traits<char>::int_type c1 = *p++;
 							if(!_IsHexChar(c1)) goto label_badchar;
-							std::char_traits<char>::int_type c2 = getchar();
+							std::char_traits<char>::int_type c2 = *p++;
 							if(!_IsHexChar(c2)) goto label_badchar;
 							c = (_ToHex(c1) << 4) | (_ToHex(c2) << 0);
 						  }break;
@@ -308,10 +311,10 @@ label_repeat:
 							int iv = 0;
 							if ('0' <= c && c < '8') {
 								iv = c - '0';
-								c = getchar();
+								c = *p++;
 								if ('0' <= c && c < '8') {
 									iv = iv * 8 + c - '0';
-									c = getchar();
+									c = *p++;
 									if ('0' <= c && c < '8') {
 										int newiv = iv * 8 + c - '0';
 										if(newiv > 0xff){
