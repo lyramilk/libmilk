@@ -328,6 +328,8 @@ label_repeat:
 								}else{
 									--p;
 								}
+								token.s.push_back(iv);
+								continue;
 							}
 						  }
 						}

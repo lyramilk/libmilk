@@ -25,6 +25,11 @@ int main(int argc,const char* argv[])
 	jsons.push_back("\"\\x");
 	jsons.push_back("\"\\");
 	jsons.push_back("\"");
+	jsons.push_back("\"\\141\"");
+	jsons.push_back("\"\\141");
+	jsons.push_back("\"\\14\"");
+	jsons.push_back("\"\\1\"");
+	jsons.push_back("\"\\14");
 
 	{
 		std::vector<lyramilk::data::string>::const_iterator it = jsons.begin();
