@@ -372,6 +372,22 @@ namespace lyramilk{namespace data
 		operator const map& () const throw(type_invalid);
 
 		/**
+			@brief 安全类型转换
+			@details 安全获得某种类型，如果var无法转换到该类型。则返回if_not_compat
+			@param if_not_compat 在无法转换时的默认值。
+			@return 转换结果
+		*/
+
+		chunk conv(chunk if_not_compat) const;
+		string conv(string if_not_compat) const;
+		wstring conv(wstring if_not_compat) const;
+		bool conv(bool if_not_compat) const;
+		uint64 conv(uint64 if_not_compat) const;
+		double conv(double if_not_compat) const;
+		array& conv(array& if_not_compat);
+		map& conv(map& if_not_compat);
+
+		/**
 			@brief 定义额外的用户数据。
 			@param v 用户数据的标识。
 			@param p 用户数据的指针。

@@ -1450,6 +1450,55 @@ var::operator const lyramilk::data::var::map& () const throw(type_invalid)
 	throw type_invalid(lyramilk::kdict("%s：%s类型无法转换为%s类型","lyramilk::data::var::operator var::map()",type_name(t).c_str(),type_name(t_map).c_str()));
 }
 
+chunk var::conv(chunk if_not_compat) const
+{
+	if(!type_like(t_bin)) return if_not_compat;
+	return *this;
+}
+
+string var::conv(string if_not_compat) const
+{
+	if(!type_like(t_str)) return if_not_compat;
+	return *this;
+}
+
+wstring var::conv(wstring if_not_compat) const
+{
+	if(!type_like(t_wstr)) return if_not_compat;
+	return *this;
+}
+
+bool var::conv(bool if_not_compat) const
+{
+	if(!type_like(t_bool)) return if_not_compat;
+	return *this;
+}
+
+uint64 var::conv(uint64 if_not_compat) const
+{
+	if(!type_like(t_int)) return if_not_compat;
+	return *this;
+}
+
+double var::conv(double if_not_compat) const
+{
+	if(!type_like(t_double)) return if_not_compat;
+	return *this;
+}
+
+var::array& var::conv(var::array& if_not_compat)
+{
+	if(!type_like(t_array)) return if_not_compat;
+	return *this;
+}
+
+var::map& var::conv(var::map& if_not_compat)
+{
+	if(!type_like(t_map)) return if_not_compat;
+	return *this;
+}
+
+
 void lyramilk::data::var::userdata(string v,const void* p) throw(type_invalid)
 {
 	if(t != t_user)	throw type_invalid(lyramilk::kdict("%s：%s类型无法赋予用户数据","lyramilk::data::var::operator var::map()",type_name(t).c_str()));
