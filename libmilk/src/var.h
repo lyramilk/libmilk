@@ -382,7 +382,16 @@ namespace lyramilk{namespace data
 		string conv(string if_not_compat) const;
 		wstring conv(wstring if_not_compat) const;
 		bool conv(bool if_not_compat) const;
+		uint64 conv(int8 if_not_compat) const;
+		uint64 conv(uint8 if_not_compat) const;
+		uint64 conv(int16 if_not_compat) const;
+		uint64 conv(uint16 if_not_compat) const;
+		uint64 conv(int32 if_not_compat) const;
+		uint64 conv(uint32 if_not_compat) const;
+		uint64 conv(int64 if_not_compat) const;
 		uint64 conv(uint64 if_not_compat) const;
+		uint64 conv(long if_not_compat) const;
+		uint64 conv(unsigned long if_not_compat) const;
 		double conv(double if_not_compat) const;
 		array& conv(array& if_not_compat);
 		map& conv(map& if_not_compat);

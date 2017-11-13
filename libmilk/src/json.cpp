@@ -609,7 +609,7 @@ label_badchar:
 				const lyramilk::data::var::array& ar = v;
 				for(lyramilk::data::var::array::const_iterator it=ar.begin();it!=ar.end();++it){
 					jsonstr.clear();
-					if(json::stringify(*it,&jsonstr)){
+					if(json::stringify(*it,&jsonstr) && !jsonstr.empty()){
 						str += jsonstr + ',';
 					}
 				}
@@ -623,7 +623,7 @@ label_badchar:
 				const lyramilk::data::var::map& m = v;
 				for(lyramilk::data::var::map::const_iterator it=m.begin();it!=m.end();++it){
 					jsonstr.clear();
-					if(json::stringify(it->second,&jsonstr)){
+					if(json::stringify(it->second,&jsonstr) && !jsonstr.empty()){
 						str += '"' + escape(it->first) + "\":" + jsonstr + ',';
 					}
 				}

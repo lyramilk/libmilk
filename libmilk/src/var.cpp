@@ -1474,7 +1474,56 @@ bool var::conv(bool if_not_compat) const
 	return *this;
 }
 
+uint64 var::conv(int8 if_not_compat) const
+{
+	if(!type_like(t_int)) return if_not_compat;
+	return *this;
+}
+uint64 var::conv(uint8 if_not_compat) const
+{
+	if(!type_like(t_int)) return if_not_compat;
+	return *this;
+}
+uint64 var::conv(int16 if_not_compat) const
+{
+	if(!type_like(t_int)) return if_not_compat;
+	return *this;
+}
+uint64 var::conv(uint16 if_not_compat) const
+{
+	if(!type_like(t_int)) return if_not_compat;
+	return *this;
+}
+uint64 var::conv(int32 if_not_compat) const
+{
+	if(!type_like(t_int)) return if_not_compat;
+	return *this;
+}
+uint64 var::conv(uint32 if_not_compat) const
+{
+	if(!type_like(t_int)) return if_not_compat;
+	return *this;
+}
+
+uint64 var::conv(int64 if_not_compat) const
+{
+	if(!type_like(t_int)) return if_not_compat;
+	return *this;
+}
+
 uint64 var::conv(uint64 if_not_compat) const
+{
+	if(!type_like(t_int)) return if_not_compat;
+	return *this;
+}
+
+uint64 var::conv(long if_not_compat) const
+{
+	if(!type_like(t_int)) return if_not_compat;
+	return *this;
+}
+
+uint64 var::conv(unsigned long if_not_compat) const
 {
 	if(!type_like(t_int)) return if_not_compat;
 	return *this;
