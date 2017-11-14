@@ -1452,87 +1452,87 @@ var::operator const lyramilk::data::var::map& () const throw(type_invalid)
 
 chunk var::conv(chunk if_not_compat) const
 {
-	if(!type_like(t_bin)) return if_not_compat;
-	return *this;
+	if(type_like(t_str)) return *this;
+	return if_not_compat;
 }
 
 string var::conv(string if_not_compat) const
 {
-	if(!type_like(t_str)) return if_not_compat;
-	return *this;
+	if(type_like(t_str)) return *this;
+	return if_not_compat;
 }
 
 wstring var::conv(wstring if_not_compat) const
 {
-	if(!type_like(t_wstr)) return if_not_compat;
-	return *this;
+	if(type_like(t_str)) return *this;
+	return if_not_compat;
 }
 
 bool var::conv(bool if_not_compat) const
 {
-	if(!type_like(t_bool)) return if_not_compat;
-	return *this;
+	if(type_like(t_str)) return *this;
+	return if_not_compat;
 }
 
 uint64 var::conv(int8 if_not_compat) const
 {
-	if(!type_like(t_int)) return if_not_compat;
-	return *this;
+	if(type_like(t_str)) return *this;
+	return if_not_compat;
 }
 uint64 var::conv(uint8 if_not_compat) const
 {
-	if(!type_like(t_int)) return if_not_compat;
-	return *this;
+	if(type_like(t_str)) return *this;
+	return if_not_compat;
 }
 uint64 var::conv(int16 if_not_compat) const
 {
-	if(!type_like(t_int)) return if_not_compat;
-	return *this;
+	if(type_like(t_str)) return *this;
+	return if_not_compat;
 }
 uint64 var::conv(uint16 if_not_compat) const
 {
-	if(!type_like(t_int)) return if_not_compat;
-	return *this;
+	if(type_like(t_str)) return *this;
+	return if_not_compat;
 }
 uint64 var::conv(int32 if_not_compat) const
 {
-	if(!type_like(t_int)) return if_not_compat;
-	return *this;
+	if(type_like(t_str)) return *this;
+	return if_not_compat;
 }
 uint64 var::conv(uint32 if_not_compat) const
 {
-	if(!type_like(t_int)) return if_not_compat;
-	return *this;
+	if(type_like(t_str)) return *this;
+	return if_not_compat;
 }
 
 uint64 var::conv(int64 if_not_compat) const
 {
-	if(!type_like(t_int)) return if_not_compat;
-	return *this;
+	if(type_like(t_str)) return *this;
+	return if_not_compat;
 }
 
 uint64 var::conv(uint64 if_not_compat) const
 {
-	if(!type_like(t_int)) return if_not_compat;
-	return *this;
+	if(type_like(t_str)) return *this;
+	return if_not_compat;
 }
 
 uint64 var::conv(long if_not_compat) const
 {
-	if(!type_like(t_int)) return if_not_compat;
-	return *this;
+	if(type_like(t_str)) return *this;
+	return if_not_compat;
 }
 
 uint64 var::conv(unsigned long if_not_compat) const
 {
-	if(!type_like(t_int)) return if_not_compat;
-	return *this;
+	if(type_like(t_str)) return *this;
+	return if_not_compat;
 }
 
 double var::conv(double if_not_compat) const
 {
-	if(!type_like(t_double)) return if_not_compat;
-	return *this;
+	if(type_like(t_str)) return *this;
+	return if_not_compat;
 }
 
 var::array& var::conv(var::array& if_not_compat)
