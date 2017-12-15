@@ -11,6 +11,7 @@
 #include <iostream>
 #include <sstream>
 #include <exception>
+#include <stdio.h>
 
 
 #ifdef Z_HAVE_UNORDEREDMAP
@@ -181,6 +182,12 @@ namespace lyramilk{namespace data
 		return str;
 	}
 #endif
+	lyramilk::data::string inline str(unsigned long long i)
+	{
+		char buff[64];
+		snprintf(buff,sizeof(buff),"%llu",i);
+		return buff;
+	}
 	/**
 		@brief 这是一个超级变量，封装了对整数、小数、字符串、数组、映射表的表达，它尽可能在各种类型间进行转换。
 	*/
@@ -381,6 +388,13 @@ namespace lyramilk{namespace data
 		chunk conv(chunk if_not_compat) const;
 		string conv(string if_not_compat) const;
 		wstring conv(wstring if_not_compat) const;
+		string conv(const char* if_not_compat) const;
+		string conv(char* if_not_compat) const;
+		wstring conv(const wchar_t* if_not_compat) const;
+		wstring conv(wchar_t* if_not_compat) const;
+		chunk conv(const unsigned char* if_not_compat) const;
+		chunk conv(unsigned char* if_not_compat) const;
+
 		bool conv(bool if_not_compat) const;
 		uint64 conv(int8 if_not_compat) const;
 		uint64 conv(uint8 if_not_compat) const;

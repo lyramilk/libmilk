@@ -1468,6 +1468,60 @@ wstring var::conv(wstring if_not_compat) const
 	return if_not_compat;
 }
 
+chunk var::conv(chunk if_not_compat) const
+{
+	if(type_like(t_str)) return *this;
+	return if_not_compat;
+}
+
+string var::conv(string if_not_compat) const
+{
+	if(type_like(t_str)) return *this;
+	return if_not_compat;
+}
+
+wstring var::conv(wstring if_not_compat) const
+{
+	if(type_like(t_str)) return *this;
+	return if_not_compat;
+}
+
+string var::conv(const char* if_not_compat) const
+{
+	if(type_like(t_str)) return *this;
+	return if_not_compat;
+}
+
+string var::conv(char* if_not_compat) const
+{
+	if(type_like(t_str)) return *this;
+	return if_not_compat;
+}
+
+wstring var::conv(const wchar_t* if_not_compat) const
+{
+	if(type_like(t_str)) return *this;
+	return if_not_compat;
+}
+
+wstring var::conv(wchar_t* if_not_compat) const
+{
+	if(type_like(t_str)) return *this;
+	return if_not_compat;
+}
+
+chunk var::conv(const unsigned char* if_not_compat) const
+{
+	if(type_like(t_bin)) return *this;
+	return if_not_compat;
+}
+
+chunk var::conv(unsigned char* if_not_compat) const
+{
+	if(type_like(t_bin)) return *this;
+	return if_not_compat;
+}
+
 bool var::conv(bool if_not_compat) const
 {
 	if(type_like(t_str)) return *this;
