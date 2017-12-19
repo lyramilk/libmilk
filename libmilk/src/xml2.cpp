@@ -112,7 +112,7 @@ namespace lyramilk{namespace data
 		if(!var_to_xml(&xml_doc,m,p)) return false;
 		xml_doc.LinkEndChild(p);
 
-		tinyxml2::XMLPrinter printer;
+		tinyxml2::XMLPrinter printer(NULL,true);
 		xml_doc.Print(&printer);
 
 		pstr->assign(printer.CStr(),printer.CStrSize());
