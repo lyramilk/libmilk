@@ -1468,24 +1468,6 @@ wstring var::conv(wstring if_not_compat) const
 	return if_not_compat;
 }
 
-chunk var::conv(chunk if_not_compat) const
-{
-	if(type_like(t_str)) return *this;
-	return if_not_compat;
-}
-
-string var::conv(string if_not_compat) const
-{
-	if(type_like(t_str)) return *this;
-	return if_not_compat;
-}
-
-wstring var::conv(wstring if_not_compat) const
-{
-	if(type_like(t_str)) return *this;
-	return if_not_compat;
-}
-
 string var::conv(const char* if_not_compat) const
 {
 	if(type_like(t_str)) return *this;

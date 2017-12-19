@@ -4,17 +4,17 @@
 #include <fstream>
 #include <math.h>
 #include <stdlib.h>
-#include <tinyxml.h>
+#include <tinyxml2.h>
 #include <libmilk/multilanguage.h>
 
 namespace lyramilk{namespace data
 {
-	bool static var_to_xml(const lyramilk::data::var::map& m,TiXmlElement* x)
+	bool static var_to_xml(tinyxml2::XMLDocument* doc,const lyramilk::data::var::map& m,tinyxml2::XMLElement* x)
 	{
 		lyramilk::data::var::map::const_iterator it = m.begin();
 		for(;it!=m.end();++it){
 			if(it->first == "xml.tag" || it->first == "xml.body") continue;
-			x->SetAttribute(lyramilk::data::str(it->first),lyramilk::data::str(it->second.str()));
+			x->SetAttribute(it->first.c_str(),it->second.str().c_str());
 		}
 
 		lyramilk::data::var::map::const_iterator it_body = m.find("xml.body");
@@ -29,11 +29,11 @@ namespace lyramilk{namespace data
 				if(it_tag == childm.end()) return false;
 				if(it_tag->second.type() != lyramilk::data::var::t_str) throw lyramilk::exception(D("%s应该是%s,但它是%s","xml.tag","t_str",it_tag->second.type_name().c_str()));
 
-				TiXmlElement* p = new TiXmlElement(lyramilk::data::str(it_tag->second.str()));
+				tinyxml2::XMLElement* p = doc->NewElement(it_tag->second.str().c_str());
 				x->LinkEndChild(p);
-				if(!var_to_xml(childm,p)) return false;
+				if(!var_to_xml(doc,childm,p)) return false;
 			}else if(it->type_like(lyramilk::data::var::t_str)){
-				x->LinkEndChild(new TiXmlText(lyramilk::data::str(it->str())));
+				x->LinkEndChild(doc->NewText(it->str().c_str()));
 			}else{
 				throw lyramilk::exception(D("xml属性不支持%s类型",it->type_name().c_str()));
 			}
@@ -41,26 +41,30 @@ namespace lyramilk{namespace data
 		return true;
 	}
 
-	bool static xml_to_var(const TiXmlNode* x,lyramilk::data::var::map& m)
+	bool static xml_to_var(tinyxml2::XMLDocument* doc,const tinyxml2::XMLNode* x,lyramilk::data::var::map& m)
 	{
-		for(const TiXmlAttribute* ax = x->ToElement()->FirstAttribute();ax;ax = ax->Next()){
-			m[lyramilk::data::str(ax->NameTStr())] = lyramilk::data::str(ax->ValueStr());
+		for(const tinyxml2::XMLAttribute* ax = x->ToElement()->FirstAttribute();ax;ax = ax->Next()){
+			m[ax->Name()] = ax->Value();
 		}
 
-		const TiXmlNode* cx = x->FirstChild();
+		const tinyxml2::XMLNode* cx = x->FirstChild();
 		if(cx == nullptr) return true;
 		lyramilk::data::var& tmpv = m["xml.body"];
 		tmpv.type(lyramilk::data::var::t_array);
 		lyramilk::data::var::array& ar = tmpv;
 		for(;cx;cx = cx->NextSibling()){
-			int t = cx->Type();
-			if(t == TiXmlNode::TINYXML_ELEMENT){
+			const tinyxml2::XMLElement* ele = cx->ToElement();
+			if(ele){
 				ar.push_back(lyramilk::data::var::map());
 				lyramilk::data::var::map& m = ar.back();
-				m["xml.tag"] = lyramilk::data::str(cx->ValueStr());
-				xml_to_var(cx->ToElement(),m);
-			}else if(t == TiXmlNode::TINYXML_TEXT){
-				ar.push_back(lyramilk::data::str(cx->ValueStr()));
+				m["xml.tag"] = cx->Value();
+				xml_to_var(doc,ele,m);
+				continue;
+			}
+			
+			const tinyxml2::XMLText* txt = cx->ToText();
+			if(txt){
+				ar.push_back(cx->Value());
 			}
 		}
 		return true;
@@ -98,32 +102,34 @@ namespace lyramilk{namespace data
 
 	bool xml::stringify(const lyramilk::data::var::map& m,lyramilk::data::string* pstr)
 	{
-		TiXmlDocument xml_doc;
+		if(!pstr) return false;
+		tinyxml2::XMLDocument xml_doc;
 		lyramilk::data::var::map::const_iterator it_tag = m.find("xml.tag");
 		if(it_tag == m.end()) return false;
 		if(it_tag->second.type() != lyramilk::data::var::var::t_str) return false;
 
-		TiXmlElement* p = new TiXmlElement(lyramilk::data::str(it_tag->second.str()));
+		tinyxml2::XMLElement* p = xml_doc.NewElement(it_tag->second.str().c_str());
+		if(!var_to_xml(&xml_doc,m,p)) return false;
 		xml_doc.LinkEndChild(p);
-		if(!var_to_xml(m,p)) return false;
 
+		tinyxml2::XMLPrinter printer;
+		xml_doc.Print(&printer);
 
-		std::string str;
-		str << xml_doc;
-		*pstr = lyramilk::data::str(str);
+		pstr->assign(printer.CStr(),printer.CStrSize());
 		return true;
 	}
 
 	bool xml::parse(lyramilk::data::string str,lyramilk::data::var::map* m)
 	{
-		lyramilk::data::stringstream ss(str);
-		TiXmlDocument xml_doc;
-		ss >> xml_doc;
+		tinyxml2::XMLDocument xml_doc;
+		if(tinyxml2::XML_SUCCESS != xml_doc.Parse(str.c_str(),str.size())){
+			return false;
+		}
 
-		TiXmlNode* root = xml_doc.RootElement();
+		tinyxml2::XMLNode* root = xml_doc.RootElement();
 		if(root == nullptr) return false;
-		(*m)["xml.tag"] = lyramilk::data::str(root->ValueStr());
-		if(!xml_to_var(root,*m)){
+		(*m)["xml.tag"] = root->Value();
+		if(!xml_to_var(&xml_doc,root,*m)){
 			m->clear();
 			return false;
 		}
