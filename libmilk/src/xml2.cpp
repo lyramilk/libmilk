@@ -115,7 +115,10 @@ namespace lyramilk{namespace data
 		tinyxml2::XMLPrinter printer(NULL,true);
 		xml_doc.Print(&printer);
 
-		pstr->assign(printer.CStr(),printer.CStrSize());
+		int sz = printer.CStrSize();
+		if(sz > 0){
+			pstr->assign(printer.CStr(),sz - 1);
+		}
 		return true;
 	}
 
