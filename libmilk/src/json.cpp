@@ -1,6 +1,5 @@
 ﻿#include "json.h"
 #include "log.h"
-#include "exception.h"
 #include <fstream>
 #include <math.h>
 #include <stdlib.h>
@@ -67,7 +66,7 @@ namespace lyramilk{namespace data
 	{
 		int i = unhex[c];
 		if(i < 16) return i;
-		throw lyramilk::exception("转换16进制数字出错");
+		return 0;
 	}
 	//去转义
 	lyramilk::data::string json::unescape(const lyramilk::data::string& s)
@@ -120,11 +119,14 @@ namespace lyramilk{namespace data
 						unsigned short jwc = (_ToHex(p[2]) << 12)  | (_ToHex(p[3]) << 8) | (_ToHex(p[4]) << 4) | (_ToHex(p[5]));
 						unsigned wchar_t wc = jwc;
 						if(jwc >= 0xd800 && jwc <= 0xdfff){
-							if(p[6] != '\\') throw lyramilk::exception("错误的json字符");
-							if(p[7] != 'u') throw lyramilk::exception("错误的json字符");
-							if(!(_IsHexChar(p[8]) && _IsHexChar(p[9]) && _IsHexChar(p[10]) && _IsHexChar(p[11]))) throw lyramilk::exception("错误的json字符");
+							if(p[6] != '\\') return "";
+							if(p[7] != 'u') return "";
+							if(!(_IsHexChar(p[8]) && _IsHexChar(p[9]) && _IsHexChar(p[10]) && _IsHexChar(p[11]))) return "";
 							unsigned short jwc2 = (_ToHex(p[8]) << 12)  | (_ToHex(p[9]) << 8) | (_ToHex(p[10]) << 4) | (_ToHex(p[11]));
 							wc = (jwc2&0x03ff) + (((jwc&0x03ff) + 0x40) << 10);
+							p += 10;
+						}else{
+							p += 4;
 						}
 						if(wc < 0x80){
 							ret.push_back((unsigned char)wc);
@@ -157,6 +159,28 @@ namespace lyramilk{namespace data
 					}
 					break;
 				  default:
+					int iv = 0;
+					if ('0' <= p[1] && p[1] < '8') {
+						iv = p[1] - '0';
+						if ('0' <= p[2] && p[2] < '8') {
+							iv = iv * 8 + p[2] - '0';
+							if ('0' <= p[3] && p[3] < '8') {
+								int newiv = iv * 8 + p[3] - '0';
+								if(newiv > 0xff){
+									p += 2;
+								}else{
+									iv = newiv;
+									p += 3;
+								}
+							}else{
+								p += 2;
+							}
+						}else{
+							++p;
+						}
+						ret.push_back(iv);
+						continue;
+					}
 					ret.push_back(p[1]);
 				}
 				++p;
@@ -406,16 +430,16 @@ label_badchar:
 		}
 	};
 
-	bool zparsearray(jsontoken& token,jsontokenizer& z,lyramilk::data::var::array& v,int deep);
-	bool zparseobject(jsontoken& token,jsontokenizer& z,lyramilk::data::var::map& v,int deep);
-	bool zparse(jsontoken& token,jsontokenizer& z,lyramilk::data::var& v,int deep);
+	bool inline zparsearray(jsontoken& token,jsontokenizer& z,lyramilk::data::var::array& v,int deep);
+	bool inline zparseobject(jsontoken& token,jsontokenizer& z,lyramilk::data::var::map& v,int deep);
+	bool inline zparse(jsontoken& token,jsontokenizer& z,lyramilk::data::var& v,int deep);
 
-	bool zparsearray(jsontoken& token,jsontokenizer& z,lyramilk::data::var::array& v,int deep)
+	bool inline zparsearray(jsontoken& token,jsontokenizer& z,lyramilk::data::var::array& v,int deep)
 	{
 		while(z.next(token)){
 			switch(token.t){
 			  case jsontoken::STRING:{
-				v.push_back(json::unescape(token.s));
+				v.push_back(token.s);
 			  }break;
 			  case jsontoken::INTEGER:{
 				v.push_back(token.u.i);
@@ -455,12 +479,12 @@ label_badchar:
 		}
 		return true;
 	}
-	bool zparseobject(jsontoken& token,jsontokenizer& z,lyramilk::data::var::map& v,int deep)
+	bool inline zparseobject(jsontoken& token,jsontokenizer& z,lyramilk::data::var::map& v,int deep)
 	{
 		while(z.next(token)){
 			switch(token.t){
 			  case jsontoken::STRING:{
-				lyramilk::data::string key = json::unescape(token.s);
+				lyramilk::data::string key = token.s;
 				if(z.next(token) && token.t == jsontoken::COLON){
 					lyramilk::data::var subvalue;
 					if(!zparse(token,z,subvalue,deep + 1)) return false;
@@ -481,12 +505,12 @@ label_badchar:
 		return true;
 	}
 
-	bool zparse(jsontoken& token,jsontokenizer& z,lyramilk::data::var& v,int deep)
+	bool inline zparse(jsontoken& token,jsontokenizer& z,lyramilk::data::var& v,int deep)
 	{
 		if(z.next(token)){
 			switch(token.t){
 			  case jsontoken::STRING:{
-				v = json::unescape(token.s);
+				v = token.s;
 			  }break;
 			  case jsontoken::INTEGER:{
 				v = token.u.i;
@@ -566,7 +590,7 @@ label_badchar:
 	lyramilk::data::string json::str() const
 	{
 		lyramilk::data::string jsonstr;
-		if(!stringify(v,&jsonstr)) throw lyramilk::exception("json生成错误");
+		if(!stringify(v,&jsonstr)) return "";
 		return jsonstr;
 	}
 
@@ -643,7 +667,7 @@ label_badchar:
 	bool json::parse(lyramilk::data::string str,lyramilk::data::var* v)
 	{
 		jsontoken token;
-		token.s.reserve(65536);
+		token.s.reserve(256);
 		jsontokenizer z(str);
 		return zparse(token,z,*v,0);
 	}

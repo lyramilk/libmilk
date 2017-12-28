@@ -14,6 +14,7 @@ int main(int argc,const char* argv[])
 	jsons.push_back("{\"a1\":\"a\",\"a2\":[\"a\",\"b\",\"c\"]}");
 	jsons.push_back("{\"嵌套数组\":[{\"数组1\":{\"baidu\":\"www.baidu.com\",\"lol\":\"lol.qq.com\"}},{\"数组2\":{\"baidu\":\"www.baidu.com\",\"lol\":\"lol.qq.com\"}},{\"嵌套数组\":[{\"数组1\":{\"baidu\":\"www.baidu.com\",\"lol\":\"lol.qq.com\"}},{\"数组2\":{\"baidu\":\"www.baidu.com\",\"lol\":\"lol.qq.com\"}}],\"带引号的字符串键\":\"\\\"lol.qq.com\\\"\",\"带emoji表情\":\"👑\",\"网址\":{\"bing\":\"www.bing.com\",\"baidu\":\"www.baidu.com\"},\"布尔\":false,\"整数\":1142,\"多行字符串\":\"第一行\\n第二行\",\"浮点数\":458.599999}],\"带引号的字符串键\":\"\\\"lol.qq.com\\\"\",\"带emoji表情\":\"👑\",\"网址\":{\"bing\":\"www.bing.com\",\"baidu\":\"www.baidu.com\"},\"布尔\":false,\"整数\":1142,\"多行字符串\":\"第一行\\n第二行\",\"浮点数\":458.599999}");
 	jsons.push_back("{\r\n\t\"a1\":\"a\",\r\n\t\"a2\":[\n\t\t\"a\",\r\n\t\t\"b\",\r\n\t\t\"c\"\r\n\t]\r\n}");
+	jsons.push_back("[\"\\ud83d\\udc94\",\"\\ud83d\\udc94\",\"\\ud83d\\udc94\"]");
 	jsons.push_back("\"\\ud83d\\udc94\"");
 	jsons.push_back("\"\\ud83d\\udc9\"");
 	jsons.push_back("\"\\ud83d\\udc94");
@@ -26,10 +27,14 @@ int main(int argc,const char* argv[])
 	jsons.push_back("\"\\");
 	jsons.push_back("\"");
 	jsons.push_back("\"\\141\"");
+	jsons.push_back("\"\\\\141\"");
 	jsons.push_back("\"\\141");
 	jsons.push_back("\"\\14\"");
 	jsons.push_back("\"\\1\"");
 	jsons.push_back("\"\\14");
+
+	std::cout << lyramilk::data::json::unescape("\u5317\u4eac\\ud83d\\udc94 \\ud83d\\udc94 \\ud83d\\udc94 \\141") << std::endl;
+	std::cout << lyramilk::data::json::unescape("\u5317\u4eac\\ud83d\\udc94 \\\\ud83d \\ud83d\\udc94 \\141") << std::endl;
 
 	{
 		std::vector<lyramilk::data::string>::const_iterator it = jsons.begin();
