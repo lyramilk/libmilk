@@ -82,36 +82,47 @@ namespace lyramilk{namespace data
 				switch(p[1]){
 				  case '"':
 					ret.push_back('"');
+					++p;
 					break;
 				  case '/':
 					ret.push_back('/');
+					++p;
 					break;
 				  case '\\':
 					ret.push_back('\\');
+					++p;
 					break;
 				  case 'b':
 					ret.push_back('\b');
+					++p;
 					break;
 				  case 'f':
 					ret.push_back('\f');
+					++p;
 					break;
 				  case 'n':
 					ret.push_back('\n');
+					++p;
 					break;
 				  case 'r':
 					ret.push_back('\r');
+					++p;
 					break;
 				  case 't':
 					ret.push_back('\t');
+					++p;
 					break;
 				  case 'v':
 					ret.push_back('\v');
+					++p;
 					break;
 				  case 'x':
 					if(_IsHexChar(p[2]) && _IsHexChar(p[3])){
 						unsigned char byte;
 						byte =(_ToHex(p[2]) << 4) | (_ToHex(p[3]));
 						ret.push_back(byte);
+						p += 3;
+						continue;
 					}
 					break;
 				  case 'u':
@@ -124,9 +135,9 @@ namespace lyramilk{namespace data
 							if(!(_IsHexChar(p[8]) && _IsHexChar(p[9]) && _IsHexChar(p[10]) && _IsHexChar(p[11]))) return "";
 							unsigned short jwc2 = (_ToHex(p[8]) << 12)  | (_ToHex(p[9]) << 8) | (_ToHex(p[10]) << 4) | (_ToHex(p[11]));
 							wc = (jwc2&0x03ff) + (((jwc&0x03ff) + 0x40) << 10);
-							p += 10;
+							p += 11;
 						}else{
-							p += 4;
+							p += 5;
 						}
 						if(wc < 0x80){
 							ret.push_back((unsigned char)wc);
@@ -182,8 +193,8 @@ namespace lyramilk{namespace data
 						continue;
 					}
 					ret.push_back(p[1]);
+					++p;
 				}
-				++p;
 			}else{
 				ret.push_back(*p);
 			}

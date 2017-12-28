@@ -33,8 +33,9 @@ int main(int argc,const char* argv[])
 	jsons.push_back("\"\\1\"");
 	jsons.push_back("\"\\14");
 
-	std::cout << lyramilk::data::json::unescape("\u5317\u4eac\\ud83d\\udc94 \\ud83d\\udc94 \\ud83d\\udc94 \\141") << std::endl;
-	std::cout << lyramilk::data::json::unescape("\u5317\u4eac\\ud83d\\udc94 \\\\ud83d \\ud83d\\udc94 \\141") << std::endl;
+	std::cout << lyramilk::data::json::unescape("\\x30s") << std::endl;
+	std::cout << lyramilk::data::json::unescape("\u5317\u4eac\\ud83d\\udc94 \\ud83d\\udc94 \\ud83d\\udc94 \\60s\\x30s") << std::endl;
+	std::cout << lyramilk::data::json::unescape("\u5317\u4eac\\ud83d\\udc94 \\\\ud83d \\ud83d\\udc94 \\141s") << std::endl;
 
 	{
 		std::vector<lyramilk::data::string>::const_iterator it = jsons.begin();
