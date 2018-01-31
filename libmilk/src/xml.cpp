@@ -151,14 +151,100 @@ namespace lyramilk{namespace data
 
 	lyramilk::data::string xml::escape(const lyramilk::data::string& s)
 	{
-		TODO();
+		lyramilk::data::string ret;
+		ret.reserve(s.size() + 20);
+
+		const char* b = s.c_str();
+		const char* e = b + s.size();
+		for(;b < e;++b){
+			switch(*b){
+			  case '&':
+				ret.append("&amp;");
+				break;
+			  case '<':
+				ret.append("&lt;");
+				break;
+			  case '>':
+				ret.append("&gt;");
+				break;
+			  case '\"':
+				ret.append("&quot;");
+				break;
+			  case '\'':
+				ret.append("&apos;");
+				break;
+			  default:
+				ret.push_back(*b);
+			}
+		}
+		return ret;
 	}
 
 	lyramilk::data::string xml::unescape(const lyramilk::data::string& s)
 	{
-		TODO();
-	}
+		lyramilk::data::string ret;
+		ret.reserve(s.size());
 
+		const char* b = s.c_str();
+		const char* e = b + s.size();
+		while(b < e){
+			if(*b == '&'){
+				if(b + 6 < e){
+					if(memcmp(b,"&amp;",5) == 0){
+						ret.push_back('&');
+						b += 5;
+					}else if(memcmp(b,"&lt;",4) == 0){
+						ret.push_back('<');
+						b += 4;
+					}else if(memcmp(b,"&gt;",4) == 0){
+						ret.push_back('>');
+						b += 4;
+					}else if(memcmp(b,"&quot;",6) == 0){
+						ret.push_back('\"');
+						b += 6;
+					}else if(memcmp(b,"&apos;",6) == 0){
+						ret.push_back('\'');
+						b += 6;
+					}else{
+						ret.push_back('&');
+						b += 1;
+					}
+				}else if(b + 5 < e){
+					if(memcmp(b,"&amp;",5) == 0){
+						ret.push_back('&');
+						b += 5;
+					}else if(memcmp(b,"&lt;",4) == 0){
+						ret.push_back('<');
+						b += 4;
+					}else if(memcmp(b,"&gt;",4) == 0){
+						ret.push_back('>');
+						b += 4;
+					}else{
+						ret.push_back('&');
+						b += 1;
+					}
+				}else if(b + 4 < e){
+					if(memcmp(b,"&lt;",4) == 0){
+						ret.push_back('<');
+						b += 4;
+					}else if(memcmp(b,"&gt;",4) == 0){
+						ret.push_back('>');
+						b += 4;
+					}else{
+						ret.push_back('&');
+						b += 1;
+					}
+				}else{
+					ret.push_back('&');
+					b += 1;
+				}
+			}else{
+				ret.push_back(*b);
+				b += 1;
+			}
+		}
+		return ret;
+	}
 }}
 
 std::ostream& operator << (std::ostream& os, const lyramilk::data::xml& t)
