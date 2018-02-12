@@ -379,6 +379,7 @@ label_repeat:
 			  case jsontoken::INTEGER:
 			  case jsontoken::DOUBLE:{
 				const char* k = p;
+				if(*k == '-' || *k == '+') ++k;
 				for(;k<e;++k){
 					if(*k == 'e' || *k =='E' || *k =='.'){
 						token.t = jsontoken::DOUBLE;
@@ -570,6 +571,8 @@ label_badchar:
 			else unhex[i] = 0xff;
 			if(i == '\"') tokentable[i] = jsontoken::STRING;
 			else if(i >= '0' && i <= '9') tokentable[i] = jsontoken::INTEGER;
+			else if(i == '+') tokentable[i] = jsontoken::INTEGER;
+			else if(i == '-') tokentable[i] = jsontoken::INTEGER;
 			else if(i == '.') tokentable[i] = jsontoken::DOUBLE;
 			else if(i == ':') tokentable[i] = jsontoken::COLON;
 			else if(i == '[') tokentable[i] = jsontoken::LBRACK;
