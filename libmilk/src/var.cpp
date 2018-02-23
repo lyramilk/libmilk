@@ -4,6 +4,7 @@
 #include <sstream>
 #include <algorithm>
 #include <stdio.h>
+#include <memory.h>
 
 #ifndef null
 #define null nullptr
@@ -11,9 +12,19 @@
 #ifdef Z_HAVE_JEMALLOC
 	#include <jemalloc/jemalloc.h>
 #endif
+
+
+#ifdef _WIN32
+	#include <Windows.h>
+#elif defined __linux__
+	#include <iconv.h>
+	#include <assert.h>
+	#include <arpa/inet.h>
+#endif
+
 std::locale::id id;
 
-using namespace lyramilk::data;
+namespace lyramilk { namespace data{
 
 const var var::nil;
 
@@ -66,8 +77,6 @@ T reverse_order(T t)
 }
 
 #ifdef _WIN32
-	#include <Windows.h>
-
 	class u2a
 	{
 		string p;
@@ -161,10 +170,6 @@ T reverse_order(T t)
 	#define a2t(x) (u2t(a2u(x)))
 
 #elif defined __linux__
-	#include <iconv.h>
-	#include <assert.h>
-	#include <arpa/inet.h>
-
 	static lyramilk::data::string iconv(const lyramilk::data::string& str,const lyramilk::data::string& from,const lyramilk::data::string& to)
 	{
 		const size_t ds = 4096;
@@ -250,12 +255,12 @@ T reverse_order(T t)
 	#define u2t(x) u2a(x)
 #endif
 
-void* lyramilk::data::milk_malloc(size_t size)
+void* milk_malloc(size_t size)
 {
 	return ::malloc(size);
 }
 
-void lyramilk::data::milk_free(void* p, size_t size)
+void milk_free(void* p, size_t size)
 {
 	::free(p);
 }
@@ -277,13 +282,11 @@ const char* var::type_invalid::what() const throw()
 var::var()
 {
 	t = t_invalid;
-	u.a = null;
 }
 
 var::var(const var& v)
 {
 	t = t_invalid;
-	u.a = null;
 	assign(v);
 }
 
@@ -295,154 +298,132 @@ var::~var()
 var::var(const unsigned char* v)
 {
 	t = t_invalid;
-	u.a = null;
 	assign(v);
 }
 
 var::var(const char* v)
 {
 	t = t_invalid;
-	u.a = null;
 	assign(v);
 }
 
 var::var(const wchar_t* v)
 {
 	t = t_invalid;
-	u.a = null;
 	assign(v);
 }
 
 var::var(const chunk& v)
 {
 	t = t_invalid;
-	u.a = null;
 	assign(v);
 }
 
 var::var(const string& v)
 {
 	t = t_invalid;
-	u.a = null;
 	assign(v);
 }
 
 var::var(const wstring& v)
 {
 	t = t_invalid;
-	u.a = null;
 	assign(v);
 }
 
 var::var(bool v)
 {
 	t = t_invalid;
-	u.a = null;
 	assign(v);
 }
 
 var::var(int8 v)
 {
 	t = t_invalid;
-	u.a = null;
 	assign(v);
 }
 
 var::var(uint8 v)
 {
 	t = t_invalid;
-	u.a = null;
 	assign(v);
 }
 
 var::var(int16 v)
 {
 	t = t_invalid;
-	u.a = null;
 	assign(v);
 }
 
 var::var(uint16 v)
 {
 	t = t_invalid;
-	u.a = null;
 	assign(v);
 }
 
 var::var(int32 v)
 {
 	t = t_invalid;
-	u.a = null;
 	assign(v);
 }
 
 var::var(uint32 v)
 {
 	t = t_invalid;
-	u.a = null;
 	assign(v);
 }
 
 var::var(long v)
 {
 	t = t_invalid;
-	u.a = null;
 	assign(v);
 }
 
 var::var(unsigned long v)
 {
 	t = t_invalid;
-	u.a = null;
 	assign(v);
 }
 
 var::var(int64 v)
 {
 	t = t_invalid;
-	u.a = null;
 	assign(v);
 }
 
 var::var(uint64 v)
 {
 	t = t_invalid;
-	u.a = null;
 	assign(v);
 }
 
 var::var(double v)
 {
 	t = t_invalid;
-	u.a = null;
 	assign(v);
 }
 
 var::var(float v)
 {
 	t = t_invalid;
-	u.a = null;
 	assign(v);
 }
 
 var::var(const array& v)
 {
 	t = t_invalid;
-	u.a = null;
 	assign(v);
 }
 
 var::var(const map& v)
 {
 	t = t_invalid;
-	u.a = null;
 	assign(v);
 }
 
 var::var(const string& n,const void* v)
 {
 	t = t_invalid;
-	u.a = null;
 	assign(n,v);
 }
 
@@ -455,13 +436,16 @@ var& var::operator +=(const var& v) throw(type_invalid)
 {
 	switch(t){
 	  case t_bin:{
-			*u.p += (chunk)v;
+			chunk* bp = reinterpret_cast<chunk*>(&u.bp);
+			*bp += (chunk)v;
 		}break;
 	  case t_str:{
-			*u.s += (string)v;
+			string* bs = reinterpret_cast<string*>(&u.bs);
+			*bs += (string)v;
 		}break;
 	  case t_wstr:{
-			*u.w += (wstring)v;
+			wstring* bw = reinterpret_cast<wstring*>(&u.bw);
+			*bw += (wstring)v;
 		}break;
 	  case t_bool:{
 			u.b |= (bool)v;
@@ -476,22 +460,22 @@ var& var::operator +=(const var& v) throw(type_invalid)
 			u.f8 += (double)v;
 		}break;
 	  case t_array:{
+			array* ba = reinterpret_cast<array*>(&u.ba);
 			if(v.t == t_array){
-				u.a->insert(u.a->end(),v.u.a->begin(),v.u.a->end());
-			}else if(v.t == t_map){
-				array av = v;
-				*this += av;
+				const array* vba = reinterpret_cast<const array*>(&v.u.ba);
+				ba->insert(ba->end(),vba->begin(),vba->end());
 			}else{
-				u.a->push_back(v);
+				ba->push_back(v);
 			}
 		}break;
 	  case t_map:{
 			if(v.t == t_map){
-				map::iterator it = v.u.m->begin();
-				for(;it!=v.u.m->end();++it){
-					u.m->insert(*it);
+				map* bm = reinterpret_cast<map*>(&u.bm);
+				const map* vbm = reinterpret_cast<const map*>(&v.u.bm);
+				map::const_iterator it = vbm->begin();
+				for(;it!=vbm->end();++it){
+					bm->insert(*it);
 				}
-				u.a->insert(u.a->end(),v.u.a->begin(),v.u.a->end());
 			}else{
 				throw type_invalid(lyramilk::kdict("%s：t_map类型不能追加其它类型","lyramilk::data::var::operator +=()"));
 			}
@@ -512,21 +496,24 @@ bool var::operator ==(const var& v) const throw(type_invalid)
 			if(v.t == t_bool){
 				return ((bool)*this) == v.u.b;
 			}else{
-				return u.p->compare((chunk)v) == 0;
+				const chunk* bp = reinterpret_cast<const chunk*>(&u.bp);
+				return bp->compare((chunk)v) == 0;
 			}
 		}break;
 	  case t_str:{
 			if(v.t == t_bool){
 				return ((bool)*this) == v.u.b;
 			}else{
-				return u.s->compare((string)v) == 0;
+				const string* bs = reinterpret_cast<const string*>(&u.bs);
+				return bs->compare((string)v) == 0;
 			}
 		}break;
 	  case t_wstr:{
 			if(v.t == t_bool){
 				return ((bool)*this) == v.u.b;
 			}else{
-				return u.w->compare((wstring)v) == 0;
+				const wstring* bw = reinterpret_cast<const wstring*>(&u.bw);
+				return bw->compare((wstring)v) == 0;
 			}
 		}break;
 	  case t_bool:{
@@ -543,27 +530,22 @@ bool var::operator ==(const var& v) const throw(type_invalid)
 		}break;
 	  case t_array:{
 			if(v.t != t_array){
-				if(u.a->size() == 1 && u.a->at(0) == v) return true;
 				return false;
 			}else{
-				array::size_type size = u.a->size();
-				if(size != v.u.a->size()) return false;
-				for(array::size_type i=0;i<size;++i){
-					if(u.a->at(i) != v.u.a->at(i)) return false;
-				}
-				return true;
+				const array* ba = reinterpret_cast<const array*>(&u.ba);
+				const array* vba = reinterpret_cast<const array*>(&v.u.ba);
+				return *ba == *vba;
 			}
 		}break;
 	  case t_map:{
 			if(v.t != t_map){
 				return false;
 			}else{
-				map::size_type size = u.m->size();
-				if(size != v.u.m->size()) return false;
-				for(map::iterator it = v.u.m->begin();it != v.u.m->end();++it){
-					map::iterator it2 = u.m->find(it->first);
-					if(it2 == u.m->end()) return false;
-					if(it->second != it2->second) return false;
+				const map* bm = reinterpret_cast<const map*>(&u.bm);
+				const map* vbm = reinterpret_cast<const map*>(&v.u.bm);
+				if(bm->size() != vbm->size()) return false;
+				for(map::const_iterator it1 = vbm->begin(),it2 = bm->begin();it1 != vbm->end() && it2 != bm->end();++it1,++it2){
+					if(it1->first != it2->first || it1->second != it2->second) return false;
 				}
 				return true;
 			}
@@ -587,42 +569,37 @@ bool var::operator <(const var& v) const throw(type_invalid)
 {
 	switch(t){
 	  case t_bin:{
-			if(v.t == t_bool){
-				return ((bool)*this) == v.u.b;
-			}else{
-				return u.p->compare((chunk)v) < 0;
-			}
+			const chunk* bp = reinterpret_cast<const chunk*>(&u.bp);
+			return bp->compare((chunk)v) < 0;
 		}break;
 	  case t_str:{
-			if(v.t == t_bool){
-				return ((bool)*this) == v.u.b;
-			}else{
-				return u.s->compare((string)v) < 0;
-			}
+			const string* bs = reinterpret_cast<const string*>(&u.bs);
+			return bs->compare((string)v) < 0;
 		}break;
 	  case t_wstr:{
-			if(v.t == t_bool){
-				return ((bool)*this) == v.u.b;
-			}else{
-				return u.w->compare((wstring)v) < 0;
-			}
+			const wstring* bw = reinterpret_cast<const wstring*>(&u.bw);
+			return bw->compare((wstring)v) < 0;
 		}break;
 	  case t_array:{
 			if(v.t != t_array){
-				if(!u.a->empty()) return u.a->at(0) < v;
-				return false;
+				return t < v.t;
 			}else{
-				array::iterator it1 = u.a->begin();
-				array::iterator it2 = v.u.a->begin();
-
-				for(;it1!=u.a->end() && it2!=v.u.a->end();++it1,++it2){
-					if((*it1) != (*it2)){
-						return *it1 < *it2;
-					}
+				const array* ba = reinterpret_cast<const array*>(&u.ba);
+				const array* vba = reinterpret_cast<const array*>(&v.u.ba);
+				return *ba < *vba;
+			}
+		}break;
+	  case t_map:{
+			if(v.t != t_map){
+				return t < v.t;
+			}else{
+				const map* bm = reinterpret_cast<const map*>(&u.bm);
+				const map* vbm = reinterpret_cast<const map*>(&v.u.bm);
+				if(bm->size() != vbm->size()) return false;
+				for(map::const_iterator it1 = vbm->begin(),it2 = bm->begin();it1 != vbm->end() && it2 != bm->end();++it1,++it2){
+					if(it2->first < it1->first) return false;
 				}
-				//如果到这里还没返回，说明前面一直相等，此时检查数组容量，如果右值容量大，则左小于右。
-				if(it2 != v.u.a->end()) return true;
-				return false;
+				return bm->size() < vbm->size();
 			}
 		}break;
 	  case t_bool:{
@@ -662,7 +639,8 @@ var& var::operator =(const var& v)
 var& var::at(lyramilk::data::uint64 index) throw(type_invalid)
 {
 	if(t == t_array){
-		return u.a->at(index);
+		array* ba = reinterpret_cast<array*>(&u.ba);
+		return ba->at(index);
 	}
 	throw type_invalid(lyramilk::kdict("%s：错误的索引类型%s[%s]","lyramilk::data::var::at()",type_name(t).c_str(),"t_uint"));
 }
@@ -670,7 +648,8 @@ var& var::at(lyramilk::data::uint64 index) throw(type_invalid)
 var& var::at(const string& index) throw(type_invalid)
 {
 	if(t == t_map){
-		return u.m->operator[](index);
+		map* bm = reinterpret_cast<map*>(&u.bm);
+		return bm->operator[](index);
 	}
 	throw type_invalid(lyramilk::kdict("%s：错误的索引类型%s[%s]","lyramilk::data::var::at()",type_name(t).c_str(),"t_str"));
 }
@@ -679,7 +658,8 @@ var& var::at(const wstring& index) throw(type_invalid)
 {
 	if(t == t_map){
 		var str = index;
-		return u.m->operator[](str.str());
+		map* bm = reinterpret_cast<map*>(&u.bm);
+		return bm->operator[](str);
 	}
 	throw type_invalid(lyramilk::kdict("%s：错误的索引类型%s[%s]","lyramilk::data::var::at()",type_name(t).c_str(),"t_wstr"));
 }
@@ -687,7 +667,8 @@ var& var::at(const wstring& index) throw(type_invalid)
 const var& var::at(lyramilk::data::uint64 index) const throw(type_invalid)
 {
 	if(t == t_array){
-		return u.a->at(index);
+		const array* ba = reinterpret_cast<const array*>(&u.ba);
+		return ba->at(index);
 	}
 	throw type_invalid(lyramilk::kdict("%s：错误的索引类型%s[%s]","lyramilk::data::var::at()",type_name(t).c_str(),"t_uint"));
 }
@@ -695,7 +676,12 @@ const var& var::at(lyramilk::data::uint64 index) const throw(type_invalid)
 const var& var::at(const string& index) const throw(type_invalid)
 {
 	if(t == t_map){
-		return u.m->operator[](index);
+		const map* bm = reinterpret_cast<const map*>(&u.bm);
+		map::const_iterator it = bm->find(index);
+		if (it != bm->end()) {
+			return it->second;
+		}
+		return lyramilk::data::var::nil;
 	}
 	throw type_invalid(lyramilk::kdict("%s：错误的索引类型%s[%s]","lyramilk::data::var::at()",type_name(t).c_str(),"t_str"));
 }
@@ -704,7 +690,12 @@ const var& var::at(const wstring& index) const throw(type_invalid)
 {
 	if(t == t_map){
 		var str = index;
-		return u.m->operator[](str.str());
+		const map* bm = reinterpret_cast<const map*>(&u.bm);
+		map::const_iterator it = bm->find(str.str());
+		if (it != bm->end()) {
+			return it->second;
+		}
+		return lyramilk::data::var::nil;
 	}
 	throw type_invalid(lyramilk::kdict("%s：错误的索引类型%s[%s]","lyramilk::data::var::at()",type_name(t).c_str(),"t_wstr"));
 }
@@ -713,72 +704,95 @@ var& var::assign(const var& v)
 {
 	if(this == &v) return *this;
 	vt newt = v.t;
+	vu oldu = u;
 	switch(v.t){
 	  case t_bin:
-		if(v.u.p){
-			chunk* p = new chunk(*v.u.p);
+		{
+			const chunk* vbp = reinterpret_cast<const chunk*>(&v.u.bp);
+			new (u.bp) chunk(*vbp);
+			vu newu = u;
+			u = oldu;
 			clear();
-			u.p = p;
-			if(u.p == null) newt = t_invalid;
-		}else{
-			clear();
-			newt = t_invalid;
+			u = newu;
 		}
 		break;
 	  case t_str:
-		if(v.u.s){
-			string* p = new string(*v.u.s);
+		{
+			const string* vbs = reinterpret_cast<const string*>(&v.u.bs);
+			new (u.bs) string(*vbs);
+			vu newu = u;
+			u = oldu;
 			clear();
-			u.s = p;
-			if(u.s == null) newt = t_invalid;
-		}else{
-			clear();
-			newt = t_invalid;
+			u = newu;
 		}
 		break;
 	  case t_wstr:
-		if(v.u.w){
-			wstring* p = new wstring(*v.u.w);
+		{
+			const wstring* vbw = reinterpret_cast<const wstring*>(&v.u.bw);
+			new (u.bw) wstring(*vbw);
+			vu newu = u;
+			u = oldu;
 			clear();
-			u.w = p;
-			if(u.w == null) newt = t_invalid;
-		}else{
+			u = newu;
+		}
+		break;
+	  case t_bool:
+		{
+			bool tmp = v.u.b;
 			clear();
-			newt = t_invalid;
+			u.b = tmp;
+		}
+		break;
+	  case t_int:
+		{
+			int64 tmp = v.u.i8;
+			clear();
+			u.i8 = tmp;
+		}
+		break;
+	  case t_uint:
+		{
+			uint64 tmp = v.u.u8;
+			clear();
+			u.u8 = tmp;
+		}
+		break;
+	  case t_double:
+		{
+			double tmp = v.u.f8;
+			clear();
+			u.f8 = tmp;
 		}
 		break;
 	  case t_array:
-		if(v.u.a){
-			array* p = new array(*v.u.a);
+		{
+			const array* vba = reinterpret_cast<const array*>(&v.u.ba);
+			new (u.ba) array(*vba);
+			vu newu = u;
+			u = oldu;
 			clear();
-			u.a = p;
-			if(u.a == null) newt = t_invalid;
-		}else{
-			clear();
-			newt = t_invalid;
+			u = newu;
 		}
 		break;
 	  case t_map:
-		if(v.u.m){
-			map* p = new map(*v.u.m);
+		{
+			const map* vbm = reinterpret_cast<const map*>(&v.u.bm);
+			new (u.bm) map(*vbm);
+			vu newu = u;
+			u = oldu;
 			clear();
-			u.m = p;
-			if(u.m == null) newt = t_invalid;
-		}else{
-			clear();
-			newt = t_invalid;
+			u = newu;
+			t = newt;
 		}
 		break;
 	  case t_user:
-		if(v.u.o){
-			_userdata* p = new _userdata;
-			*p = *v.u.o;
+		{
+			const _userdata* vbo = reinterpret_cast<const _userdata*>(&v.u.bo);
+			new (u.bo) _userdata(*vbo);
+			vu newu = u;
+			u = oldu;
 			clear();
-			u.o = p;
-			if(u.o == null) newt = t_invalid;
-		}else{
-			clear();
-			newt = t_invalid;
+			u = newu;
 		}
 		break;
 	  case t_invalid:
@@ -797,8 +811,7 @@ var& var::assign(const unsigned char* v)
 {
 	clear();
 	t = t_str;
-	u.p = new chunk(v?v:(const unsigned char*)"");
-	if(u.p == null) t = t_invalid;
+	new (u.bp) chunk(v?v:(const unsigned char*)"");
 	return *this;
 }
 
@@ -806,8 +819,7 @@ var& var::assign(const char* v)
 {
 	clear();
 	t = t_str;
-	u.s = new string(v?v:"");
-	if(u.s == null) t = t_invalid;
+	new (u.bs) string(v?v:"");
 	return *this;
 }
 
@@ -815,8 +827,7 @@ var& var::assign(const wchar_t* v)
 {
 	clear();
 	t = t_wstr;
-	u.w = new wstring(v?v:L"");
-	if(u.w == null) t = t_invalid;
+	new (u.bw) wstring(v?v:L"");
 	return *this;
 }
 
@@ -824,8 +835,7 @@ var& var::assign(const chunk& v)
 {
 	clear();
 	t = t_bin;
-	u.p = new chunk(v);
-	if(u.p == null) t = t_invalid;
+	new (u.bp) chunk(v);
 	return *this;
 }
 
@@ -833,8 +843,7 @@ var& var::assign(const string& v)
 {
 	clear();
 	t = t_str;
-	u.s = new string(v);
-	if(u.s == null) t = t_invalid;
+	new (u.bs) string(v);
 	return *this;
 }
 
@@ -842,8 +851,7 @@ var& var::assign(const wstring& v)
 {
 	clear();
 	t = t_wstr;
-	u.w = new wstring(v);
-	if(u.w == null) t = t_invalid;
+	new (u.bw) wstring(v);
 	return *this;
 }
 
@@ -949,12 +957,7 @@ var& var::assign(const array& v)
 {
 	clear();
 	t = t_array;
-	u.a = new array();
-	if(u.a == null){
-		t = t_invalid;
-		return *this;
-	}
-	*u.a = v;
+	new (u.ba) array(v);
 	return *this;
 }
 
@@ -962,12 +965,7 @@ var& var::assign(const lyramilk::data::var::map& v)
 {
 	clear();
 	t = t_map;
-	u.m = new map();
-	if(u.m == null){
-		t = t_invalid;
-		return *this;
-	}
-	*u.m = v;
+	new (u.bm) map(v);
 	return *this;
 }
 
@@ -975,12 +973,8 @@ var& var::assign(const string& n,const void* v)
 {
 	clear();
 	t = t_user;
-	u.o = new _userdata;
-	if(u.o == null){
-		t = t_invalid;
-		return *this;
-	}
-	u.o->operator[](n) = v;
+	_userdata* bo = new (u.bo) _userdata;
+	bo->operator[](n) = v;
 	return *this;
 }
 
@@ -994,13 +988,16 @@ var::operator chunk() const throw(type_invalid)
 {
 	switch(t){
 	  case t_bin:{
-			return *u.p;
+			const chunk* bp = reinterpret_cast<const chunk*>(&u.bp);
+			return *bp;
 		}break;
 	  case t_str:{
-			return chunk((const unsigned char*)u.s->c_str(),u.s->size());
+			const string* bs = reinterpret_cast<const string*>(&u.bs);
+			return chunk((const unsigned char*)bs->c_str(),bs->size());
 		}break;
 	  case t_wstr:{
-			return chunk((const unsigned char*)u.w->c_str(),(u.w->size() << (int)tempc<sizeof(wchar_t)>::square));
+			const wstring* bw = reinterpret_cast<const wstring*>(&u.bw);
+			return chunk((const unsigned char*)bw->c_str(),(bw->size() << (int)tempc<sizeof(wchar_t)>::square));
 		}break;
 	  case t_bool:{
 			return chunk((const unsigned char*)&u.b,sizeof(u.b));
@@ -1036,13 +1033,16 @@ var::operator string () const throw(type_invalid)
 {
 	switch(t){
 	  case t_bin:{
-			return string((const char*)u.p->c_str(),u.p->size());
+			const chunk* bp = reinterpret_cast<const chunk*>(&u.bp);
+			return string((const char*)bp->c_str(),bp->size());
 		}break;
 	  case t_str:{
-			return *u.s;
+			const string* bs = reinterpret_cast<const string*>(&u.bs);
+			return *bs;
 		}break;
 	  case t_wstr:{
-			return string(u2a(*u.w));
+			const wstring* bw = reinterpret_cast<const wstring*>(&u.bw);
+			return string(u2a(*bw));
 		}break;
 	  case t_bool:{
 			return u.b?"true":"false";
@@ -1063,12 +1063,12 @@ var::operator string () const throw(type_invalid)
 			return buff;
 		}break;
 	  case t_array:{
-			//if(u.a->size() == 1) return u.a->at(0);
-			array::const_iterator it = u.a->begin();
+			const array* ba = reinterpret_cast<const array*>(&u.ba);
+			array::const_iterator it = ba->begin();
 			string str = "[";
-			if(it != u.a->end()){
+			if(it != ba->end()){
 				str += (string)*it;
-				for(++it;it!=u.a->end();++it){
+				for(++it;it!=ba->end();++it){
 					str += ",";
 					str += (string)*it;
 				}
@@ -1077,11 +1077,13 @@ var::operator string () const throw(type_invalid)
 			return str;
 		}break;
 	  case t_map:{
+			const map* bm = reinterpret_cast<const map*>(&u.bm);
+
 			string str = "{";
-			map::const_iterator it = u.m->begin();
-			if(it != u.m->end()){
+			map::const_iterator it = bm->begin();
+			if(it != bm->end()){
 				str += (string)it->first + ":" + (string)it->second;
-				for(++it;it!=u.m->end();++it){
+				for(++it;it!=bm->end();++it){
 					str += "," + (string)it->first + ":" + (string)it->second;
 				}
 			}
@@ -1110,13 +1112,16 @@ var::operator wstring () const throw(type_invalid)
 {
 	switch(t){
 	  case t_bin:{
-			return wstring((const wchar_t*)u.p->c_str(),(u.p->size() << (int)tempc<sizeof(wchar_t)>::square));
+			const chunk* bp = reinterpret_cast<const chunk*>(&u.bp);
+			return wstring((const wchar_t*)bp->c_str(),(bp->size() << (int)tempc<sizeof(wchar_t)>::square));
 		}break;
 	  case t_str:{
-			return a2u(*u.s);
+			const string* bs = reinterpret_cast<const string*>(&u.bs);
+			return a2u(*bs);
 		}break;
 	  case t_wstr:{
-			return *u.w;
+			const wstring* bw = reinterpret_cast<const wstring*>(&u.bw);
+			return *bw;
 		}break;
 	  case t_bool:{
 			return u.b?L"true":L"false";
@@ -1137,12 +1142,12 @@ var::operator wstring () const throw(type_invalid)
 			return buff;
 		}break;
 	  case t_array:{
-			//if(u.a->size() == 1) return u.a->at(0);
-			array::const_iterator it = u.a->begin();
+			const array* ba = reinterpret_cast<const array*>(&u.ba);
+			array::const_iterator it = ba->begin();
 			wstring str = L"[";
-			if(it != u.a->end()){
+			if(it != ba->end()){
 				str += (wstring)*it;
-				for(++it;it!=u.a->end();++it){
+				for(++it;it!=ba->end();++it){
 					str += L",";
 					str += (wstring)*it;
 				}
@@ -1151,12 +1156,13 @@ var::operator wstring () const throw(type_invalid)
 			return str;
 		}break;
 	  case t_map:{
+			const map* bm = reinterpret_cast<const map*>(&u.bm);
 			wstring str = L"{";
-			map::const_iterator it = u.m->begin();
-			if(it != u.m->end()){
+			map::const_iterator it = bm->begin();
+			if(it != bm->end()){
 				wstring strfirst = var(it->first);
 				str += strfirst + L":" + (wstring)it->second;
-				for(++it;it!=u.m->end();++it){
+				for(++it;it!=bm->end();++it){
 					wstring strfirst = var(it->first);
 					str += L"," + strfirst + L":" + (wstring)it->second;
 				}
@@ -1178,18 +1184,23 @@ var::operator bool () const throw(type_invalid)
 {
 	switch(t){
 	  case t_bin:{
-			throw type_invalid(lyramilk::kdict("%s：错误的子类型%s","lyramilk::data::var::operator bool()",type_name(t).c_str()));
-		}break;
+			const chunk* bp = reinterpret_cast<const chunk*>(&u.bp);
+			if(sizeof(bool) > bp->size()) throw type_invalid(lyramilk::kdict("%s：错误的子类型%s","lyramilk::data::var::operator bool()",type_name(t).c_str()));
+			bool b;
+			memcpy(&b,bp->c_str(),sizeof(b));
+			return b;	}break;
 	  case t_str:{
-			string w = *u.s;
-			std::transform(u.s->begin(),u.s->end(),w.begin(),tolower);
+			const string* bs = reinterpret_cast<const string*>(&u.bs);
+			string w = *bs;
+			std::transform(bs->begin(),bs->end(),w.begin(),tolower);
 			if(w.compare("true") == 0) return true;
 			if(w.compare("false") == 0) return false;
 			throw type_invalid(lyramilk::kdict("%s：错误的子类型%s","lyramilk::data::var::operator bool()",type_name(t).c_str()));
 		}break;
 	  case t_wstr:{
-			wstring w = *u.w;
-			std::transform(u.w->begin(),u.w->end(),w.begin(),towlower);
+			const wstring* bw = reinterpret_cast<const wstring*>(&u.bw);
+			wstring w = *bw;
+			std::transform(bw->begin(),bw->end(),w.begin(),towlower);
 			if(w.compare(L"true") == 0) return true;
 			if(w.compare(L"false") == 0) return false;
 			throw type_invalid(lyramilk::kdict("%s：错误的子类型%s","lyramilk::data::var::operator bool()",type_name(t).c_str()));
@@ -1351,16 +1362,21 @@ var::operator int64 () const throw(type_invalid)
 			return u.u8;
 		}break;
 	  case t_bin:{
-			char* p;
-			return strtoll((const char*)u.p->c_str(),&p,10);
+			const chunk* bp = reinterpret_cast<const chunk*>(&u.bp);
+			if(sizeof(int64) > bp->size()) throw type_invalid(lyramilk::kdict("%s：错误的子类型%s","lyramilk::data::var::operator int64()",type_name(t).c_str()));
+			int64 i8;
+			memcpy(&i8,bp->c_str(),sizeof(i8));
+			return i8;
 		}break;
 	  case t_str:{
+			const string* bs = reinterpret_cast<const string*>(&u.bs);
 			char* p;
-			return strtoll(u.s->c_str(),&p,10);
+			return strtoll(bs->c_str(),&p,10);
 		}break;
 	  case t_wstr:{
+			const wstring* bw = reinterpret_cast<const wstring*>(&u.bw);
 			wchar_t* p;
-			return wcstoll(u.w->c_str(),&p,10);
+			return wcstoll(bw->c_str(),&p,10);
 		}break;
 	  case t_bool:{
 			return u.b;
@@ -1388,16 +1404,21 @@ var::operator double () const throw(type_invalid)
 {
 	switch(t){
 	  case t_bin:{
-			char* p;
-			return strtod((const char*)u.p->c_str(),&p);
+			const chunk* bp = reinterpret_cast<const chunk*>(&u.bp);
+			if(sizeof(int64) > bp->size()) throw type_invalid(lyramilk::kdict("%s：错误的子类型%s","lyramilk::data::var::operator uint64()",type_name(t).c_str()));
+			double f8;
+			memcpy(&f8,bp->c_str(),sizeof(f8));
+			return f8;
 		}break;
 	  case t_str:{
+			const string* bs = reinterpret_cast<const string*>(&u.bs);
 			char* p;
-			return strtod(u.s->c_str(),&p);
+			return strtod(bs->c_str(),&p);
 		}break;
 	  case t_wstr:{
+			const wstring* bw = reinterpret_cast<const wstring*>(&u.bw);
 			wchar_t* p;
-			return wcstod(u.w->c_str(),&p);
+			return wcstod(bw->c_str(),&p);
 		}break;
 	  case t_bool:{
 			return u.b;
@@ -1428,25 +1449,29 @@ var::operator float () const throw(type_invalid)
 
 var::operator lyramilk::data::var::array& () throw(type_invalid)
 {
-	if(t == t_array) return *u.a;
+	array* ba = reinterpret_cast<array*>(&u.ba);
+	if(t == t_array) return *ba;
 	throw type_invalid(lyramilk::kdict("%s：%s类型无法转换为%s类型","lyramilk::data::var::operator var::array()",type_name(t).c_str(),type_name(t_array).c_str()));
 }
 
 var::operator const lyramilk::data::var::array& () const throw(type_invalid)
 {
-	if(t == t_array) return *u.a;
+	const array* ba = reinterpret_cast<const array*>(&u.ba);
+	if(t == t_array) return *ba;
 	throw type_invalid(lyramilk::kdict("%s：%s类型无法转换为%s类型","lyramilk::data::var::operator var::array()",type_name(t).c_str(),type_name(t_array).c_str()));
 }
 
 var::operator var::map& ()  throw(type_invalid)
 {
-	if(t == t_map) return *u.m;
+	map* bm = reinterpret_cast<map*>(&u.bm);
+	if(t == t_map) return *bm;
 	throw type_invalid(lyramilk::kdict("%s：%s类型无法转换为%s类型","lyramilk::data::var::operator var::map()",type_name(t).c_str(),type_name(t_map).c_str()));
 }
 
 var::operator const lyramilk::data::var::map& () const throw(type_invalid)
 {
-	if(t == t_map) return *u.m;
+	const map* bm = reinterpret_cast<const map*>(&u.bm);
+	if(t == t_map) return *bm;
 	throw type_invalid(lyramilk::kdict("%s：%s类型无法转换为%s类型","lyramilk::data::var::operator var::map()",type_name(t).c_str(),type_name(t_map).c_str()));
 }
 
@@ -1587,22 +1612,25 @@ var::map& var::conv(var::map& if_not_compat)
 void lyramilk::data::var::userdata(string v,const void* p) throw(type_invalid)
 {
 	if(t != t_user)	throw type_invalid(lyramilk::kdict("%s：%s类型无法赋予用户数据","lyramilk::data::var::operator var::map()",type_name(t).c_str()));
-	u.o->operator[](v) = p;
+	_userdata* bo = reinterpret_cast<_userdata*>(&u.bo);
+	bo->operator[](v) = p;
 }
 
 const void* lyramilk::data::var::userdata(string v) const
 {
 	if(t != t_user)	return null;
-	_userdata::iterator it = u.o->find(v);
-	if(it == u.o->end()) return null;
+	const _userdata* bo = reinterpret_cast<const _userdata*>(&u.bo);
+	_userdata::const_iterator it = bo->find(v);
+	if(it == bo->end()) return null;
 	return it->second;
 }
 
 const void* lyramilk::data::var::userdata() const
 {
 	if(t != t_user)	return null;
-	_userdata::iterator it = u.o->begin();
-	if(it == u.o->end()) return null;
+	const _userdata* bo = reinterpret_cast<const _userdata*>(&u.bo);
+	_userdata::const_iterator it = bo->begin();
+	if(it == bo->end()) return null;
 	return it->second;
 }
 
@@ -1799,86 +1827,73 @@ string var::type_name() const
 var& var::type(var::vt nt) throw(type_invalid)
 {
 	if(t == nt) return *this;
-	string* s = u.s;
-	wstring* w = u.w;
-	array* a = u.a;
-	map* m = u.m;
-	chunk* p = u.p;
 	switch(nt){
 	  case t_bin:{
-			u.p = new chunk((const chunk)*this);
-			if(u.p == null) t = t_invalid;
+			chunk t = *this;
+			clear();
+			new (u.bp) chunk(t);
 		}break;
 	  case t_str:{
-			u.s = new string((const string)*this);
-			if(u.s == null) t = t_invalid;
+			string t = *this;
+			clear();
+			new (u.bs) string(t);
 		}break;
 	  case t_wstr:{
-			u.w = new wstring((const wstring)*this);
-			if(u.w == null) t = t_invalid;
+			wstring t = *this;
+			clear();
+			new (u.bw) wstring(t);
 		}break;
 	  case t_bool:{
-			u.b = *this;
+			bool t = *this;
+			clear();
+			u.b = t;
 		}break;
 	  case t_int:{
-			u.i8 = *this;
+			lyramilk::data::int64 t = *this;
+			clear();
+			u.i8 = t;
 		}break;
 	  case t_uint:{
-			u.u8 = *this;
+			lyramilk::data::uint64 t = *this;
+			clear();
+			u.u8 = t;
 		}break;
 	  case t_double:{
-			u.f8 = *this;
+			double t = *this;
+			clear();
+			u.f8 = t;
 		}break;
 	  case t_array:{
-			array* na = new array();
 			if(type_like(t_array)){
-				*na = *this;
+				array t = *this;
+				clear();
+				new (u.ba) array(t);
+			}else{
+				clear();
+				new (u.ba) array();
 			}
-			u.a = na;
 		}break;
 	  case t_map:{
-			map* nm = new map();
 			if(type_like(t_map)){
-				*nm = *this;
+				map t = *this;
+				clear();
+				new (u.bw) map(t);
+			}else{
+				clear();
+				new (u.bw) map();
 			}
-			u.m = nm;
 		}break;
 	  case t_user:{
-			if(t != nt) throw type_invalid(lyramilk::kdict("%s：错误的新类型%d","lyramilk::data::var::operator var::type()",nt));
+			if(t != nt){
+				clear();
+			}
 		}break;
 	  case t_invalid:
+		clear();
 		break;
 	  default:
 		throw type_invalid(lyramilk::kdict("%s：错误的新类型%d","lyramilk::data::var::operator var::type()",nt));
 	}
-
-	switch(t){
-	  case t_bin:
-		delete p;
-		break;
-	  case t_str:
-		delete s;
-		break;
-	  case t_wstr:
-		delete w;
-		break;
-	  case t_bool:
-	  case t_int:
-	  case t_uint:
-	  case t_double:
-		break;
-	  case t_array:
-		delete a;
-		break;
-	  case t_map:
-		delete m;
-		break;
-	  case t_user:
-		break;
-	  case t_invalid:
-		break;
-	}
-
 	t = nt;
 	return *this;
 }
@@ -1904,21 +1919,14 @@ bool var::type_like(vt nt) const
 var::array::size_type var::size() const throw(type_invalid)
 {
 	if(t == t_array){
-		return u.a->size();
+		const array* ba = reinterpret_cast<const array*>(&u.ba);
+		return ba->size();
 	}
 	if(t == t_map){
-		return u.m->size();
+		const map* bm = reinterpret_cast<const map*>(&u.bm);
+		return bm->size();
 	}
-	if(t == t_bin){
-		return u.p->size();
-	}
-	if(t == t_str){
-		return u.s->size();
-	}
-	if(t == t_wstr){
-		return u.w->size();
-	}
-	throw type_invalid(lyramilk::kdict("%s：不可获取size的子类型","lyramilk::data::var::size()"));
+	return 0;
 }
 
 lyramilk::data::string var::str() const
@@ -1940,28 +1948,40 @@ void var::clear()
 	  case t_invalid:
 		break;
 	  case t_bin:
-		delete u.p;
-		u.p = null;
+		{
+			const chunk* bp = reinterpret_cast<const chunk*>(&u.bp);
+			bp->~chunk();
+		}
 		break;
 	  case t_str:
-		delete u.s;
-		u.s = null;
+		{
+			const string* bs = reinterpret_cast<const string*>(&u.bs);
+			bs->~string();
+		}
 		break;
 	  case t_wstr:
-		delete u.w;
-		u.w = null;
+		{
+			const wstring* bw = reinterpret_cast<const wstring*>(&u.bw);
+			bw->~wstring();
+		}
 		break;
 	  case t_array:
-		delete u.a;
-		u.a = null;
+		{
+			const array* ba = reinterpret_cast<const array*>(&u.ba);
+			ba->~array();
+		}
 		break;
 	  case t_map:
-		delete u.m;
-		u.m = null;
+		{
+			const map* bm = reinterpret_cast<const map*>(&u.bm);
+			bm->~map();
+		}
 		break;
 	  case t_user:
-		delete u.o;
-		u.o = null;
+		{
+			const _userdata* bo = reinterpret_cast<const _userdata*>(&u.bo);
+			bo->~_userdata();
+		}
 		break;
 	}
 	t = t_invalid;
@@ -2006,16 +2026,16 @@ bool var::_serialize(ostream& os) const throw(type_invalid)
 
 	switch(t){
 	  case t_bin:{
-			chunk& binstr = *u.p;
-			string_size_type size = (string_size_type)binstr.size();
+			const chunk* bp = reinterpret_cast<const chunk*>(&u.bp);
+			string_size_type size = (string_size_type)bp->size();
 			write(os,m);
 			write(os,size);
-			os.write((const char*)binstr.c_str(),size);
+			os.write((const char*)bp->c_str(),size);
 			return true;
 		}break;
 	  case t_str:{
-			string& localstr = *u.s;
-			string utf8str = a2t(localstr);
+			const string* bs = reinterpret_cast<const string*>(&u.bs);
+			string utf8str = a2t(*bs);
 			string_size_type size = (string_size_type)utf8str.size();
 			write(os,m);
 			write(os,size);
@@ -2023,7 +2043,8 @@ bool var::_serialize(ostream& os) const throw(type_invalid)
 			return true;
 		}break;
 	  case t_wstr:{
-			string utf8str = u2t(*u.w);
+			const wstring* bw = reinterpret_cast<const wstring*>(&u.bw);
+			string utf8str = u2t(*bw);
 			string_size_type size = (string_size_type)utf8str.size();
 			write(os,m);
 			write(os,size);
@@ -2043,21 +2064,23 @@ bool var::_serialize(ostream& os) const throw(type_invalid)
 			return true;
 		}break;
 	  case t_array:{
-			array_size_type size = (array_size_type)u.a->size();
+			const array* ba = reinterpret_cast<const array*>(&u.ba);
+			array_size_type size = (array_size_type)ba->size();
 			write(os,m);
 			write(os,size);
-			array::iterator it = u.a->begin();
-			for(;it != u.a->end();++it){
+			array::const_iterator it = ba->begin();
+			for(;it != ba->end();++it){
 				if(!it->_serialize(os)) return false;
 			}
 			return true;
 		}break;
 	  case t_map:{
-			array_size_type size = (array_size_type)u.m->size();
+			const map* bm = reinterpret_cast<const map*>(&u.bm);
+			array_size_type size = (array_size_type)bm->size();
 			write(os,m);
 			write(os,size);
-			map::iterator it = u.m->begin();
-			for(;it != u.m->end();++it){
+			map::const_iterator it = bm->begin();
+			for(;it != bm->end();++it){
 				{
 					string utf8str = a2t(it->first);
 					string_size_type size = (string_size_type)utf8str.size();
@@ -2145,13 +2168,14 @@ bool var::_deserialize(istream& is)
 			if(!read(is,size)) return false;
 			if(r) size = reverse_order(size);
 			type(t_array);
+			array* ba = reinterpret_cast<array*>(&u.ba);
 			for(array_size_type i=0;i<size;++i){
 				var d;
 				if(!d._deserialize(is)){
 					clear();
 					return false;
 				}
-				u.a->push_back(d);
+				ba->push_back(d);
 			}
 			t = ts;
 			return true;
@@ -2161,6 +2185,7 @@ bool var::_deserialize(istream& is)
 			if(!read(is,size)) return false;
 			if(r) size = reverse_order(size);
 			type(t_map);
+			map* bm = reinterpret_cast<map*>(&u.bm);
 			for(array_size_type i=0;i<size;++i){
 				var key;
 				var value;
@@ -2168,7 +2193,7 @@ bool var::_deserialize(istream& is)
 					clear();
 					return false;
 				}
-				u.m->operator[](key) = value;
+				bm->operator[](key) = value;
 			}
 			t = ts;
 			return true;
@@ -2307,28 +2332,33 @@ var& var::path(string varpath) throw(type_invalid)
 				throw type_invalid(lyramilk::kdict("%s 路径：t_array类型只能接收纯整数的字符串形式(%s)","lyramilk::data::var::path()",varpath.c_str()));
 			}
 			unsigned int index = atoi(str.c_str());
-			if(p->u.a->size() == index){
-				p->u.a->push_back(nil);
-			}else if(p->u.a->size() < index + 1){
+			array* ba = reinterpret_cast<array*>(&p->u.ba);
+			if(ba->size() == index){
+				ba->push_back(nil);
+			}else if(ba->size() < index + 1){
 				throw type_invalid(lyramilk::kdict("%s 路径：t_array类型越界(%s)","lyramilk::data::var::path()",varpath.c_str()));
 			}
-			p = &p->u.a->at(index);
+			p = &ba->at(index);
 		}else if(p->type() == t_map){
-			p = &p->u.m->operator[](*it);
+			map* bm = reinterpret_cast<map*>(&p->u.bm);
+			p = &bm->operator[](*it);
 		}else if(p->type() == t_invalid){
 			string& str = *it;
 			if(str.find_first_not_of("0123456789") == str.npos){
 				unsigned int index = atoi(str.c_str());
 				p->type(t_array);
-				if(p->u.a->size() == index){
-					p->u.a->push_back(nil);
-					p = &p->u.a->back();
-				}else if(p->u.a->size() < index - 1){
-					p = &p->u.a->operator[](index);
+
+				array* ba = reinterpret_cast<array*>(&p->u.ba);
+				if(ba->size() == index){
+					ba->push_back(nil);
+					p = &ba->back();
+				}else if(ba->size() < index - 1){
+					p = &ba->operator[](index);
 				}
 			}else{
 				p->type(t_map);
-				p = &p->u.m->operator[](str);
+				map* bm = reinterpret_cast<map*>(&p->u.bm);
+				p = &bm->operator[](str);
 			}
 		}else{
 			throw type_invalid(lyramilk::kdict("%s 路径：%s","lyramilk::data::var::path()",varpath.c_str()));
@@ -2368,14 +2398,18 @@ const var& var::path(string varpath) const throw(type_invalid)
 				throw type_invalid(lyramilk::kdict("%s 路径：t_array类型只能接收纯整数的字符串形式(%s)","lyramilk::data::var::path()",varpath.c_str()));
 			}
 			unsigned int index = atoi(str.c_str());
-			if(p->u.a->size() == index){
-				p->u.a->push_back(nil);
-			}else if(p->u.a->size() < index){
-				throw type_invalid(lyramilk::kdict("%s 路径：t_array类型越界(%s)","lyramilk::data::var::path()",varpath.c_str()));
+			const array* ba = reinterpret_cast<const array*>(&u.ba);
+			if(ba->size() <= index){
+				return lyramilk::data::var::nil;
 			}
-			p = &p->u.a->at(index);
+			p = &ba->at(index);
 		}else if(p->type() == t_map){
-			p = &p->u.m->operator[](*it);
+			const map* bm = reinterpret_cast<const map*>(&u.bm);
+			map::const_iterator it_map = bm->find(*it);
+			if(it_map == bm->end()){
+				return lyramilk::data::var::nil;
+			}
+			p = &it_map->second;
 		}else{
 			return lyramilk::data::var::nil;
 		}
@@ -2387,22 +2421,27 @@ template < >
 lyramilk::data::chunk& lyramilk::data::var::as<lyramilk::data::chunk&>() throw(type_invalid)
 {
 	if(t != t_bin) throw type_invalid(lyramilk::kdict("as取引用时无法转换类型"));
-	return *u.p;
+	chunk* bp = reinterpret_cast<chunk*>(&u.bp);
+	return *bp;
 }
 
 template < >
 lyramilk::data::string& lyramilk::data::var::as<lyramilk::data::string&>() throw(type_invalid)
 {
 	if(t != t_str) throw type_invalid(lyramilk::kdict("as取引用时无法转换类型"));
-	return *u.s;
+	string* bs = reinterpret_cast<string*>(&u.bs);
+	return *bs;
 }
 
 template < >
 lyramilk::data::wstring& lyramilk::data::var::as<lyramilk::data::wstring&>() throw(type_invalid)
 {
 	if(t != t_wstr) throw type_invalid(lyramilk::kdict("as取引用时无法转换类型"));
-	return *u.w;
+	wstring* bw = reinterpret_cast<wstring*>(&u.bw);
+	return *bw;
 }
+
+}}	//namespace
 
 std::ostream& operator << (std::ostream& os,const lyramilk::data::var& t)
 {
@@ -2412,7 +2451,7 @@ std::ostream& operator << (std::ostream& os,const lyramilk::data::var& t)
 std::istream& operator >> (std::istream& is, lyramilk::data::var& t)
 {
 	char buff[4096];
-	string str;
+	lyramilk::data::string str;
 	while(is){
 		is.read(buff,4096);
 		str.append(buff,(unsigned int)is.gcount());
@@ -2441,6 +2480,7 @@ lyramilk::data::bostream& operator << (lyramilk::data::bostream& os, const signe
 {
 	return os << (const unsigned char*)c;
 }
+
 
 
 #ifdef Z_HAVE_UNORDEREDMAP
@@ -2501,4 +2541,3 @@ namespace std{namespace tr1{
 #elif defined Z_HAVE_TR1_UNORDEREDMAP
 }}
 #endif
-

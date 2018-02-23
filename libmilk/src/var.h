@@ -549,21 +549,22 @@ namespace lyramilk{namespace data
 		var& path(string varpath) throw(type_invalid);
 		const var& path(string varpath) const throw(type_invalid);
 	  private:
-		union
+		vt t;
+
+		union vu
 		{
 			bool b;
 			int64 i8;
 			uint64 u8;
 			double f8;
 
-			chunk *p;
-			string *s;
-			wstring *w;
-			array *a;
-			map *m;
-			_userdata *o;
+			char bp[sizeof(chunk) + 10];
+			char bs[sizeof(string) + 10];
+			char bw[sizeof(wstring) + 10];
+			char ba[sizeof(std::vector<int>) + 10];
+			char bm[sizeof(_userdata) + 10];
+			char bo[sizeof(_userdata) + 10];
 		}u;
-		vt t;
 		bool _serialize(ostream& os) const throw(type_invalid);
 		bool _deserialize(istream& is);
 	};
