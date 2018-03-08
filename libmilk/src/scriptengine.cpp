@@ -75,6 +75,11 @@ namespace lyramilk{namespace script
 		return pr.second;
 	}
 
+	void engine::undef(lyramilk::data::string funcname)
+	{
+		get_builder().erase(funcname);
+	}
+
 	lyramilk::script::engine* engine::createinstance(lyramilk::data::string scriptname)
 	{
 		engine_builder::const_iterator it = get_builder().find(scriptname);

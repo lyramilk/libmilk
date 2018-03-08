@@ -385,9 +385,9 @@ class coding_b64:public lyramilk::data::coding
 			u.i |= i2<<12;
 			u.i |= i3<<6;
 			u.i |= i4;
-			if(u.c[2])ret.push_back(u.c[2]);
-			if(u.c[1])ret.push_back(u.c[1]);
-			if(u.c[0])ret.push_back(u.c[0]);
+			ret.push_back(u.c[2]);
+			ret.push_back(u.c[1]);
+			ret.push_back(u.c[0]);
 		}else if(m == 3){
 			const unsigned char* p = e;
 			unsigned int i1 = mc_debase64[p[0]];
@@ -397,9 +397,9 @@ class coding_b64:public lyramilk::data::coding
 			u.i = i1<<18;
 			u.i |= i2<<12;
 			u.i |= i3<<6;
-			if(u.c[2])ret.push_back(u.c[2]);
-			if(u.c[1])ret.push_back(u.c[1]);
-			if(u.c[0])ret.push_back(u.c[0]);
+			ret.push_back(u.c[2]);
+			ret.push_back(u.c[1]);
+			ret.push_back(u.c[0]);
 		}else if(m == 2){
 			const unsigned char* p = e;
 			unsigned int i1 = mc_debase64[p[0]];
@@ -407,17 +407,14 @@ class coding_b64:public lyramilk::data::coding
 			if((i1 | i2)&0x80) throw lyramilk::data::coding_exception(D("解码%s时发生错误：不该出现该字符","base64"));
 			u.i = i1<<18;
 			u.i |= i2<<12;
-			if(u.c[2])ret.push_back(u.c[2]);
-			if(u.c[1])ret.push_back(u.c[1]);
-			if(u.c[0])ret.push_back(u.c[0]);
+			ret.push_back(u.c[2]);
+			ret.push_back(u.c[1]);
 		}else if(m == 1){
 			const unsigned char* p = e;
 			unsigned int i1 = mc_debase64[p[0]];
 			if(i1&0x80) throw lyramilk::data::coding_exception(D("解码%s时发生错误：不该出现该字符","base64"));
 			u.i = i1<<18;
-			if(u.c[2])ret.push_back(u.c[2]);
-			if(u.c[1])ret.push_back(u.c[1]);
-			if(u.c[0])ret.push_back(u.c[0]);
+			ret.push_back(u.c[2]);
 		}
 		return ret;
 	}
@@ -445,7 +442,7 @@ class coding_b64:public lyramilk::data::coding
 			const unsigned char* p = e;
 			unsigned int i1 = p[0] >> 2;
 			unsigned int i2 = ((p[0] & 3) << 4) | (p[1] >> 4);
-			unsigned int i3 = ((p[1] & 0xf) << 2) | (p[2] >> 6);
+			unsigned int i3 = ((p[1] & 0xf) << 2);
 			ret.push_back(mc_base64[i1]);
 			ret.push_back(mc_base64[i2]);
 			ret.push_back(mc_base64[i3]);

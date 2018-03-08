@@ -160,6 +160,13 @@ namespace lyramilk{namespace script
 			@param builder 脚本引擎对象的创建函数
 		*/
 		static bool define(lyramilk::data::string scriptname,lyramilk::script::engine* (*builder)(),void (*destoryer)(lyramilk::script::engine*));
+
+		/**
+			@brief 取消一个脚本引擎与其创建函数的对应关系。
+			@param scriptname 脚本引擎的名字
+		*/
+		static void undef(lyramilk::data::string funcname);
+
 		/**
 			@brief 通过脚本引擎的名字创建一个脚本引擎对象。
 			@param scriptname 脚本引擎的名字

@@ -1,7 +1,8 @@
 # -*- python -*-
+# coding:utf-8
+
 import gdb
 import itertools
-import re
 
 class LibmilkVarMapIterator:
 	def __init__(self, val):
@@ -31,9 +32,9 @@ class LibmilkVarMapIterator:
 		result = self.node.dereference()['_M_v']
 		self.node = self.node.dereference()['_M_next']
 		self.update ()
-		#return ('%s(%s)'%(str(result['first']),str(result['second']['t'])),result['second'])
-		#return (str(result['first']) + '(' + str(result['second']['t']) + ')',result['second'])
-		return (str(result['first']),result['second'])
+		str1 = unicode(result['first']).encode("utf8");
+		str2 = unicode(result['second']).encode("utf8");
+		return (str1,str2)
 
 class LibmilkVarArrayIterator:
 	def __init__(self, val):
@@ -70,11 +71,17 @@ class LibmilkVarPrinter:
 		if s_t == 'lyramilk::data::var::t_user':
 			return 't_user'
 		if s_t == 'lyramilk::data::var::t_bin':
-			return 't_bin:%s' % self.val['u']['p'].dereference()
+			var_chunk_type = gdb.lookup_type("lyramilk::data::chunk");
+			bp = self.val['u']['bp'].dereference().cast(var_chunk_type);
+			return 't_bin:%s' % bp
 		if s_t == 'lyramilk::data::var::t_str':
-			return 't_str:%s' % self.val['u']['s'].dereference()
+			var_string_type = gdb.lookup_type("lyramilk::data::string");
+			bs = self.val['u']['bs'].dereference().cast(var_string_type);
+			return 't_str:%s' % bs
 		if s_t == 'lyramilk::data::var::t_wstr':
-			return 't_wstr:%s' % self.val['u']['w'].dereference()
+			var_wstring_type = gdb.lookup_type("lyramilk::data::wstring");
+			bw = self.val['u']['bw'].dereference().cast(var_wstring_type);
+			return 't_wstr:%s' % bw
 		if s_t == 'lyramilk::data::var::t_bool':
 			return 't_bool:%s' % self.val['u']['b']
 		if s_t == 'lyramilk::data::var::t_int':
@@ -90,11 +97,17 @@ class LibmilkVarPrinter:
 	def children(self):
 		s_t = str(self.val['t']);
 		if s_t == 'lyramilk::data::var::t_user':
-			return LibmilkVarMapIterator(self.val['u']['o'].dereference())
+			var_userdata_type = gdb.lookup_type("lyramilk::data::var::_userdata");
+			bo = self.val['u']['bo'].dereference().cast(var_userdata_type);
+			return LibmilkVarMapIterator(bo)
 		if s_t == 'lyramilk::data::var::t_map':
-			return LibmilkVarMapIterator(self.val['u']['m'].dereference())
+			var_map_type = gdb.lookup_type("lyramilk::data::var::map");
+			bm = self.val['u']['bm'].dereference().cast(var_map_type);
+			return LibmilkVarMapIterator(bm)
 		if s_t == 'lyramilk::data::var::t_array':
-			return LibmilkVarArrayIterator(self.val['u']['a'].dereference())
+			var_array_type = gdb.lookup_type("lyramilk::data::var::array");
+			ba = self.val['u']['ba'].dereference().cast(var_array_type);
+			return LibmilkVarArrayIterator(ba)
 		return ()
 
 def lookup_var(val):
@@ -102,9 +115,12 @@ def lookup_var(val):
 		return LibmilkVarPrinter(val)
 	if str(val.type) == 'lyramilk::data::var &':
 		return LibmilkVarPrinter(val)
+	if str(val.type) == 'const lyramilk::data::var':
+		return LibmilkVarPrinter(val)
+	if str(val.type) == 'const lyramilk::data::var &':
+		return LibmilkVarPrinter(val)
 	return None
 
-#gdb.pretty_printers.insert(0,lookup_var)
 gdb.pretty_printers.append(lookup_var)
 
 print '[gdb]load pretty_printers for lyramilk::data::var	'

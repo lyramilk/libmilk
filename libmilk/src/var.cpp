@@ -27,6 +27,7 @@ std::locale::id id;
 namespace lyramilk { namespace data{
 
 const var var::nil;
+var::_userdata var::__reserve0;
 
 template <int T>
 struct tempc;

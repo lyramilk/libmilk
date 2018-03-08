@@ -567,6 +567,8 @@ namespace lyramilk{namespace data
 		}u;
 		bool _serialize(ostream& os) const throw(type_invalid);
 		bool _deserialize(istream& is);
+
+		static _userdata __reserve0;
 	};
 
 	template < >
