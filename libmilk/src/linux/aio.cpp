@@ -58,7 +58,7 @@ namespace lyramilk{namespace io
 
 	aiopoll::~aiopoll()
 	{
-		if(epfd){
+		if(epfd > 0){
 			::close(epfd);
 		}
 	}

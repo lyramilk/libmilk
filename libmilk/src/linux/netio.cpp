@@ -107,7 +107,7 @@ namespace lyramilk{namespace netio
 	{
 		sslobj = nullptr;
 		sslenable = false;
-		sock = 0;
+		sock = -1;
 	}
 
 	socket::~socket()
@@ -133,7 +133,7 @@ namespace lyramilk{namespace netio
 
 	bool socket::isalive()
 	{
-		if(sock == 0) return false;
+		if(sock < 0) return false;
 		pollfd pfd;
 		pfd.fd = sock;
 		pfd.events = POLLOUT;
@@ -149,9 +149,9 @@ namespace lyramilk{namespace netio
 
 	bool socket::close()
 	{
-		if(sock){
+		if(sock >= 0){
 			::close(sock);
-			sock = 0;
+			sock = -1;
 			return true;
 		}
 		return false;
@@ -318,7 +318,7 @@ namespace lyramilk{namespace netio
 
 	bool client::open(lyramilk::data::string host,lyramilk::data::uint16 port)
 	{
-		if(fd()){
+		if(fd() >= 0){
 			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开监听套件字失败，因为该套接字己打开。") << std::endl;
 			return false;
 		}
@@ -335,7 +335,7 @@ namespace lyramilk{namespace netio
 		}
 
 		native_socket_type tmpsock = ::socket(AF_INET,SOCK_STREAM, IPPROTO_IP);
-		if(!tmpsock){
+		if(tmpsock < 0){
 			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开监听套件字失败：%s",strerror(errno)) << std::endl;
 			return false;
 		}
