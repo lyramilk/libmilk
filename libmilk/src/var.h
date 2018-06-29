@@ -188,6 +188,16 @@ namespace lyramilk{namespace data
 		snprintf(buff,sizeof(buff),"%llu",i);
 		return buff;
 	}
+#ifdef Z_HAVE_TR1_UNORDEREDMAP
+		typedef lyramilk::data::unordered_map<string,string> stringdict;
+#else
+		typedef lyramilk::data::map<string,string> stringdict;
+#endif
+#ifdef Z_HAVE_TR1_UNORDEREDMAP
+		typedef lyramilk::data::unordered_map<wstring,wstring> wstringdict;
+#else
+		typedef lyramilk::data::map<wstring,wstring> wstringdict;
+#endif
 	/**
 		@brief 这是一个超级变量，封装了对整数、小数、字符串、数组、映射表的表达，它尽可能在各种类型间进行转换。
 	*/
@@ -254,6 +264,7 @@ namespace lyramilk{namespace data
 		var(float v);
 		var(const array& v);
 		var(const map& v);
+		var(const stringdict& v);
 		var(const string& n,const void* v);
 		var(const var& v);
 
@@ -348,6 +359,7 @@ namespace lyramilk{namespace data
 		var& assign(float v);
 		var& assign(const array& v);
 		var& assign(const map& v);
+		var& assign(const stringdict& v);
 		/**
 			@brief 为var赋值
 			@details 用一个事有标识的用户指针初始化一个var。
@@ -409,6 +421,8 @@ namespace lyramilk{namespace data
 		double conv(double if_not_compat) const;
 		array& conv(array& if_not_compat);
 		map& conv(map& if_not_compat);
+		const array& conv(const array& if_not_compat) const;
+		const map& conv(const map& if_not_compat) const;
 
 		/**
 			@brief 定义额外的用户数据。

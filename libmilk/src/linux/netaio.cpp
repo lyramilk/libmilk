@@ -19,12 +19,14 @@
 #endif
 
 
+#ifdef OPENSSL_FOUND
 lyramilk::data::string inline ssl_err()
 {
 	char buff[4096] = {0};
 	ERR_error_string(ERR_get_error(),buff);
 	return buff;
 }
+#endif
 
 namespace lyramilk{namespace netio
 {
@@ -594,6 +596,7 @@ namespace lyramilk{namespace netio
 			sslctx = SSL_CTX_new(SSLv23_server_method());
 		}
 
+		SSL_CTX_set_mode((SSL_CTX*)sslctx, SSL_MODE_AUTO_RETRY);
 		SSL_CTX_set_mode((SSL_CTX*)sslctx, SSL_MODE_RELEASE_BUFFERS);
 
 		int r = 0;
@@ -619,7 +622,11 @@ namespace lyramilk{namespace netio
 			}
 		}
 
-		SSL_CTX_set_tmp_rsa((SSL_CTX*)sslctx,RSA_generate_key(512,RSA_F4,NULL,NULL));
+		EC_KEY *ecdh = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+		SSL_CTX_set_tmp_ecdh((SSL_CTX*)sslctx, ecdh);
+		EC_KEY_free(ecdh);
+		SSL_CTX_set_tmp_rsa((SSL_CTX*)sslctx,RSA_generate_key(1024,RSA_F4,NULL,NULL));
+		SSL_CTX_set_cipher_list( (SSL_CTX*)sslctx, "ALL" );
 		const unsigned char pkey[] = "www.lyramilk.com";
 		SSL_CTX_set_session_id_context((SSL_CTX*)sslctx,pkey,sizeof(pkey));
 

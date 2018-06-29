@@ -422,6 +422,12 @@ var::var(const map& v)
 	assign(v);
 }
 
+var::var(const stringdict& v)
+{
+	t = t_invalid;
+	assign(v);
+}
+
 var::var(const string& n,const void* v)
 {
 	t = t_invalid;
@@ -967,6 +973,18 @@ var& var::assign(const lyramilk::data::var::map& v)
 	clear();
 	t = t_map;
 	new (u.bm) map(v);
+	return *this;
+}
+
+var& var::assign(const stringdict& v)
+{
+	clear();
+	t = t_map;
+	map* bm = new (u.bm) map(v.bucket_count());
+	stringdict::const_iterator it = v.begin();
+	for(;it!=v.end();++it){
+		bm->operator[](it->first) = it->second;
+	}
 	return *this;
 }
 
@@ -1604,6 +1622,18 @@ var::array& var::conv(var::array& if_not_compat)
 }
 
 var::map& var::conv(var::map& if_not_compat)
+{
+	if(!type_like(t_map)) return if_not_compat;
+	return *this;
+}
+
+const var::array& var::conv(const var::array& if_not_compat) const
+{
+	if(!type_like(t_array)) return if_not_compat;
+	return *this;
+}
+
+const var::map& var::conv(const var::map& if_not_compat) const
 {
 	if(!type_like(t_map)) return if_not_compat;
 	return *this;

@@ -22,6 +22,7 @@ namespace lyramilk{namespace script{namespace js
 
 		struct class_handler
 		{
+			unsigned char magic;
 			class_builder ctr;
 			class_destoryer dtr;
 			script_js* eng;

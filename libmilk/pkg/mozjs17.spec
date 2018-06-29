@@ -18,7 +18,8 @@ Prefix:		/usr
 	autoconf-2.13
 	mkdir -p build_OPT.OBJ
 	cd build_OPT.OBJ/
-	../configure --enable-jemalloc --enable-strip --enable-release --enable-optimize=-O2 --disable-tests --enable-threadsafe --with-system-nspr --prefix=%{?_builddir}/%{?name}
+	#../configure --enable-jemalloc --enable-strip --enable-release --enable-optimize=-O2 --disable-tests --enable-threadsafe --with-system-nspr --prefix=%{?_builddir}/%{?name}
+	../configure --enable-strip --enable-release --enable-optimize=-O2 --disable-tests --enable-threadsafe --with-system-nspr --prefix=%{?_builddir}/%{?name}
 	make
 	make install
 	cd %{?_builddir}/%{?name}/lib

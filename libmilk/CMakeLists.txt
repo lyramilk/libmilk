@@ -1,6 +1,6 @@
 ﻿#定义工程名及版本
 project(milk)
-set(version 1.1.62)
+set(version 1.1.63)
 set(soversion 1.1)
 
 cmake_minimum_required (VERSION 2.8.11) 
@@ -25,11 +25,11 @@ enable_testing()
 #定制编译选项
 
 if(release)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O4 -DNDEBUG -Wall ")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O4 -DNDEBUG -Wall")
 	set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} -g -O4 -Wall ")
 	message("Build as release")
 else()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -D_DEBUG -fstack-protector ")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -D_DEBUG -fstack-protector")
 	set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} -g -Wall -fstack-protector ")
 	message("Build as debug")
 endif()
@@ -59,10 +59,10 @@ endif()
 
 ## 搜索可选的外部依赖
 if(UNIX)
-	pkg_search_module(OPENSSL openssl)
-	pkg_search_module(LZ4 liblz4)
-	pkg_search_module(LUAJIT luajit)
-	pkg_check_modules(JS17 mozjs-17.0)
+	pkg_check_modules(OPENSSL openssl)
+	pkg_check_modules(LZ4 liblz4)
+	pkg_check_modules(LUAJIT luajit)
+	pkg_check_modules(JS17 mozjs-17.0 REQUIRED)
 	#check_include_file_cxx(unordered_map		Z_HAVE_UNORDEREDMAP)
 	check_include_file_cxx(tr1/unordered_map	Z_HAVE_TR1_UNORDEREDMAP)
 	#check_include_file_cxx(tinyxml.h		Z_HAVE_TINYXML)

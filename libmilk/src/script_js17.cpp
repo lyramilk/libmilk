@@ -57,6 +57,7 @@ namespace lyramilk{namespace script{namespace js
 
 	struct js_obj_pack
 	{
+		unsigned char magic;
 		engine::class_destoryer dtr;
 		void* pthis;
 		lyramilk::script::js::script_js* eng;
@@ -64,6 +65,7 @@ namespace lyramilk{namespace script{namespace js
 
 		js_obj_pack(engine::class_destoryer da,lyramilk::script::js::script_js* _env,void* dt):dtr(da),pthis(dt),eng(_env)
 		{
+			magic = 0x22;
 			//info[engine::s_env_this()].assign(engine::s_user_nativeobject(),pthis);
 			info[engine::s_env_engine()].assign(engine::s_env_engine(),eng);
 		}
@@ -423,31 +425,63 @@ namespace lyramilk{namespace script{namespace js
 		engine::functional_type_inclass pfun = (engine::functional_type_inclass)js_get_func_native(cx,&args.callee());
 		js_obj_pack *ppack = (js_obj_pack*)JS_GetPrivate(&args.thisv().toObject());
 
-		if(pfun && ppack && ppack->pthis){
-			lyramilk::data::var::array params;
-			params.resize(argc);
-			for(unsigned i=0;i<argc;++i){
-				j2v(cx,args[i],params[i]);
-			}
-			try{
-				lyramilk::data::var ret = pfun(params,ppack->info,ppack->pthis);
-				jsval jsret;
-				v2j(cx,ret,jsret);
-				args.rval().set(jsret);
-			}catch(lyramilk::data::string& str){
-				js_thow(cx,str.c_str(),str.size());
-				return JS_FALSE;
-			}catch(const char* cstr){
-				js_thow(cx,cstr,strlen(cstr));
-				return JS_FALSE;
-			}catch(std::exception& e){
-				const char* cstr = e.what();
-				js_thow(cx,cstr,strlen(cstr));
-				return JS_FALSE;
-			}catch(...){
-				lyramilk::data::string str = D("未知异常");
-				js_thow(cx,str.c_str(),str.size());
-				return JS_FALSE;
+		if(pfun && ppack){
+			if(ppack->magic == 0x21){
+				script_js::class_handler* pp = (script_js::class_handler*)reinterpret_cast<script_js::class_handler*>(ppack);
+				lyramilk::data::var::map info;
+				info[engine::s_env_engine()].assign(engine::s_env_engine(),pp->eng);
+
+				lyramilk::data::var::array params;
+				params.resize(argc);
+				for(unsigned i=0;i<argc;++i){
+					j2v(cx,args[i],params[i]);
+				}
+				try{
+					lyramilk::data::var ret = pfun(params,info,nullptr);
+					jsval jsret;
+					v2j(cx,ret,jsret);
+					args.rval().set(jsret);
+				}catch(lyramilk::data::string& str){
+					js_thow(cx,str.c_str(),str.size());
+					return JS_FALSE;
+				}catch(const char* cstr){
+					js_thow(cx,cstr,strlen(cstr));
+					return JS_FALSE;
+				}catch(std::exception& e){
+					const char* cstr = e.what();
+					js_thow(cx,cstr,strlen(cstr));
+					return JS_FALSE;
+				}catch(...){
+					lyramilk::data::string str = D("未知异常");
+					js_thow(cx,str.c_str(),str.size());
+					return JS_FALSE;
+				}
+			}else if(ppack->magic == 0x22 && ppack->pthis){
+				lyramilk::data::var::array params;
+				params.resize(argc);
+				for(unsigned i=0;i<argc;++i){
+					j2v(cx,args[i],params[i]);
+				}
+				try{
+					lyramilk::data::var ret = pfun(params,ppack->info,ppack->pthis);
+					jsval jsret;
+					v2j(cx,ret,jsret);
+					args.rval().set(jsret);
+				}catch(lyramilk::data::string& str){
+					js_thow(cx,str.c_str(),str.size());
+					return JS_FALSE;
+				}catch(const char* cstr){
+					js_thow(cx,cstr,strlen(cstr));
+					return JS_FALSE;
+				}catch(std::exception& e){
+					const char* cstr = e.what();
+					js_thow(cx,cstr,strlen(cstr));
+					return JS_FALSE;
+				}catch(...){
+					lyramilk::data::string str = D("未知异常");
+					js_thow(cx,str.c_str(),str.size());
+					return JS_FALSE;
+				}
 			}
 		}
 		return JS_TRUE;
@@ -686,6 +720,7 @@ namespace lyramilk{namespace script{namespace js
 		JS_GetObjectId(selectedcx,jo,&joid);
 
 		class_handler h;
+		h.magic = 0x21;
 		h.ctr = builder;
 		h.dtr = destoryer;
 		h.eng = this;
