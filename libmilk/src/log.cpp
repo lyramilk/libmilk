@@ -159,7 +159,9 @@ int logbuf::sync()
 		}
 	}
 
-	p.loger.log(time(NULL),p.t,getlogin(),str.c_str(),module,lyramilk::data::string(pstr,len));
+	const char* loginuser = getlogin();
+
+	p.loger.log(time(NULL),p.t,loginuser?loginuser:"unknow_user",str.c_str(),module,lyramilk::data::string(pstr,len));
 	/*/
 	p.p->log(time(NULL),p.t,"user","app",module,lyramilk::data::string(pstr,len));
 	/ **/
