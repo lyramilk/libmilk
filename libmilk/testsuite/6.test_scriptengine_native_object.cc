@@ -5,6 +5,7 @@
 #include "scriptengine.h"
 #include "ansi_3_64.h"
 #include "testing.h"
+#include <jsapi.h>
 #define D(x...) lyramilk::kdict(x)
 
 class os
@@ -158,8 +159,10 @@ void test_script(lyramilk::data::string file,lyramilk::script::engine* eng)
 		lyramilk::data::var::array r;
 		lyramilk::data::var::array r2;
 		r2.push_back(100000);
-		r.push_back(eng->createobject("test_system",r2));
-		r.push_back(eng->createobject("test_number",r2));
+		//r.push_back(eng->createobject("test_system",r2));
+		//r.push_back(eng->createobject("test_number",r2));
+		r.push_back(10000000000000011);
+		r.push_back(10000000000000010);
 		std::cout << "调用script的test函数的结果：" << eng->call("mytest",r) << std::endl;
 		eng->gc();
 	}
@@ -169,6 +172,7 @@ void test_script(lyramilk::data::string file,lyramilk::script::engine* eng)
 
 int main(int argc,const char* argv[])
 {
+	printf("min=%llu,max=%llu\n",JSVAL_INT_MIN,JSVAL_INT_MAX);
 
 	for(int i=0;i<1;++i){
 
@@ -182,7 +186,7 @@ int main(int argc,const char* argv[])
 
 	for(std::map<lyramilk::data::string,lyramilk::script::engine*>::iterator it = engs.begin();it!=engs.end();++it){
 		std::cout << "*********************************************测试" << it->first << "*********************************************" << std::endl;
-		lyramilk::data::string test = "/root/libmilk/testsuite/test." + it->first;
+		lyramilk::data::string test = "/data/src/libmilk/testsuite/test." + it->first;
 		test_script(test,it->second);
 	}
 	}

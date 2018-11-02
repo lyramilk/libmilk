@@ -1,47 +1,51 @@
-﻿#ifndef _lyramilk_system_netaio_h_
-#define _lyramilk_system_netaio_h_
+﻿#ifndef _lyramilk_netio_netaio_h_
+#define _lyramilk_netio_netaio_h_
 
 #include "netio.h"
 #include "aio.h"
 
 namespace lyramilk{namespace netio
 {
+	/*
 	using lyramilk::io::native_epool_type;
 	using lyramilk::io::native_filedescriptor_type;
 	using lyramilk::io::uint32;
+*/
 	/**
-		@brief 异步套接字会话
+		@brief 套接字会话
+		@details 被aiolistener监听到以后可以通过创建这个对象的实例创建通信会话。。
 	*/
-	class _lyramilk_api_ aiosession : public lyramilk::io::aioselector,public socket
+	class _lyramilk_api_ aiosession : public lyramilk::io::aioselector,public lyramilk::netio::socket
 	{
-	  public:
-		typedef aiosession* (*builder)();
-		typedef void(*destoryer)(aiosession* s);
 	  protected:
-		destoryer dtr;
-		friend class aiolistener;
-		virtual bool notify_in();
-		virtual bool notify_out();
-		virtual bool notify_hup();
-		virtual bool notify_err();
-		virtual bool notify_pri();
-		lyramilk::data::stringstream scache;
-		lyramilk::data::string retransmitcache;
 		int flag;
 		lyramilk::data::string peer_cert_info;
-		virtual void ondestory();
-	  protected:
-		virtual int cache_read(char* buf,int bufsize);
-		virtual bool cache_empty();
-		virtual bool cache_ok();
-		virtual void cache_clear();
-	  public:
 		aiosession();
 		virtual ~aiosession();
-
-		virtual bool init();
+		virtual void ondestory();
+	  public:
+		virtual bool init() = 0;
+		/**
+			@brief 销毁会话，如果重写的话，也要在重写的函数中调用 aiosession::destory 来触发ondestory以便释放对象。
+		*/
 		virtual void destory();
 
+		/**
+			@brief 获取对端证书信息。
+		*/
+		virtual lyramilk::data::string ssl_get_peer_certificate_info();
+
+		virtual lyramilk::io::native_filedescriptor_type getfd();
+	  private:
+		typedef aiosession* (*builder)();
+		typedef void(*destoryer)(aiosession* s);
+		friend class aiolistener;
+
+		friend class aiosession_sync;
+		friend class aiosession_async;
+		virtual lyramilk::data::int32 read(void* buf, lyramilk::data::int32 len);
+		virtual lyramilk::data::int32 write(const void* buf, lyramilk::data::int32 len);
+	  public:
 		/// 模板化会话对象的销毁函数
 		template <typename T>
 		static void __tdestoryer(aiosession* s)
@@ -49,6 +53,7 @@ namespace lyramilk{namespace netio
 			delete static_cast<T*>(s);
 		}
 
+		destoryer dtr;
 		/// 模板化会话对象的生成函数
 		template <typename T>
 		static T* __tbuilder()
@@ -57,16 +62,27 @@ namespace lyramilk{namespace netio
 			p->dtr = __tdestoryer<T>;
 			return p;
 		}
-		virtual native_filedescriptor_type getfd();
+	};
 
-		/**
-			@brief 获取对端证书信息。
-		*/
-		virtual lyramilk::data::string ssl_get_peer_certificate_info();
-		/**
-			@brief 设置对端证书信息。
-		*/
-		virtual void ssl_set_peer_certificate_info(lyramilk::data::string info);
+	/**
+		@brief 同步套接字会话
+		@details onrequest中向os写数据的时候，以阻塞的方式写出去。
+	*/
+	class _lyramilk_api_ aiosession_sync : public lyramilk::netio::aiosession
+	{
+	  protected:
+		socket_ostream aos;
+		virtual bool notify_in();
+		virtual bool notify_out();
+		virtual bool notify_hup();
+		virtual bool notify_err();
+		virtual bool notify_pri();
+	  public:
+		aiosession_sync();
+		virtual ~aiosession_sync();
+
+		virtual bool init();
+		virtual void destory();
 	  protected:
 		/**
 			@brief 连接时触发
@@ -87,52 +103,28 @@ namespace lyramilk{namespace netio
 			@return 返回false会导致服务器主动断开链接。
 		*/
 		virtual bool onrequest(const char* cache, int size, lyramilk::data::ostream& os) = 0;
-	  private:
-		virtual bool read(void* buf, lyramilk::data::uint32 len,lyramilk::data::uint32 delay);
-		virtual bool write(const void* buf, lyramilk::data::uint32 len,lyramilk::data::uint32 delay);
-
-		virtual bool check_read(lyramilk::data::uint32 delay);
-		virtual bool check_write(lyramilk::data::uint32 delay);
-		virtual bool check_error();
 	};
 
-	class _lyramilk_api_ aiosession2;
-	class _lyramilk_api_ aiosession2_buf : public std::basic_streambuf<char>
+	/**
+		@brief 异步套接字会话
+		@details onrequest中向os写数据的时候，先被缓存起来，得到epoll的OUT消息的时候会把数据写出去。
+	*/
+	class _lyramilk_api_ aiosession_async : public lyramilk::netio::aiosession_sync
 	{
-		friend class aiosession2_stream;
-	  protected:
-		native_filedescriptor_type fd;
-		native_epool_type epfd;
-		aiosession2* r;
-
-		virtual std::streamsize xsputn (const char* s, std::streamsize n);
-		virtual int overflow (int c);
-	  public:
-		aiosession2_buf();
-		virtual ~aiosession2_buf();
-	};
-
-	class _lyramilk_api_ aiosession2_stream : public lyramilk::data::ostringstream
-	{
-		aiosession2_buf sbuf;
-	  public:
-		aiosession2_stream();
-		virtual ~aiosession2_stream();
-
-		virtual void init(native_epool_type epfd,native_filedescriptor_type fd,aiosession2* r);
-	};
-
-	class _lyramilk_api_ aiosession2 : public aiosession
-	{
-		aiosession2_stream ss;
-	  public:
-		aiosession2();
-		virtual ~aiosession2();
-		virtual bool init();
-		virtual void destory();
+		lyramilk::data::stringstream scache;
+		lyramilk::data::string retransmitcache;
 	  protected:
 		virtual bool notify_in();
+		virtual bool notify_out();
+		virtual int cache_read(char* buf,int bufsize);
+		virtual bool cache_empty();
+		virtual bool cache_ok();
+		virtual void cache_clear();
+	  public:
+		aiosession_async();
+		virtual ~aiosession_async();
 	};
+
 
 	/**
 		@brief 异步套接字监听会话
@@ -201,7 +193,7 @@ namespace lyramilk{namespace netio
 		///	取得SSL_CTX*
 		virtual ssl_ctx_type get_ssl_ctx();
 
-		virtual native_filedescriptor_type getfd();
+		virtual lyramilk::io::native_filedescriptor_type getfd();
 
 		virtual void ondestory();
 	};

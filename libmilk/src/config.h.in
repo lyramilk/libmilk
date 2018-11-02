@@ -35,6 +35,7 @@
 		#endif
 	#endif
 
+	#include <iostream>
 	#define TODO()		std::cout << "\x1b[31m" << __FILE__ << "[" << __LINE__ << "]\x1b[0m函数" << __FUNCTION__ << "未实现" <<std::endl,throw __FUNCTION__
 	#define THROW(e)	std::cout << "\x1b[31m" << __FILE__ << "[" << __LINE__ << "]\x1b[0m函数" << __FUNCTION__ << "抛出异常" <<std::endl,throw(e)
 	#define COUT		(std::cout << "\x1b[36m" << __FILE__ << "[" << __LINE__ << "]\x1b[0m")

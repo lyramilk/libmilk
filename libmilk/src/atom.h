@@ -4,6 +4,7 @@
 #include "config.h"
 #include "thread.h"
 #include <unistd.h>
+#include <list>
 
 /**
 	@namespace lyramilk::threading
@@ -171,6 +172,7 @@ namespace lyramilk{namespace threading
 		bool try_pop(T* t)
 		{
 			unsigned int seq = headseq;
+
 			node& n = ring[seq%ringsize];
 			if(__sync_bool_compare_and_swap(&n.s,s_data,s_lock)){
 				if(__sync_bool_compare_and_swap(&headseq,seq,seq + 1)){
@@ -309,9 +311,14 @@ namespace lyramilk{namespace threading
 			}
 			T* tmp = underflow();
 			if(tmp){
-				es.push_back(item(tmp,this));
-				es.back().trylock();
-				return ptr(&es.back());
+				item* pe = nullptr;
+				{
+					mutex_sync _(l);
+					es.push_back(item(tmp,this));
+					pe = &es.back();
+					pe->lock();
+				}
+				return ptr(pe);
 			}
 			return ptr(nullptr);
 		}
@@ -343,6 +350,7 @@ namespace lyramilk{namespace threading
 
 		typedef std::list<item> list_type;
 		list_type es;
+		mutex_spin l;
 	};
 }}
 

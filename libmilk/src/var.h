@@ -16,8 +16,10 @@
 
 #ifdef Z_HAVE_UNORDEREDMAP
 	#include <unordered_map>
+	#define HAVE_UNORDEREDMAP
 #elif defined Z_HAVE_TR1_UNORDEREDMAP
 	#include <tr1/unordered_map>
+	#define HAVE_UNORDEREDMAP
 #endif
 
 /**
@@ -188,12 +190,47 @@ namespace lyramilk{namespace data
 		snprintf(buff,sizeof(buff),"%llu",i);
 		return buff;
 	}
-#ifdef Z_HAVE_TR1_UNORDEREDMAP
+
+	lyramilk::data::string inline str(long long i)
+	{
+		char buff[64];
+		snprintf(buff,sizeof(buff),"%lld",i);
+		return buff;
+	}
+	lyramilk::data::string inline str(unsigned int i)
+	{
+		char buff[64];
+		snprintf(buff,sizeof(buff),"%u",i);
+		return buff;
+	}
+
+	lyramilk::data::string inline str(int i)
+	{
+		char buff[64];
+		snprintf(buff,sizeof(buff),"%d",i);
+		return buff;
+	}
+
+	lyramilk::data::string inline str(double f)
+	{
+		char buff[128];
+		snprintf(buff,sizeof(buff),"%f",f);
+		return buff;
+	}
+
+	lyramilk::data::string inline str(float f)
+	{
+		char buff[128];
+		snprintf(buff,sizeof(buff),"%f",f);
+		return buff;
+	}
+
+#ifdef HAVE_UNORDEREDMAP
 		typedef lyramilk::data::unordered_map<string,string> stringdict;
 #else
 		typedef lyramilk::data::map<string,string> stringdict;
 #endif
-#ifdef Z_HAVE_TR1_UNORDEREDMAP
+#ifdef HAVE_UNORDEREDMAP
 		typedef lyramilk::data::unordered_map<wstring,wstring> wstringdict;
 #else
 		typedef lyramilk::data::map<wstring,wstring> wstringdict;
@@ -203,14 +240,14 @@ namespace lyramilk{namespace data
 	*/
 	class _lyramilk_api_ var
 	{
-#ifdef Z_HAVE_TR1_UNORDEREDMAP
+#ifdef HAVE_UNORDEREDMAP
 		typedef lyramilk::data::unordered_map<string,const void*> _userdata;
 #else
 		typedef lyramilk::data::map<string,const void*> _userdata;
 #endif
 	  public:
 		typedef class _lyramilk_api_ std::vector<lyramilk::data::var, allocator<lyramilk::data::var> > array;
-#ifdef Z_HAVE_TR1_UNORDEREDMAP
+#ifdef HAVE_UNORDEREDMAP
 		typedef lyramilk::data::unordered_map<lyramilk::data::string,lyramilk::data::var,hash<lyramilk::data::string>, std::equal_to<lyramilk::data::string> ,lyramilk::data::allocator<std::pair<lyramilk::data::string,lyramilk::data::var> > > map;
 #else
 		typedef class _lyramilk_api_ std::map<lyramilk::data::string, lyramilk::data::var, std::less<lyramilk::data::string>, allocator<lyramilk::data::string> > map;

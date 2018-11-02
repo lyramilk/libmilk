@@ -1,5 +1,7 @@
 ﻿#include "thread.h"
 #include <sys/sysinfo.h>
+#include <unistd.h>
+#include <cassert>
 
 namespace lyramilk{namespace threading
 {
@@ -7,40 +9,56 @@ namespace lyramilk{namespace threading
 	threads::return_type threads::thread_task(threads* p)
 	{
 		threads::return_type ret = 0;
-		__sync_add_and_fetch(&p->c,1);
+		__sync_add_and_fetch(&p->cur,1);
 		ret = p->svc();
-		__sync_sub_and_fetch(&p->c,1);
+		__sync_sub_and_fetch(&p->cur,1);
+
+		mutex_os* lock = (mutex_os*)p->lock;
+		mutex_sync _(*lock);
+		pthread_t thread = pthread_self();
+		p->m.erase(thread);
 		return ret;
 	}
 
 	threads::threads()
 	{
-		c = 0;
+		cur = 0;
+		cap = 0;
+		lock = new mutex_os;
 	}
 
 	threads:: ~threads()
 	{
 		void* tmp;
-		vector_type::iterator it = m.begin();
+		pool_type::iterator it = m.begin();
 		for(;it != m.end();++it){
 			pthread_join(*it,&tmp);
 		}
+		delete (mutex_os*)lock;
 	}
 
-	void threads::active(std::size_t threadcount)
+	bool threads::active(std::size_t threadcount)
 	{
-		m.reserve(threadcount);
+		cap = threadcount;
+		std::size_t cc = cur;
 
-		for(std::size_t i = 0;i<threadcount;++i){
+		mutex_os* lock = (mutex_os*)this->lock;
+		while(cc < cap){
+			mutex_sync _(*lock);
 			pthread_t thread;
 			if(pthread_create(&thread,NULL,(void* (*)(void*))thread_task,this) == 0){
-				m.push_back(thread);
+				m.insert(thread);
+				++cc;
 			}
 		}
+		return true;
 	}
 
-	void threads::active()
+	bool threads::active()
 	{
+		if(capacity() > 0){
+			return active();
+		}
 		std::size_t t = get_nprocs();
 		if(t < 1){
 			t = 1;
@@ -52,20 +70,17 @@ namespace lyramilk{namespace threading
 			t |= e;
 		}
 		active(t);
-	}
-
-	void threads::detach()
-	{
-		vector_type::iterator it = m.begin();
-		for(;it != m.end();++it){
-			pthread_detach(*it);
-		}
-		m.clear();
+		return true;
 	}
 
 	std::size_t threads::size()
 	{
-		return c;
+		return cur;
+	}
+
+	std::size_t threads::capacity()
+	{
+		return cap;
 	}
 
 	// mutex_super
@@ -95,7 +110,9 @@ namespace lyramilk{namespace threading
 
 	void mutex_spin::lock()
 	{
-		while(!__sync_bool_compare_and_swap(&locked,false,true));
+		while(!__sync_bool_compare_and_swap(&locked,false,true)){
+			usleep(10);
+		}
 	}
 
 	void mutex_spin::unlock()
@@ -273,4 +290,61 @@ namespace lyramilk{namespace threading
 		pthread_setspecific(key,arg);
 	}
 
+
+
+
+
+	mutex_semaphore::mutex_semaphore()
+	{
+		sigval = 0;
+		max_signal = 1;
+	}
+
+	mutex_semaphore::~mutex_semaphore()
+	{
+	}
+
+	void mutex_semaphore::set_max_signal(long long max_signal)
+	{
+		this->max_signal = max_signal;
+	}
+
+	long long mutex_semaphore::get_max_signal()
+	{
+		return max_signal;
+	}
+
+	long long mutex_semaphore::get_signal()
+	{
+		return sigval;
+	}
+
+	void mutex_semaphore::lock()
+	{
+		while(__sync_add_and_fetch(&sigval,1) > max_signal){
+			__sync_sub_and_fetch(&sigval,1);
+			usleep(10);
+		}
+	}
+
+	void mutex_semaphore::unlock()
+	{
+		__sync_sub_and_fetch(&sigval,1);
+	}
+
+	bool mutex_semaphore::try_lock()
+	{
+		if(__sync_add_and_fetch(&sigval,1) > max_signal){
+			__sync_sub_and_fetch(&sigval,1);
+			return false;
+		}
+		return true;
+	}
+
+	bool mutex_semaphore::test() const
+	{
+		return sigval < max_signal;
+	}
+
 }}
+

@@ -37,6 +37,7 @@
 			SSL_load_error_strings();
 			ERR_load_BIO_strings();
 			OpenSSL_add_all_algorithms();
+			gethostbyname("www.lyramilk.com");
 		}
 		~__ssl()
 		{
@@ -49,9 +50,25 @@
 			return buff;
 		}
 	};
+#else
 
-	static __ssl _ssl;
+	struct __ssl
+	{
+		__ssl()
+		{
+			gethostbyname("www.lyramilk.com");
+		}
+		~__ssl()
+		{
+		}
+
+		lyramilk::data::string err()
+		{
+			return "";
+		}
+	};
 #endif
+static __ssl _ssl;
 
 
 
@@ -133,9 +150,9 @@ namespace lyramilk{namespace netio
 
 	bool socket::isalive()
 	{
-		if(sock < 0) return false;
+		if(fd() < 0) return false;
 		pollfd pfd;
-		pfd.fd = sock;
+		pfd.fd = fd();
 		pfd.events = POLLOUT;
 		pfd.revents = 0;
 		int ret = ::poll(&pfd,1,0);
@@ -161,7 +178,7 @@ namespace lyramilk{namespace netio
 	{
 		sockaddr_in addr;
 		socklen_t size = sizeof addr;
-		if(getsockname(sock,(sockaddr*)&addr,&size) !=0 ) return netaddress();
+		if(getsockname(fd(),(sockaddr*)&addr,&size) !=0 ) return netaddress();
 		return netaddress(addr.sin_addr.s_addr,ntohs(addr.sin_port));
 	}
 
@@ -169,7 +186,7 @@ namespace lyramilk{namespace netio
 	{
 		sockaddr_in addr;
 		socklen_t size = sizeof addr;
-		if(getpeername(sock,(sockaddr*)&addr,&size) !=0 ) return netaddress();
+		if(getpeername(fd(),(sockaddr*)&addr,&size) !=0 ) return netaddress();
 		return netaddress(addr.sin_addr.s_addr,ntohs(addr.sin_port));
 	}
 
@@ -183,133 +200,377 @@ namespace lyramilk{namespace netio
 		sock = tmpfd;
 	}
 
-	/* socket_stream_buf */
-	socket_stream_buf::int_type socket_stream_buf::sync()
+	lyramilk::data::int32 socket::read(void* buf, lyramilk::data::int32 len)
 	{
-		return overflow();
-	}
-	socket_stream_buf::int_type socket_stream_buf::overflow (int_type c)
-	{
-		const char* p = pbase();
-		int l = pptr() - pbase();
-		int r = 0;
-		do{
+		int rt = 0;
 #ifdef OPENSSL_FOUND
-			if(psock->ssl()){
-				r = SSL_write((SSL*)psock->sslobj, p,l);
-			}else{
-				r = ::send(psock->sock,p,l,0);
-			}
+		if(ssl()){
+			rt = SSL_read((SSL*)get_ssl_obj(), buf, len);
+		}else{
+			rt = ::recv(fd(),buf,len,0);
+		}
 #else
-			r = ::send(psock->sock,p,l,0);
+		rt = ::recv(fd(),buf,len,0);
 #endif
-		}while(r == -1 && errno == EAGAIN);
-		if(r>0){
-			seq_w += r;
-			setp(putbuf + l - r,putbuf + sizeof(putbuf));
+		if(rt < 0){
+			if(errno != EAGAIN){
+				lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.socket.read") << lyramilk::kdict("从套接字%d中读取数据时发生错误:%s",fd(),strerror(errno)) << std::endl;
+			}
+		}else if(rt == 0){
+			lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.socket.read") << lyramilk::kdict("从套接字%d中读取数据时发生错误:%s",fd(),"套接字己关闭") << std::endl;
+		}
+		return rt;
+	}
+
+	lyramilk::data::int32 socket::write(const void* buf, lyramilk::data::int32 len)
+	{
+		int rt = 0;
+#ifdef OPENSSL_FOUND
+		if(ssl()){
+			rt = SSL_write((SSL*)get_ssl_obj(), buf, len);
+		}else{
+			rt = ::send(fd(),buf,len,0);
+		}
+#else
+		rt = ::send(fd(),buf,len,0);
+#endif
+		if(rt < 0){
+			if(errno != EAGAIN){
+				lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.socket.write") << lyramilk::kdict("向套接字%d中写入数据时发生错误:%s",fd(),strerror(errno)) << std::endl;
+			}
+		}else if(rt == 0){
+			lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.socket.write") << lyramilk::kdict("向套接字%d中写入数据时发生错误:%s",fd(),"套接字己关闭") << std::endl;
+		}
+		return rt;
+	}
+
+
+	bool socket::check_read(lyramilk::data::uint32 msec)
+	{
+		pollfd pfd;
+		pfd.fd = fd();
+		pfd.events = POLLIN;
+		pfd.revents = 0;
+		int ret = ::poll(&pfd,1,msec);
+		if(ret > 0){
+			if(pfd.revents & POLLIN){
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool socket::check_write(lyramilk::data::uint32 msec)
+	{
+		pollfd pfd;
+		pfd.fd = fd();
+		pfd.events = POLLOUT;
+		pfd.revents = 0;
+		int ret = ::poll(&pfd,1,msec);
+		if(ret > 0){
+			if(pfd.revents & POLLOUT){
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool socket::check_error()
+	{
+		pollfd pfd;
+		pfd.fd = fd();
+		pfd.events = POLLHUP | POLLERR;
+		pfd.revents = 0;
+		int ret = ::poll(&pfd,1,0);
+		if(ret > 0){
+			if(pfd.revents){
+				return true;
+			}
+		}
+		return false;
+	}
+
+
+	/* socket_ostream_buf */
+
+	const int buffersize = 2048;
+
+	socket_ostream_buf::int_type socket_ostream_buf::sync()
+	{
+		if(putbuf){
+			const char* p = pbase();
+			int l = pptr() - p;
+			if(l == 0) return 0;
+			int r = 0;
+			do{
+				r = psock->write(p,l);
+				if(errno == EAGAIN){
+					usleep(10);
+				}
+			}while(r == -1 && errno == EAGAIN);
+			if(r>0){
+				seq_w += r;
+
+				if(r == l){
+					setp(putbuf,putbuf + buffersize);
+				}else{
+					char buff[buffersize];
+					memcpy(buff,putbuf + r,l - r);
+					setp(putbuf,putbuf + buffersize);
+					sputn(buff,l-r);
+				}
+				return 0;
+			}
+			lyramilk::klog(lyramilk::log::error,"lyramilk.socket_ostream_buf.sync") << lyramilk::kdict("发送：%d\t错误：%s",r,strerror(errno)) << std::endl;
+		}
+		return traits_type::eof();
+	}
+
+	socket_ostream_buf::int_type socket_ostream_buf::overflow (int_type c)
+	{
+		if(putbuf == nullptr){
+			char t = c;
+			int r = psock->write(&t,1);
+			if(r > 0){
+				seq_w += r;
+				return r;
+			}
+		}
+		if(sync() == 0){
 			if(c != traits_type::eof()){
 				sputc(c);
 			}
-			return 0;
+			return c;
 		}
-		lyramilk::klog(lyramilk::log::error,"lyramilk.socket_stream_buf.overflow") << lyramilk::kdict("发送：%d\t错误：%s",r,strerror(errno)) << std::endl;
 		return traits_type::eof();
 	}
 
-	socket_stream_buf::int_type socket_stream_buf::underflow()
+	std::streamsize socket_ostream_buf::xsputn (const char* s, std::streamsize n)
 	{
-		char* p = getbuf;
-		int l = sizeof(getbuf);
-		int r = 0;
-		do{
-#ifdef OPENSSL_FOUND
-			if(psock->ssl()){
-				r = SSL_read((SSL*)psock->sslobj, p,l);
-			}else{
-				r = ::recv(psock->sock,p,l,0);
-			}
-#else
-			r = ::recv(psock->sock,p,l,0);
-#endif
-		}while(r == -1 && errno == EAGAIN);
-		if(r>0){
-			seq_r += r;
-			setg(getbuf,getbuf,getbuf + r);
-			return sgetc();
+		if(putbuf){
+			return std::basic_streambuf<char>::xsputn(s,n);
 		}
-		lyramilk::klog(lyramilk::log::error,"lyramilk.socket_stream_buf.underflow") << lyramilk::kdict("接收：%d\t错误：%s",r,strerror(errno)) << std::endl;
-		return traits_type::eof();
+
+		int r = psock->write(s,n);
+		if(r > 0){
+			seq_w += r;
+			return r;
+		}
+		return 0;
 	}
 
-	socket_stream_buf::socket_stream_buf()
+	socket_ostream_buf::socket_ostream_buf()
 	{
-		setp(putbuf,putbuf + sizeof(putbuf));
-		setg(getbuf,getbuf + sizeof(getbuf),getbuf + sizeof(getbuf));
+		putbuf = nullptr;
 	}
 
-	socket_stream_buf::~socket_stream_buf()
+	socket_ostream_buf::~socket_ostream_buf()
 	{
+		if(putbuf) delete[] putbuf;
 	}
 
-	void socket_stream_buf::reset()
+	void socket_ostream_buf::reset()
 	{
-		setp(putbuf,putbuf + sizeof(putbuf));
-		setg(getbuf,getbuf + sizeof(getbuf),getbuf + sizeof(getbuf));
+		if(putbuf){
+			setp(putbuf,putbuf + buffersize);
+		}
 	}
 
-	/* socket_stream */
-	socket_stream::socket_stream()
+	/* socket_ostream */
+	socket_ostream::socket_ostream()
 	{
 		sbuf.psock = nullptr;
 	}
 
-	socket_stream::socket_stream(socket& ac)
+	socket_ostream::socket_ostream(socket* ac)
 	{
 		init(ac);
 	}
 
-	socket_stream::~socket_stream()
+	socket_ostream::~socket_ostream()
 	{
-		/*
-		if(sbuf.psock){
-			fcntl(sbuf.psock->fd(),F_SETFL,flags);
-		}*/
 	}
 
-	void socket_stream::init(socket& ac)
+	void socket_ostream::init(socket* ac)
 	{
-		sbuf.seq_r = sbuf.seq_w = 0;
-		sbuf.psock = &ac;
-		lyramilk::data::stringstream::init(&sbuf);
+		sbuf.seq_w = 0;
+		sbuf.psock = ac;
+		lyramilk::data::ostringstream::init(&sbuf);
+		sbuf.putbuf = new char[buffersize];
 		sbuf.reset();
 		clear();
-		/*
-		flags = fcntl(sbuf.psock->fd(),F_GETFL,0);
-
-		int flags_nonblock = flags & ~O_NONBLOCK;
-		fcntl(sbuf.psock->fd(),F_SETFL,flags_nonblock);*/
-	}
-	std::streamsize socket_stream::in_avail()
-	{
-		return sbuf.in_avail();
 	}
 
-	lyramilk::data::uint64 socket_stream::rseq()
-	{
-		return sbuf.seq_r - in_avail();
-	}
-
-	lyramilk::data::uint64 socket_stream::wseq()
+	lyramilk::data::uint64 socket_ostream::wseq()
 	{
 		return sbuf.seq_w;
 	}
 
+
+
+	/* socket_ostream_buf_async */
+	socket_ostream_buf_async::int_type socket_ostream_buf_async::overflow (int_type c)
+	{
+		char t = c;
+		if(psock->write(&t,1) == 1){
+			++seq_w;
+			seq_diff = 1;
+			return t;
+		}
+		return traits_type::eof();
+	}
+
+	std::streamsize socket_ostream_buf_async::xsputn (const char* s, std::streamsize n)
+	{
+		seq_diff = psock->write(s,n);
+		if(seq_diff > 0){
+			seq_w += seq_diff;
+			return seq_diff;
+		}
+		return traits_type::eof();
+	}
+
+	socket_ostream_buf_async::socket_ostream_buf_async()
+	{
+	}
+
+	socket_ostream_buf_async::~socket_ostream_buf_async()
+	{
+	}
+
+	/* socket_ostream_async */
+	socket_ostream_async::socket_ostream_async()
+	{
+		sbuf.psock = nullptr;
+	}
+
+	socket_ostream_async::socket_ostream_async(socket* ac)
+	{
+		init(ac);
+	}
+
+	socket_ostream_async::~socket_ostream_async()
+	{
+	}
+
+	void socket_ostream_async::init(socket* ac)
+	{
+		sbuf.seq_w = 0;
+		sbuf.seq_diff = 0;
+		sbuf.psock = ac;
+		lyramilk::data::ostringstream::init(&sbuf);
+		clear();
+	}
+
+	lyramilk::data::uint64 socket_ostream_async::wseq()
+	{
+		return sbuf.seq_w;
+	}
+
+	int socket_ostream_async::pcount()
+	{
+		return sbuf.seq_diff;
+	}
+
+	/* socket_istream_buf */
+	socket_istream_buf::int_type socket_istream_buf::sync()
+	{
+		if(getbuf == nullptr) return traits_type::eof();
+		return overflow();
+	}
+
+	socket_istream_buf::int_type socket_istream_buf::underflow()
+	{
+		if(getbuf){
+			char* p = getbuf;
+			int l = buffersize;
+			int r = 0;
+			do{
+				r = psock->read(p,l);
+				if(errno == EAGAIN){
+					usleep(10);
+				}
+			}while(r == -1 && errno == EAGAIN);
+			if(r>0){
+				seq_r += r;
+				setg(getbuf,getbuf,getbuf + r);
+				return sgetc();
+			}
+			lyramilk::klog(lyramilk::log::error,"lyramilk.socket_istream_buf.underflow") << lyramilk::kdict("接收：%d\t错误：%s",r,strerror(errno)) << std::endl;
+			return traits_type::eof();
+		}
+		char c;
+		int r = psock->read(&c,1);
+		if(r > 0){
+			seq_r += r;
+			return c;
+		}
+		return traits_type::eof();
+	}
+
+	socket_istream_buf::socket_istream_buf()
+	{
+		getbuf = nullptr;
+	}
+
+	socket_istream_buf::~socket_istream_buf()
+	{
+		if(getbuf) delete[] getbuf;
+	}
+
+	void socket_istream_buf::reset()
+	{
+		if(getbuf){
+			setg(getbuf,getbuf + buffersize,getbuf + buffersize);
+		}
+	}
+
+	/* socket_istream */
+	socket_istream::socket_istream()
+	{
+		sbuf.psock = nullptr;
+	}
+
+	socket_istream::socket_istream(socket* ac)
+	{
+		init(ac);
+	}
+
+	socket_istream::~socket_istream()
+	{
+	}
+
+	void socket_istream::init(socket* ac)
+	{
+		sbuf.seq_r = 0;
+		sbuf.psock = ac;
+		lyramilk::data::istringstream::init(&sbuf);
+		sbuf.getbuf = new char[buffersize];
+		sbuf.reset();
+		clear();
+	}
+	std::streamsize socket_istream::in_avail()
+	{
+		return sbuf.in_avail();
+	}
+
+	lyramilk::data::uint64 socket_istream::rseq()
+	{
+		return sbuf.seq_r - in_avail();
+	}
+
 	/* client */
 	client::client():use_ssl(false)
-	{}
+	{
+		sslctx = nullptr;
+	}
 
 	client::~client()
-	{}
+	{
+		if(sslctx){
+			SSL_CTX_free((SSL_CTX*)sslctx);
+		}
+	}
 
 	bool client::open(const netaddress& addr)
 	{
@@ -319,7 +580,7 @@ namespace lyramilk{namespace netio
 	bool client::open(lyramilk::data::string host,lyramilk::data::uint16 port)
 	{
 		if(fd() >= 0){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开监听套件字失败，因为该套接字己打开。") << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字失败：%s","套接字己经打开。") << std::endl;
 			return false;
 		}
 		hostent* h = gethostbyname(host.c_str());
@@ -336,7 +597,7 @@ namespace lyramilk{namespace netio
 
 		native_socket_type tmpsock = ::socket(AF_INET,SOCK_STREAM, IPPROTO_IP);
 		if(tmpsock < 0){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开监听套件字失败：%s",strerror(errno)) << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字失败：%s",strerror(errno)) << std::endl;
 			return false;
 		}
 
@@ -373,6 +634,7 @@ namespace lyramilk{namespace netio
 			this->fd(tmpsock);
 			return true;
 		}
+		lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字失败：%s",strerror(errno)) << std::endl;
 		::close(tmpsock);
 		return false;
 	}
@@ -434,87 +696,5 @@ namespace lyramilk{namespace netio
 		return sslctx;
 	}
 
-	lyramilk::data::int32 client::read(char* buf, lyramilk::data::int32 len)
-	{
-		int rt = 0;
-#ifdef OPENSSL_FOUND
-		if(ssl()){
-			rt = SSL_read((SSL*)sslobj, buf, len);
-		}else{
-			rt = ::recv(fd(),buf,len,0);
-		}
-#else
-		rt = ::recv(fd(),buf,len,0);
-#endif
-		if(rt < 0){
-			lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.client.read") << lyramilk::kdict("从套接字中读取数据时发生错误:%s",strerror(errno)) << std::endl;
-		}else if(rt == 0){
-			lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.client.read") << lyramilk::kdict("从套接字中读取数据时发生错误:%s","套接字己关闭") << std::endl;
-		}
-		return rt;
-	}
-
-	lyramilk::data::int32 client::write(const char* buf, lyramilk::data::int32 len)
-	{
-		int rt = 0;
-#ifdef OPENSSL_FOUND
-		if(ssl()){
-			rt = SSL_write((SSL*)sslobj, buf, len);
-		}else{
-			rt = ::send(fd(),buf,len,0);
-		}
-#else
-		rt = ::send(fd(),buf,len,0);
-#endif
-		if(rt < 0){
-			lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.client.write") << lyramilk::kdict("发生了错误:%s",strerror(errno)) << std::endl;
-		}
-		return rt;
-	}
-
-	bool client::check_read(lyramilk::data::uint32 delay)
-	{
-		pollfd pfd;
-		pfd.fd = fd();
-		pfd.events = POLLIN;
-		pfd.revents = 0;
-		int ret = ::poll(&pfd,1,delay);
-		if(ret > 0){
-			if(pfd.revents & POLLIN){
-				return true;
-			}
-		}
-		return false;
-	}
-
-	bool client::check_write(lyramilk::data::uint32 delay)
-	{
-		pollfd pfd;
-		pfd.fd = fd();
-		pfd.events = POLLOUT;
-		pfd.revents = 0;
-		int ret = ::poll(&pfd,1,delay);
-		if(ret > 0){
-			if(pfd.revents & POLLOUT){
-				return true;
-			}
-		}
-		return false;
-	}
-
-	bool client::check_error()
-	{
-		pollfd pfd;
-		pfd.fd = fd();
-		pfd.events = POLLHUP | POLLERR;
-		pfd.revents = 0;
-		int ret = ::poll(&pfd,1,0);
-		if(ret > 0){
-			if(pfd.revents){
-				return true;
-			}
-		}
-		return false;
-	}
 }}
 

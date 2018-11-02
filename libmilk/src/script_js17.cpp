@@ -772,6 +772,10 @@ namespace lyramilk{namespace script{namespace js
 
 		JSObject* jsobj = JS_New(selectedcx,&jo.toObject(),jvs.size(),jvs.data());
 
+		if(jsobj == nullptr){
+			return lyramilk::data::var::nil;
+		}
+
 		jsval jv;
 		jv.setObject(*jsobj);
 

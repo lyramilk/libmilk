@@ -10,9 +10,9 @@
 
 
 #ifdef MACRO_ES2
-class server_session:public lyramilk::netio::aiosession2
+class server_session:public lyramilk::netio::aiosession_async
 #else
-class server_session:public lyramilk::netio::aiosession
+class server_session:public lyramilk::netio::aiosession_sync
 #endif
 {
   protected:
@@ -59,7 +59,7 @@ std::cout << std::endl;*/
 
 	//void write(const unsigned char* cache,int size)
 
-	server_session() :log(lyramilk::klog,"iseal.rpc.server.session")
+	server_session() :log(lyramilk::klog,"server.session")
 	{
 	}
 	virtual ~server_session()

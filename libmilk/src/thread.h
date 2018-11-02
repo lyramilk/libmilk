@@ -2,9 +2,7 @@
 #define _lyramilk_system_threading_thread_h_
 
 #include "config.h"
-#include <vector>
-#include <list>
-#include <cassert>
+#include <set>
 
 #ifdef __linux__
 	#include <pthread.h>
@@ -29,17 +27,18 @@ namespace lyramilk{namespace threading
 		@details 线程组对象，激活后多线程执行svc函数。使用的时候继承这个对象然后覆盖svc函数就可以。
 	*/
 #ifdef WIN32
-	template class _lyramilk_api_ std::vector < pthread_t >;
+	template class _lyramilk_api_ std::set < pthread_t>;
 #endif
 	class _lyramilk_api_ threads
 	{
 	  protected:
 		typedef int return_type;
-		std::size_t c;
+		std::size_t cap;
+		std::size_t cur;
+		void* lock;
+		typedef std::set<pthread_t> pool_type;
 
-		typedef std::vector<pthread_t> vector_type;
-
-		vector_type m;
+		pool_type m;
 #ifdef WIN32
 		static int __stdcall thread_task(threads* p);
 #else
@@ -61,24 +60,23 @@ namespace lyramilk{namespace threading
 			@details 激活时将启动多个线程执行svc
 			@param threadcount 激活的线程数。
 		*/
-		virtual void active(std::size_t threadcount);
+		virtual bool active(std::size_t threadcount);
 
 		/**
 			@brief 激活线程组
 			@details 激活时将启动多个线程执行svc，启动的线程数目根据cpu核心数决定。
 		*/
-		virtual void active();
-
-		/**
-			@brief 线程组析构
-			@details 析构时会等待所有线程结束才会真正退出。
-		*/
-		virtual void detach();
+		virtual bool active();
 
 		/**
 			@brief 激活的线程数
 		*/
 		virtual std::size_t size();
+
+		/**
+			@brief 配置的线程数
+		*/
+		virtual std::size_t capacity();
 
 		/**
 			@brief 线程函数，激活线程时触发。
@@ -192,6 +190,28 @@ namespace lyramilk{namespace threading
 		mutex_super& w();
 	  protected:
 		pthread_rwlock_t lock;
+	};
+
+	/**
+		@brief 固定次数的资源锁
+		@details 同一线程多次进入计多次。
+	*/
+	class _lyramilk_api_ mutex_semaphore :public mutex_super
+	{
+		long long sigval;
+	  protected:
+		long long max_signal;
+	  public:
+		mutex_semaphore();
+		virtual ~mutex_semaphore();
+		virtual void set_max_signal(long long max_signal);
+		virtual long long get_max_signal();
+		virtual long long get_signal();
+
+		virtual void lock();
+		virtual void unlock();
+		virtual bool try_lock();
+		virtual bool test() const;
 	};
 
 	/// 线程结束时调用。

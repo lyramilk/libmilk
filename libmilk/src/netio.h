@@ -47,8 +47,8 @@ namespace lyramilk{namespace netio
 	{
 		native_socket_type sock;
 	  protected:
-		friend class socket_stream_buf;
-		friend class aiosession2_buf;
+		friend class socket_ostream_buf;
+		friend class socket_istream_buf;
 		ssl_type sslobj;
 		bool sslenable;
 	  public:
@@ -75,45 +75,138 @@ namespace lyramilk{namespace netio
 		/// 取得套接字
 		virtual native_socket_type fd() const;
 		virtual void fd(native_socket_type tmpfd);
+
+
+		/*
+			@brief 从套接字中读取数据
+		*/
+
+		virtual lyramilk::data::int32 read(void* buf, lyramilk::data::int32 len);
+
+		/*
+			@brief 向套接字写入数据
+		*/
+		virtual lyramilk::data::int32 write(const void* buf, lyramilk::data::int32 len);
+
+		/*
+			@brief 检查套接字是否可读
+			@param msec 等待的毫秒数。
+			@return 在 msec 毫秒内如果套接字可读则返回true。
+		*/
+		virtual bool check_read(lyramilk::data::uint32 msec);
+
+		/*
+			@brief 检查套接字是否可写
+			@param msec 等待的毫秒数。
+			@return 在 msec 毫秒内如果套接字可写则返回true。
+		*/
+		virtual bool check_write(lyramilk::data::uint32 msec);
+
+		/*
+			@brief 检查套接字是有错误
+		*/
+		virtual bool check_error();
 	};
 
-	class _lyramilk_api_ socket_stream;
-
 	/// 以流的方式操作套接字的流缓冲
-	class _lyramilk_api_ socket_stream_buf : public std::basic_streambuf<char>
+	class _lyramilk_api_ socket_ostream_buf : public std::basic_streambuf<char>
 	{
-		friend class socket_stream;
-		lyramilk::data::uint64 seq_r;
+		friend class socket_ostream;
 		lyramilk::data::uint64 seq_w;
 	  protected:
 		lyramilk::netio::socket* psock;
-		char putbuf[2048];
-		char getbuf[2048];
+		char* putbuf;
 		virtual int_type sync();
 		virtual int_type overflow (int_type c = traits_type::eof());
-		virtual int_type underflow();
+		virtual std::streamsize xsputn (const char* s, std::streamsize n);
 	  public:
 		void reset();
-		socket_stream_buf();
-		virtual ~socket_stream_buf();
+		socket_ostream_buf();
+		virtual ~socket_ostream_buf();
 	};
 
 	/*
 		@brief 以流的方式操作套接字的流
-		@details 只支持读写
+		@details 只支持写
 	*/
-	class _lyramilk_api_ socket_stream : public lyramilk::data::stringstream
+	class _lyramilk_api_ socket_ostream : public lyramilk::data::ostringstream
 	{
-		socket_stream_buf sbuf;
+		socket_ostream_buf sbuf;
 		int flags;
 	  public:
-		socket_stream();
-		socket_stream(socket& ac);
-		virtual ~socket_stream();
-		void init(socket& ac);
+		socket_ostream();
+		socket_ostream(socket* ac);
+		virtual ~socket_ostream();
+		void init(socket* ac);
+		lyramilk::data::uint64 wseq();
+	};
+
+
+
+	/// 以流的方式操作套接字的流缓冲（异步）
+	class _lyramilk_api_ socket_ostream_buf_async : public std::basic_streambuf<char>
+	{
+		friend class socket_ostream_async;
+		lyramilk::data::uint64 seq_w;
+		int seq_diff;
+	  protected:
+		lyramilk::netio::socket* psock;
+		virtual int_type overflow (int_type c = traits_type::eof());
+		virtual std::streamsize xsputn (const char* s, std::streamsize n);
+	  public:
+		void reset();
+		socket_ostream_buf_async();
+		virtual ~socket_ostream_buf_async();
+	};
+
+	/*
+		@brief 以流的方式操作套接字的流（异步）
+		@details 只支持写，不能保证一次把所有数据都写出去，需要用gcount去读到底写了多少字节。
+	*/
+	class _lyramilk_api_ socket_ostream_async : public lyramilk::data::ostringstream
+	{
+		socket_ostream_buf_async sbuf;
+		int flags;
+	  public:
+		socket_ostream_async();
+		socket_ostream_async(socket* ac);
+		virtual ~socket_ostream_async();
+		void init(socket* ac);
+		lyramilk::data::uint64 wseq();
+		int pcount();
+	};
+
+	/// 以流的方式操作套接字的流缓冲
+	class _lyramilk_api_ socket_istream_buf : public std::basic_streambuf<char>
+	{
+		friend class socket_istream;
+		lyramilk::data::uint64 seq_r;
+	  protected:
+		lyramilk::netio::socket* psock;
+		char* getbuf;
+		virtual int_type sync();
+		virtual int_type underflow();
+	  public:
+		void reset();
+		socket_istream_buf();
+		virtual ~socket_istream_buf();
+	};
+
+	/*
+		@brief 以流的方式操作套接字的流
+		@details 只支持读
+	*/
+	class _lyramilk_api_ socket_istream : public lyramilk::data::istringstream
+	{
+		socket_istream_buf sbuf;
+		int flags;
+	  public:
+		socket_istream();
+		socket_istream(socket* ac);
+		virtual ~socket_istream();
+		void init(socket* ac);
 		virtual std::streamsize in_avail();
 		lyramilk::data::uint64 rseq();
-		lyramilk::data::uint64 wseq();
 	};
 
 	/// 客户端套接字
@@ -134,44 +227,6 @@ namespace lyramilk{namespace netio
 
 		///	取得SSL_CTX*
 		virtual ssl_ctx_type get_ssl_ctx();
-
-		/*
-			@brief 从套接字中读取数据
-			@param buf 从套接字中读取的数据将写入该缓冲区。
-			@param len buf的内存长度。
-			@param delay 等待的毫秒数。
-			@return 实际读取得字符数。小于1时表示读取失败。
-		*/
-
-		virtual lyramilk::data::int32 read(char* buf, lyramilk::data::int32 len);
-
-		/*
-			@brief 向套接字写入数据
-			@param buf 该缓冲区的数据将写入到套接字中。
-			@param len buf的内存长度。
-			@param delay 等待的毫秒数。
-			@return 在delay毫秒内如果套接字可写则返回true。
-		*/
-		virtual lyramilk::data::int32 write(const char* buf, lyramilk::data::int32 len);
-
-		/*
-			@brief 检查套接字是否可读
-			@param delay 等待的毫秒数。
-			@return 在delay毫秒内如果套接字可读则返回true。
-		*/
-		virtual bool check_read(lyramilk::data::uint32 delay);
-
-		/*
-			@brief 检查套接字是否可写
-			@param delay 等待的毫秒数。
-			@return 在delay毫秒内如果套接字可写则返回true。
-		*/
-		virtual bool check_write(lyramilk::data::uint32 delay);
-
-		/*
-			@brief 检查套接字是有错误
-		*/
-		virtual bool check_error();
 	};
 
 

@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <cctype>
 
+#include <errno.h>
+#include <string.h>
 
 #ifdef LZ4_FOUND
 	#include <lz4.h>
@@ -26,11 +28,10 @@ namespace lyramilk{ namespace data
 	{
 		const size_t ds = 65536;
 		iconv_t cd = iconv_open(to.c_str(),from.c_str());
-		if(cd == 0){
-			assert(cd);
+		if(cd == 0 || cd == (iconv_t)-1){
+			throw lyramilk::data::coding_exception(D("不支持的iconv编码：%s,%s-->%s",strerror(errno),from.c_str(),to.c_str()));
 			return "";
 		}
-
 		char* p1 = (char*)str.c_str();
 		size_t p1s = str.size();
 		std::vector<char> ret;
@@ -48,6 +49,7 @@ namespace lyramilk{ namespace data
 
 		iconv_close(cd);
 		if(rc == -1){
+			throw lyramilk::data::coding_exception(D("编码转换错误：%s",strerror(errno)));
 			return "";
 		}
 		return lyramilk::data::string(ret.data(),p2 - (char*)ret.data());
@@ -96,7 +98,7 @@ namespace lyramilk{ namespace data
 		transform(codingname.begin(), codingname.end(), str.begin(), tolower);
 		builder_type::iterator it = builder.find(str);
 		if(it == builder.end()){
-			throw lyramilk::exception(D("不可识别的编码：%s",codingname.c_str()));
+			throw lyramilk::data::coding_exception(D("不可识别的编码：%s",codingname.c_str()));
 		}
 		return it->second()->encode(src);
 	}
@@ -106,7 +108,7 @@ namespace lyramilk{ namespace data
 		transform(codingname.begin(), codingname.end(), str.begin(), tolower);
 		builder_type::iterator it = builder.find(str);
 		if(it == builder.end()){
-			throw lyramilk::exception(D("不可识别的编码：%s",codingname.c_str()));
+			throw lyramilk::data::coding_exception(D("不可识别的编码：%s",codingname.c_str()));
 		}
 		return it->second()->decode(src);
 	}
@@ -187,11 +189,11 @@ class coding_t:public lyramilk::data::coding
   public:
 	virtual lyramilk::data::string decode(const lyramilk::data::string& str)
 	{
-		return iconv(str,name,"utf8");
+		return iconv(str,name,"UTF-8");
 	}
 	virtual lyramilk::data::string encode(const lyramilk::data::string& str)
 	{
-		return iconv(str,"utf8",name);
+		return iconv(str,"UTF-8",name);
 	}
 
 	static lyramilk::data::coding* getter()
@@ -203,6 +205,7 @@ class coding_t:public lyramilk::data::coding
 
 char c_gbk[] = "gbk";
 char c_gb2312[] = "gb2312";
+char c_GB2312[] = "GB2312";
 char c_big5[] = "big5";
 char c_utf16[] = "utf16le";
 char c_utf32[] = "utf32";
@@ -214,7 +217,8 @@ static bool ___init()
 	lyramilk::data::codes::instance()->define("lz4",coding_lz4::getter);
 #endif
 	lyramilk::data::codes::instance()->define(c_gbk,coding_t<c_gbk>::getter);
-	lyramilk::data::codes::instance()->define(c_gb2312,coding_t<c_gb2312>::getter);
+	lyramilk::data::codes::instance()->define(c_gb2312,coding_t<c_GB2312>::getter);
+	lyramilk::data::codes::instance()->define(c_GB2312,coding_t<c_GB2312>::getter);
 	lyramilk::data::codes::instance()->define(c_big5,coding_t<c_big5>::getter);
 	lyramilk::data::codes::instance()->define(c_utf16,coding_t<c_utf16>::getter);
 	lyramilk::data::codes::instance()->define("utf-16",coding_t<c_utf16>::getter);

@@ -2,6 +2,15 @@
 #define _lyramilk_io_aio_h_
 
 #include "thread.h"
+#include "atom.h"
+#include <set>
+
+
+/**
+	@namespace lyramilk::io
+	@brief io
+	@details 该命名空间描述输入/输出
+*/
 
 namespace lyramilk{namespace io
 {
@@ -15,8 +24,11 @@ namespace lyramilk{namespace io
 	class _lyramilk_api_ aiopoll;
 	class _lyramilk_api_ aioselector
 	{
+		uint32 mask;
 	  protected:
 		friend class aiopoll;
+		friend class aiopoll_safe;
+		lyramilk::threading::mutex_spin mlock;
 		aiopoll* pool;
 		virtual void ondestory() = 0;
 	  protected:
@@ -53,6 +65,14 @@ namespace lyramilk{namespace io
 	  public:
 		aioselector();
 		virtual ~aioselector();
+		/**
+			@brief 暂时锁定这个事件，不会再触发事件
+		*/
+		virtual bool lock();
+		/**
+			@brief 恢复lock状态
+		*/
+		virtual bool unlock();
 	};
 
 	/**
@@ -64,20 +84,46 @@ namespace lyramilk{namespace io
 		friend class aioselector;
 		native_epool_type epfd;
 		virtual bool transmessage();
-	  public:
-		const static int pool_max = 1000000;
+		virtual native_epool_type getfd();
 	  public:
 		aiopoll();
 		virtual ~aiopoll();
-		virtual native_epool_type getfd();
 
-		virtual bool add(aioselector* r);
-		virtual bool add(aioselector* r,uint32 mask);
-		virtual bool reset(aioselector* r,uint32 mask);
+		virtual bool add(aioselector* r,lyramilk::data::int64 mask = -1);
+		virtual bool reset(aioselector* r,lyramilk::data::int64 mask);
 		virtual bool remove(aioselector* r);
 
-		virtual void onevent(aioselector* r,uint32 events);
+		virtual void onevent(aioselector* r,lyramilk::data::int64 events);
 		virtual int svc();
+	};
+
+	//TODO 要改为每个线程一个epoll来做。记录业务工作时间，时间过长的时候创建新线程接管，同时标记旧线程。 
+	class _lyramilk_api_ aiopoll_safe : public lyramilk::io::aiopoll
+	{
+		lyramilk::threading::atomic<std::size_t> thread_idx;
+		pthread_key_t seq_key;
+		std::size_t min_payload;
+
+		struct epinfo
+		{
+			native_epool_type epfd;
+			lyramilk::data::uint64 payload;
+		};
+
+		std::vector<epinfo> epfds;
+		virtual bool active(std::size_t threadcount);
+	  protected:
+		virtual int svc();
+		virtual native_epool_type getfd();
+		virtual bool add_to_thread(lyramilk::data::int64 idx,aioselector* r,lyramilk::data::int64 mask);
+	  public:
+		aiopoll_safe(std::size_t threadcount);
+		virtual ~aiopoll_safe();
+
+		virtual bool add(aioselector* r,lyramilk::data::int64 mask = -1);
+		virtual bool add(aioselector* r,lyramilk::data::int64 mask,bool use_current_thread);
+
+		virtual lyramilk::data::int64 get_thread_idx();
 	};
 }}
 

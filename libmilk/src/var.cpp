@@ -1068,18 +1068,27 @@ var::operator string () const throw(type_invalid)
 		}break;
 	  case t_int:{
 			char buff[256];
-			sprintf(buff,"%lld",u.i8);
-			return buff;
+			std::size_t fs = snprintf(buff,sizeof(buff),"%lld",u.i8);
+			if(fs < 256) return buff;
+			char* pbuff = (char*)calloc(1,fs + 1);
+			snprintf(pbuff,fs+1,"%lld",u.i8);
+			return pbuff;
 		}break;
 	  case t_uint:{
 			char buff[256];
-			sprintf(buff,"%llu",u.u8);
-			return buff;
+			std::size_t fs = snprintf(buff,sizeof(buff),"%llu",u.u8);
+			if(fs < 256) return buff;
+			char* pbuff = (char*)calloc(1,fs + 1);
+			snprintf(pbuff,fs+1,"%llu",u.u8);
+			return pbuff;
 		}break;
 	  case t_double:{
 			char buff[256];
-			sprintf(buff,"%f",u.f8);
-			return buff;
+			std::size_t fs = snprintf(buff,sizeof(buff),"%f",u.f8);
+			if(fs < 256) return buff;
+			char* pbuff = (char*)calloc(1,fs + 1);
+			snprintf(pbuff,fs+1,"%f",u.f8);
+			return pbuff;
 		}break;
 	  case t_array:{
 			const array* ba = reinterpret_cast<const array*>(&u.ba);

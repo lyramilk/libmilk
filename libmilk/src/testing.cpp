@@ -28,13 +28,13 @@ namespace lyramilk{ namespace debug
 
 	void nsecdiff::mark()
 	{
-		clock_gettime(CLOCK_REALTIME, &timestamp);
+		clock_gettime(CLOCK_MONOTONIC_RAW, &timestamp);
 	}
 
 	long long nsecdiff::diff()
 	{
 		struct timespec ts;
-		clock_gettime(CLOCK_REALTIME, &ts);
+		clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
 		long long s = ts.tv_sec - timestamp.tv_sec;
 		long long n = ts.tv_nsec - timestamp.tv_nsec;
 		return s * 1000000000 + n;

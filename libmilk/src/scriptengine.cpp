@@ -1,5 +1,6 @@
 ﻿#include "scriptengine.h"
 #include <fstream>
+#include <cassert>
 
 namespace lyramilk{namespace script
 {
