@@ -217,7 +217,7 @@ namespace lyramilk{namespace netio
 				lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.socket.read") << lyramilk::kdict("从套接字%d中读取数据时发生错误:%s",fd(),strerror(errno)) << std::endl;
 			}
 		}else if(rt == 0){
-			lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.socket.read") << lyramilk::kdict("从套接字%d中读取数据时发生错误:%s",fd(),"套接字己关闭") << std::endl;
+			//lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.socket.read") << lyramilk::kdict("从套接字%d中读取数据时发生错误:%s",fd(),"套接字己关闭") << std::endl;
 		}
 		return rt;
 	}
@@ -234,12 +234,13 @@ namespace lyramilk{namespace netio
 #else
 		rt = ::send(fd(),buf,len,0);
 #endif
+
 		if(rt < 0){
 			if(errno != EAGAIN){
 				lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.socket.write") << lyramilk::kdict("向套接字%d中写入数据时发生错误:%s",fd(),strerror(errno)) << std::endl;
 			}
 		}else if(rt == 0){
-			lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.socket.write") << lyramilk::kdict("向套接字%d中写入数据时发生错误:%s",fd(),"套接字己关闭") << std::endl;
+			//lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.socket.write") << lyramilk::kdict("向套接字%d中写入数据时发生错误:%s",fd(),"套接字己关闭") << std::endl;
 		}
 		return rt;
 	}
@@ -299,29 +300,33 @@ namespace lyramilk{namespace netio
 	{
 		if(putbuf){
 			const char* p = pbase();
-			int l = pptr() - p;
-			if(l == 0) return 0;
-			int r = 0;
-			do{
-				r = psock->write(p,l);
-				if(errno == EAGAIN){
-					usleep(10);
-				}
-			}while(r == -1 && errno == EAGAIN);
-			if(r>0){
-				seq_w += r;
+			int n = pptr() - p;
+			if(n == 0) return 0;
 
-				if(r == l){
-					setp(putbuf,putbuf + buffersize);
+			int sendbytes = 0;
+			while(sendbytes < n){
+				int r = psock->write(p + sendbytes,n - sendbytes);
+				if(r > 0){
+					sendbytes += r;
+					seq_w += r;
+				}else if(r == -1 && errno== EAGAIN){
+					usleep(10);
+					continue;
 				}else{
-					char buff[buffersize];
-					memcpy(buff,putbuf + r,l - r);
-					setp(putbuf,putbuf + buffersize);
-					sputn(buff,l-r);
+					lyramilk::klog(lyramilk::log::error,"lyramilk.socket_ostream_buf.sync") << lyramilk::kdict("发送：%d\t错误：%s",r,strerror(errno)) << std::endl;
+					break;
 				}
-				return 0;
 			}
-			lyramilk::klog(lyramilk::log::error,"lyramilk.socket_ostream_buf.sync") << lyramilk::kdict("发送：%d\t错误：%s",r,strerror(errno)) << std::endl;
+
+			if(sendbytes == n){
+				setp(putbuf,putbuf + buffersize);
+			}else{
+				char buff[buffersize];
+				memcpy(buff,putbuf + sendbytes,n - sendbytes);
+				setp(putbuf,putbuf + buffersize);
+				sputn(buff,n-sendbytes);
+			}
+			return 0;
 		}
 		return traits_type::eof();
 	}
@@ -347,16 +352,26 @@ namespace lyramilk{namespace netio
 
 	std::streamsize socket_ostream_buf::xsputn (const char* s, std::streamsize n)
 	{
+//COUT << "xsputn " << putbuf << std::endl;
 		if(putbuf){
 			return std::basic_streambuf<char>::xsputn(s,n);
 		}
 
-		int r = psock->write(s,n);
-		if(r > 0){
-			seq_w += r;
-			return r;
+		std::streamsize sendbytes = 0;
+
+		while(sendbytes < n){
+			int r = psock->write(s + sendbytes,n - sendbytes);
+			if(r > 0){
+				sendbytes += r;
+				seq_w += r;
+			}else if(r == -1 && errno== EAGAIN){
+				usleep(10);
+				continue;
+			}else{
+				break;
+			}
 		}
-		return 0;
+		return sendbytes;
 	}
 
 	socket_ostream_buf::socket_ostream_buf()
