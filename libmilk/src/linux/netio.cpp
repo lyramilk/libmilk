@@ -314,7 +314,7 @@ namespace lyramilk{namespace netio
 					continue;
 				}else{
 					lyramilk::klog(lyramilk::log::error,"lyramilk.socket_ostream_buf.sync") << lyramilk::kdict("发送：%d\t错误：%s",r,strerror(errno)) << std::endl;
-					break;
+					return traits_type::eof();
 				}
 			}
 
