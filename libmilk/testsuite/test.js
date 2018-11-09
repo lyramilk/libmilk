@@ -1,16 +1,36 @@
 
 function mytest(t,v)
 {
+	myecho("step 0");
+	let i =0;
+	let d = {};
+	d["iterator"] = function()
+	{
+		return {next:function(){
+			if(i > 5) throw StopIteration;
+			return {n:++i};
+		}}
+	}
+
+	myecho("ssss");
+	for(let k of d){
+		myecho(k);
+	}
+	myecho("eee");
+
+
 	myecho("step 1-1");
 
 	let obj1 = new test_enum();
-	for(let k in obj1){
-		myecho("ss" + k);
-	}
+	/*
+	for(let idx in obj1){
+		let v = obj1[idx];
+		myecho("ss,type=" + typeof(v) + ",idx=" + idx + ",value=" + v);
+	}*/
 
 	myecho("step 1-2");
-	for(let k in obj1){
-		myecho("ss" + k);
+	for(let k of obj1){
+		myecho("ss," + typeof(k) + "," + JSON.stringify(k));
 	}
 	myecho("step 1-3");
 
@@ -44,3 +64,6 @@ function mytest(t,v)
 
 	return t + v;
 }
+
+
+

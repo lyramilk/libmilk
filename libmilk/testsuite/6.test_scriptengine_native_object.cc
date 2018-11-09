@@ -126,23 +126,32 @@ printf("%s\n",__FUNCTION__);
 		return "test_system";
 	}
 
-
 	lyramilk::data::var::array ar;
 
 	test_enum()
 	{
-		ar.push_back("月光");
-		ar.push_back("星辰");
-		ar.push_back("烈日");
+
+		lyramilk::data::map m;
+		m["name"] = "月光";
+		m["id"] = 1;
+		ar.push_back(m);
+
+		m["name"] = "星辰";
+		m["id"] = 2;
+		ar.push_back(m);
+
+		m["name"] = "烈日";
+		m["id"] = 3;
+		ar.push_back(m);
 	}
 
 	~test_enum()
 	{
 	}
 
-	virtual int iterator_begin(lyramilk::data::var* v)
+	virtual bool iterator_begin()
 	{
-		return 3;
+		return true;
 	}
 
 	virtual bool iterator_next(std::size_t idx,lyramilk::data::var* v)
@@ -167,6 +176,10 @@ printf("%s\n",__FUNCTION__);
 
 	virtual bool get(const lyramilk::data::string& k,lyramilk::data::var* v)
 	{
+COUT << k << std::endl;
+		if(m.find(k) == m.end()){
+			return false;
+		}
 		*v = m[k] + ".surfix";
 		return true;
 	}
