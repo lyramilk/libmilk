@@ -1,6 +1,6 @@
 ﻿#include "log.h"
 #include "ansi_3_64.h"
-#include "multilanguage.h"
+#include "dict.h"
 #include <sstream>
 #include <time.h>
 #include <iomanip>

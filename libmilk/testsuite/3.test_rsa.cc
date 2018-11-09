@@ -2,7 +2,7 @@
 #include "log.h"
 #include "bigint.h"
 #include "codes.h"
-#include "multilanguage.h"
+#include "dict.h"
 #define D(x...) lyramilk::kdict(x)
 
 using namespace lyramilk::data;

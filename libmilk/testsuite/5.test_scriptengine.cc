@@ -4,7 +4,7 @@
 	#include <lua.h>
 #endif
 #include "log.h"
-#include "multilanguage.h"
+#include "dict.h"
 #define D(x...) lyramilk::kdict(x)
 
 #include "script_js.h"

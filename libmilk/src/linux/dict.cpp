@@ -1,14 +1,14 @@
 ﻿#define  _CRT_SECURE_NO_WARNINGS
-#include "multilanguage.h"
+#include "dict.h"
 #include "log.h"
 #include "json.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <fstream>
 
-lyramilk::data::multilanguage::dict lyramilk::kdict;
+lyramilk::data::dict lyramilk::kdict;
 
-namespace lyramilk{namespace data{namespace multilanguage{
+namespace lyramilk{namespace data{
 
 	struct dict_inner_keeper
 	{
@@ -115,25 +115,6 @@ namespace lyramilk{namespace data{namespace multilanguage{
 		return lyramilk::data::string(buf.begin(),buf.end());
 	}
 
-	lyramilk::data::string dict::format(const char* fmt,...)
-	{
-		char buff[256];
-		va_list va;
-		int cnt;
-		va_start(va, fmt);
-		cnt = vsnprintf(buff,256, fmt, va);
-		va_end(va);
-		if(cnt < 256){
-			return lyramilk::data::string(buff,cnt);
-		}
-
-		std::vector<char> buf(cnt + 1);
-		va_start(va, fmt);
-		vsprintf(buf.data(),fmt,va);
-		va_end(va);
-		return lyramilk::data::string(buf.begin(),buf.end());
-	}
-
 	dict* dict::tie(dict* pdict)
 	{
 		dict* old = p;
@@ -141,4 +122,4 @@ namespace lyramilk{namespace data{namespace multilanguage{
 		return old;
 	}
 
-}}}
+}}

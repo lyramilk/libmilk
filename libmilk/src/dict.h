@@ -1,13 +1,13 @@
-﻿#ifndef _lyramilk_data_multilanguage_h_
-#define _lyramilk_data_multilanguage_h_
+﻿#ifndef _lyramilk_data_dict_h_
+#define _lyramilk_data_dict_h_
 
 #include "var.h"
 
 /**
-	@namespace lyramilk::data::multilanguage
+	@namespace lyramilk::data
 	@brief 多语言
 */
-namespace lyramilk{namespace data{namespace multilanguage{
+namespace lyramilk{namespace data{
 
 	/**
 		@brief 字典
@@ -50,15 +50,6 @@ namespace lyramilk{namespace data{namespace multilanguage{
 			@return 目标串
 		*/
 		lyramilk::data::string trans(const char* fmt,...);
-
-		/**
-			@brief 格式化字符串(这里并不进行翻译)
-			@param fmt 格式串
-			@param ... 补充参数
-			@return 目标串
-		*/
-		lyramilk::data::string static format(const char* fmt,...);
-
 		/**
 			@brief 翻译字符串
 			@param src 源串
@@ -74,11 +65,11 @@ namespace lyramilk{namespace data{namespace multilanguage{
 		*/
 		dict* tie(dict* pdict);
 	};
-}}}
+}}
 
 namespace lyramilk{
 	/// 全局默认字典，可以通过这个字典对输出字符串进行翻译。
-	extern _lyramilk_api_ lyramilk::data::multilanguage::dict kdict;
+	extern _lyramilk_api_ lyramilk::data::dict kdict;
 }
 
 #ifdef _MSC_VER

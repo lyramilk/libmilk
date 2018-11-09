@@ -1,5 +1,5 @@
 ﻿#include "var.h"
-#include "multilanguage.h"
+#include "dict.h"
 #include <vector>
 #include <sstream>
 #include <algorithm>

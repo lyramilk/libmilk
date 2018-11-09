@@ -1,5 +1,5 @@
 ﻿#include "script_js.h"
-#include "multilanguage.h"
+#include "dict.h"
 #include "log.h"
 //#include "testing.h"
 #include <jsfriendapi.h>

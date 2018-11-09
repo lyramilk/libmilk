@@ -1,5 +1,5 @@
 ﻿#include "script_lua.h"
-#include "multilanguage.h"
+#include "dict.h"
 #include "log.h"
 #include <fstream>
 #include <cassert>

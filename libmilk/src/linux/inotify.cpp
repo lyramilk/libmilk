@@ -1,5 +1,5 @@
 ﻿#include "inotify.h"
-#include "multilanguage.h"
+#include "dict.h"
 #include "log.h"
 #include <sys/inotify.h>
 #include <sys/stat.h>

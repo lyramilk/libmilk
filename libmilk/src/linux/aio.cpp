@@ -1,5 +1,5 @@
 ﻿#include "netaio.h"
-#include "multilanguage.h"
+#include "dict.h"
 #include "log.h"
 #include <sys/epoll.h>
 #include <unistd.h>

@@ -1,5 +1,5 @@
 ﻿#include "netproxy.h"
-#include "multilanguage.h"
+#include "dict.h"
 #include "ansi_3_64.h"
 #include "log.h"
 

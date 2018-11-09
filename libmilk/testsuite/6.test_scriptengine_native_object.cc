@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include "log.h"
-#include "multilanguage.h"
+#include "dict.h"
 #include "scriptengine.h"
 #include "ansi_3_64.h"
 #include "testing.h"

@@ -1,5 +1,5 @@
 ﻿#include "testing.h"
-#include "multilanguage.h"
+#include "dict.h"
 #include <sstream>
 #ifdef WIN32
 #include <windows.h>

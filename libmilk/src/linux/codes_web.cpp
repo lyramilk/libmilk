@@ -1,6 +1,6 @@
 ﻿#include "codes.h"
 #include "log.h"
-#include "multilanguage.h"
+#include "dict.h"
 
 #include <memory.h>
 
