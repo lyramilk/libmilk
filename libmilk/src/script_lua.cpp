@@ -101,7 +101,7 @@ namespace lyramilk{namespace script{namespace lua
 				return lyramilk::data::var::nil;
 			}break;
 		  case LUA_TTABLE:{
-				lyramilk::data::var::map m;
+				lyramilk::data::map m;
 				lua_pushnil(L);
 
 				while (lua_next(L, index)) {
@@ -150,8 +150,8 @@ namespace lyramilk{namespace script{namespace lua
 			}
 			break;
 		  case lyramilk::data::var::t_array:{
-				const lyramilk::data::var::array &a = v;
-				lyramilk::data::var::array::const_iterator it = a.begin();
+				const lyramilk::data::array &a = v;
+				lyramilk::data::array::const_iterator it = a.begin();
 				lua_newtable(L);
 				int itab = lua_gettop(L);
 				for(int i=0;it!=a.end();++it,++i){
@@ -162,8 +162,8 @@ namespace lyramilk{namespace script{namespace lua
 			}
 			break;
 		  case lyramilk::data::var::t_map:{
-				const lyramilk::data::var::map &m = v;
-				lyramilk::data::var::map::const_iterator it = m.begin();
+				const lyramilk::data::map &m = v;
+				lyramilk::data::map::const_iterator it = m.begin();
 				lua_newtable(L);
 				int itab = lua_gettop(L);
 				for(;it!=m.end();++it){
@@ -199,9 +199,9 @@ namespace lyramilk{namespace script{namespace lua
 		return true;
 	}
 
-	static lyramilk::data::var::array stov(lua_State *L)
+	static lyramilk::data::array stov(lua_State *L)
 	{
-		lyramilk::data::var::array r;
+		lyramilk::data::array r;
 		int m=lua_gettop(L);
 		for(int index=1;index<=m;++index){
 			lyramilk::data::var v = luaget(L,index);
@@ -210,11 +210,11 @@ namespace lyramilk{namespace script{namespace lua
 		return r;
 	}
 
-	static int vtos(lua_State *L,lyramilk::data::var::array& v)
+	static int vtos(lua_State *L,const lyramilk::data::array& v)
 	{
-		lyramilk::data::var::array::iterator it = v.begin();
+		lyramilk::data::array::const_iterator it = v.begin();
 		for(;it!=v.end();++it){
-			lyramilk::data::var &v = *it;
+			const lyramilk::data::var &v = *it;
 			luaset(L,v);
 		}
 		return v.size();
@@ -227,14 +227,14 @@ namespace lyramilk{namespace script{namespace lua
 		if(pfunc){
 			script_lua::functional_type func = (script_lua::functional_type)pfunc;
 
-			lyramilk::data::var::array params = stov(L);
+			lyramilk::data::array params = stov(L);
 			lua_pop(L,lua_gettop(L));
 
 			lua_getglobal(L,"__global_engine_pointer");
 			void* penv = lua_touserdata(L,-1);
 			lua_pop(L,1);
 
-			lyramilk::data::var::map env;
+			lyramilk::data::map env;
 			env[engine::s_env_engine()].assign(engine::s_env_engine(),penv);
 			lyramilk::data::var ret = func(params,env);
 			luaset(L,ret);
@@ -253,10 +253,10 @@ namespace lyramilk{namespace script{namespace lua
 		if(pfunc && pthis && mi){
 			script_lua::functional_type_inclass func = (script_lua::functional_type_inclass)pfunc;
 
-			lyramilk::data::var::array params = stov(L);
+			lyramilk::data::array params = stov(L);
 			lua_pop(L,lua_gettop(L));
 
-			lyramilk::data::var::map env;
+			lyramilk::data::map env;
 			//env[engine::s_env_this()].assign(engine::s_user_nativeobject(),(*pthis)->userdata(engine::s_user_nativeobject()));
 			env[engine::s_env_engine()].assign(engine::s_env_engine(),mi->env);
 			lyramilk::data::var ret = func(params,env,(void*)(*pthis)->userdata(engine::s_user_nativeobject()));
@@ -306,7 +306,7 @@ namespace lyramilk{namespace script{namespace lua
 		if(cls == NULL) return 0;
 		lua_pop(L,1);
 		script_lua::metainfo* mi = (script_lua::metainfo*)cls;
-		lyramilk::data::var::array r;
+		lyramilk::data::array r;
 		int m=lua_gettop(L);
 		for(int index=2;index<=m;++index){
 			lyramilk::data::var v = luaget(L,index);
@@ -334,7 +334,7 @@ namespace lyramilk{namespace script{namespace lua
 		lua_pop(L,1);
 		script_lua::metainfo* mi = (script_lua::metainfo*)cls;
 		lyramilk::data::var** p = (lyramilk::data::var**)lua_touserdata(L,1);
-		void* pdata = (void*)(*p)->userdata(engine::s_user_nativeobject());
+		lyramilk::script::sclass* pdata = (lyramilk::script::sclass*)(*p)->userdata(engine::s_user_nativeobject());
 		mi->dtr(pdata);
 		delete *p;
 		return 0;
@@ -353,7 +353,7 @@ namespace lyramilk{namespace script{namespace lua
 		lua_close(L_template);
 	}
 
-	bool script_lua::load_string(lyramilk::data::string scriptstring)
+	bool script_lua::load_string(const lyramilk::data::string& scriptstring)
 	{
 		init();
 		if(luaL_loadstring(L, scriptstring.c_str()) == 0){
@@ -378,7 +378,7 @@ namespace lyramilk{namespace script{namespace lua
 		return false;
 	}
 
-	bool script_lua::load_file(lyramilk::data::string scriptfile)
+	bool script_lua::load_file(const lyramilk::data::string& scriptfile)
 	{
 		init();
 		bool mainfile = false;
@@ -411,7 +411,7 @@ namespace lyramilk{namespace script{namespace lua
 		return false;
 	}
 
-	lyramilk::data::var script_lua::call(lyramilk::data::var func,lyramilk::data::var::array args)
+	lyramilk::data::var script_lua::call(const lyramilk::data::var& func,const lyramilk::data::array& args)
 	{
 		init();
 		lua_getglobal(L, func.str().c_str());
@@ -442,7 +442,7 @@ namespace lyramilk{namespace script{namespace lua
 		}
 	}
 
-	void script_lua::define(lyramilk::data::string classname,functional_map m,class_builder builder,class_destoryer destoryer)
+	void script_lua::define(const lyramilk::data::string& classname,functional_map m,class_builder builder,class_destoryer destoryer)
 	{
 		//std::cout << "注册类：" << classname << ",构造:" << (void*)builder << ",释放" << (void*)destoryer << std::endl;
 		luaL_newmetatable(L_template,classname.c_str());
@@ -479,15 +479,21 @@ namespace lyramilk{namespace script{namespace lua
 	}
 	
 
-	void script_lua::define(lyramilk::data::string funcname,functional_type func)
+	void script_lua::define(const lyramilk::data::string& funcname,functional_type func)
 	{
 		//std::cout << "注册全局函数：" << funcname << "," << (void*)func << std::endl;
 		lua_pushlightuserdata(L_template,(void*)func);
 		lua_pushcclosure(L_template, lua_func_adapter_single,1);
 		lua_setglobal(L_template,funcname.c_str());
 	}
-	
-	lyramilk::data::var script_lua::createobject(lyramilk::data::string classname,lyramilk::data::var::array args)
+
+	void script_lua::define_const(const lyramilk::data::string& key,const lyramilk::data::var& value)
+	{
+		luaset(L_template,value);
+		lua_setglobal(L_template,key.c_str());
+	}
+
+	lyramilk::data::var script_lua::createobject(const lyramilk::data::string& classname,const lyramilk::data::array& args)
 	{
 		init();
 		std::map<lyramilk::data::string,metainfo>::iterator it = minfo.find(classname);

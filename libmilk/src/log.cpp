@@ -66,7 +66,7 @@ lyramilk::data::string logb::strtime(time_t ti) const
 
 
 
-void logb::log(time_t ti,type ty,lyramilk::data::string usr,lyramilk::data::string app,lyramilk::data::string module,lyramilk::data::string str) const
+void logb::log(time_t ti,type ty,const lyramilk::data::string& usr,const lyramilk::data::string& app,const lyramilk::data::string& module,const lyramilk::data::string& str) const
 {
 	if(proxy){
 		proxy->log(ti,ty,usr,app,module,str);
@@ -187,13 +187,13 @@ logss::logss()
 	p = nullptr;
 }
 
-logss::logss(lyramilk::data::string m)
+logss::logss(const lyramilk::data::string& m)
 {
 	prefix = m;
 	p = nullptr;
 }
 
-logss::logss(const logss& qlog,lyramilk::data::string m)
+logss::logss(const logss& qlog,const lyramilk::data::string& m)
 {
 	prefix = m;
 	p = qlog.p;
@@ -228,7 +228,7 @@ logss2& logss::operator()(type ty) const
 	return *plogss2;
 }
 
-logss2& logss::operator()(lyramilk::data::string m) const
+logss2& logss::operator()(const lyramilk::data::string& m) const
 {
 	logss2* plogss2 = (logss2*)pthread_getspecific(logss2_key);
 	if(!plogss2){
@@ -244,7 +244,7 @@ logss2& logss::operator()(lyramilk::data::string m) const
 	return *plogss2;
 }
 
-logss2& logss::operator()(type ty,lyramilk::data::string m) const
+logss2& logss::operator()(type ty,const lyramilk::data::string& m) const
 {
 	logss2* plogss2 = (logss2*)pthread_getspecific(logss2_key);
 	if(!plogss2){

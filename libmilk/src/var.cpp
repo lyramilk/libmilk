@@ -266,16 +266,16 @@ void milk_free(void* p, size_t size)
 	::free(p);
 }
 
-var::type_invalid::type_invalid(string msg)
+type_invalid::type_invalid(const string& msg)
 {
 	p = msg;
 }
 
-var::type_invalid::~type_invalid() throw()
+type_invalid::~type_invalid() throw()
 {
 }
 
-const char* var::type_invalid::what() const throw()
+const char* type_invalid::what() const throw()
 {
 	return p.c_str();
 }
@@ -968,7 +968,7 @@ var& var::assign(const array& v)
 	return *this;
 }
 
-var& var::assign(const lyramilk::data::var::map& v)
+var& var::assign(const lyramilk::data::map& v)
 {
 	clear();
 	t = t_map;
@@ -1496,26 +1496,26 @@ var::operator var::map& ()  throw(type_invalid)
 	throw type_invalid(lyramilk::kdict("%s：%s类型无法转换为%s类型","lyramilk::data::var::operator var::map()",type_name(t).c_str(),type_name(t_map).c_str()));
 }
 
-var::operator const lyramilk::data::var::map& () const throw(type_invalid)
+var::operator const lyramilk::data::map& () const throw(type_invalid)
 {
 	const map* bm = reinterpret_cast<const map*>(&u.bm);
 	if(t == t_map) return *bm;
 	throw type_invalid(lyramilk::kdict("%s：%s类型无法转换为%s类型","lyramilk::data::var::operator var::map()",type_name(t).c_str(),type_name(t_map).c_str()));
 }
 
-chunk var::conv(chunk if_not_compat) const
+chunk var::conv(const chunk& if_not_compat) const
 {
 	if(type_like(t_str)) return *this;
 	return if_not_compat;
 }
 
-string var::conv(string if_not_compat) const
+string var::conv(const string& if_not_compat) const
 {
 	if(type_like(t_str)) return *this;
 	return if_not_compat;
 }
 
-wstring var::conv(wstring if_not_compat) const
+wstring var::conv(const wstring& if_not_compat) const
 {
 	if(type_like(t_str)) return *this;
 	return if_not_compat;
@@ -1649,14 +1649,14 @@ const var::map& var::conv(const var::map& if_not_compat) const
 }
 
 
-void lyramilk::data::var::userdata(string v,const void* p) throw(type_invalid)
+void lyramilk::data::var::userdata(const string& v,const void* p) throw(type_invalid)
 {
 	if(t != t_user)	throw type_invalid(lyramilk::kdict("%s：%s类型无法赋予用户数据","lyramilk::data::var::operator var::map()",type_name(t).c_str()));
 	_userdata* bo = reinterpret_cast<_userdata*>(&u.bo);
 	bo->operator[](v) = p;
 }
 
-const void* lyramilk::data::var::userdata(string v) const
+const void* lyramilk::data::var::userdata(const string& v) const
 {
 	if(t != t_user)	return null;
 	const _userdata* bo = reinterpret_cast<const _userdata*>(&u.bo);
@@ -2296,9 +2296,9 @@ void var::dump(ostream& os) const
 	os << str() << std::endl;
 }
 
-std::vector<string> static split(string data,string sep)
+lyramilk::data::strings static split(string data,string sep)
 {
-	std::vector<string> lines;
+	lyramilk::data::strings lines;
 	std::size_t posb = 0;
 	do{
 		std::size_t poscrlf = data.find(sep,posb);
@@ -2315,11 +2315,11 @@ std::vector<string> static split(string data,string sep)
 	return lines;
 }
 
-std::vector<string> static pathof(string varpath) throw(var::type_invalid)
+lyramilk::data::strings static pathof(const string& varpath) throw(type_invalid)
 {
-	std::vector<string> ret;
-	std::vector<string> v = split(varpath,"/");
-	std::vector<string>::iterator it = v.begin();
+	lyramilk::data::strings ret;
+	lyramilk::data::strings v = split(varpath,"/");
+	lyramilk::data::strings::iterator it = v.begin();
 	if(it==v.end()) return ret;
 	while(it!=v.end()){
 		if(it->compare(".") == 0 || it->empty()){
@@ -2343,7 +2343,7 @@ std::vector<string> static pathof(string varpath) throw(var::type_invalid)
 
 var& var::path(string varpath) throw(type_invalid)
 {
-	std::vector<string> fields = pathof(varpath);
+	lyramilk::data::strings fields = pathof(varpath);
 
 	//如果前面的回退无法清除，说明想要的值越过了根，不允许。
 	if(!fields.empty() && fields.at(0).compare("..") == 0){
@@ -2356,7 +2356,7 @@ var& var::path(string varpath) throw(type_invalid)
 	}
 
 	//此时的fields中包含且仅包含枝节点。
-	std::vector<string>::iterator it = fields.begin();
+	lyramilk::data::strings::iterator it = fields.begin();
 	//如果var是空的
 	var* p = this;
 	/*
@@ -2409,7 +2409,7 @@ var& var::path(string varpath) throw(type_invalid)
 
 const var& var::path(string varpath) const throw(type_invalid)
 {
-	std::vector<string> fields = pathof(varpath);
+	lyramilk::data::strings fields = pathof(varpath);
 
 	//如果前面的回退无法清除，说明想要的值越过了根，不允许。
 	if(!fields.empty() && fields.at(0).compare("..") == 0){
@@ -2422,7 +2422,7 @@ const var& var::path(string varpath) const throw(type_invalid)
 	}
 
 	//此时的fields中包含且仅包含枝节点。
-	std::vector<string>::iterator it = fields.begin();
+	lyramilk::data::strings::iterator it = fields.begin();
 	//如果var是空的
 	const var* p = this;
 	/*

@@ -19,7 +19,7 @@
 
 namespace lyramilk{ namespace data
 {
-	coding_exception::coding_exception(lyramilk::data::string msg):lyramilk::exception(msg)
+	coding_exception::coding_exception(const lyramilk::data::string& msg):lyramilk::exception(msg)
 	{}
 
 #ifdef __linux__
@@ -113,9 +113,9 @@ namespace lyramilk{ namespace data
 		return it->second()->decode(src);
 	}
 
-	lyramilk::data::var::array lyramilk::data::codes::supports()
+	lyramilk::data::array lyramilk::data::codes::supports()
 	{
-		lyramilk::data::var::array r;
+		lyramilk::data::array r;
 		builder_type::iterator it = builder.begin();
 		for(;it!=builder.end();++it){
 			r.push_back(it->first);

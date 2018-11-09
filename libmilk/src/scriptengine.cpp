@@ -4,6 +4,39 @@
 
 namespace lyramilk{namespace script
 {
+	// sclass
+	sclass::sclass()
+	{
+	}
+
+	sclass::~sclass()
+	{
+	}
+
+	bool sclass::iterator_begin()
+	{
+		return false;
+	}
+
+	bool sclass::iterator_next(std::size_t idx,lyramilk::data::var* v)
+	{
+		return false;
+	}
+
+	void sclass::iterator_end()
+	{
+	}
+
+	bool sclass::set(const lyramilk::data::string& k,const lyramilk::data::var& v)
+	{
+		return false;
+	}
+
+	bool sclass::get(const lyramilk::data::string& k,lyramilk::data::var* v)
+	{
+		return false;
+	}
+
 	// engine
 	engine::engine()
 	{}
@@ -11,23 +44,23 @@ namespace lyramilk{namespace script
 	engine::~engine()
 	{}
 
-	lyramilk::data::var& engine::get(lyramilk::data::string k)
+	lyramilk::data::var& engine::get(const lyramilk::data::string& k)
 	{
 		/*
-		lyramilk::data::var::map::iterator it = _mparams.find(k);
+		lyramilk::data::map::iterator it = _mparams.find(k);
 		if(it == _mparams.end()) return lyramilk::data::var::nil;
 		return it->second;*/
 		return mparams[k];
 	}
 
-	bool engine::set(lyramilk::data::string k,lyramilk::data::var v)
+	bool engine::set(const lyramilk::data::string& k,const lyramilk::data::var& v)
 	{
 		mparams[k] = v;
 		return true;
 	}
 
 
-	bool engine::load_file(lyramilk::data::string scriptfile)
+	bool engine::load_file(const lyramilk::data::string& scriptfile)
 	{
 		lyramilk::data::string str;
 		std::ifstream ifs;
@@ -44,7 +77,7 @@ namespace lyramilk{namespace script
 
 	lyramilk::data::var engine::call(lyramilk::data::var func)
 	{
-		lyramilk::data::var::array a;
+		lyramilk::data::array a;
 		return call(func,a);
 	}
 	
@@ -67,7 +100,7 @@ namespace lyramilk{namespace script
 
 
 
-	bool engine::define(lyramilk::data::string scriptname,lyramilk::script::engine* (*builder)(),void (*destoryer)(lyramilk::script::engine*))
+	bool engine::define(const lyramilk::data::string& scriptname,lyramilk::script::engine* (*builder)(),void (*destoryer)(lyramilk::script::engine*))
 	{
 		engine_helper r;
 		r.ctr = builder;
@@ -76,19 +109,19 @@ namespace lyramilk{namespace script
 		return pr.second;
 	}
 
-	void engine::undef(lyramilk::data::string funcname)
+	void engine::undef(const lyramilk::data::string& funcname)
 	{
 		get_builder().erase(funcname);
 	}
 
-	lyramilk::script::engine* engine::createinstance(lyramilk::data::string scriptname)
+	lyramilk::script::engine* engine::createinstance(const lyramilk::data::string& scriptname)
 	{
 		engine_builder::const_iterator it = get_builder().find(scriptname);
 		if(it == get_builder().end()) return nullptr;
 		return it->second.ctr();
 	}
 
-	void engine::destoryinstance(lyramilk::data::string scriptname,lyramilk::script::engine* eng)
+	void engine::destoryinstance(const lyramilk::data::string& scriptname,lyramilk::script::engine* eng)
 	{
 		engine_builder::const_iterator it = get_builder().find(scriptname);
 		if(it == get_builder().end()) return;

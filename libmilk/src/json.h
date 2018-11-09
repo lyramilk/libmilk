@@ -19,13 +19,13 @@ namespace lyramilk{ namespace data
 		json& operator =(const lyramilk::data::var& o);
 
 		lyramilk::data::string str() const;
-		bool str(lyramilk::data::string s);
+		bool str(const lyramilk::data::string& s);
 
 		static bool stringify(const lyramilk::data::var& v,lyramilk::data::string* str);
-		static bool parse(lyramilk::data::string str,lyramilk::data::var* v);
+		static bool parse(const lyramilk::data::string& str,lyramilk::data::var* v);
 
 		static lyramilk::data::string stringify(const lyramilk::data::var& v);
-		static lyramilk::data::var parse(lyramilk::data::string str);
+		static lyramilk::data::var parse(const lyramilk::data::string& str);
 
 		lyramilk::data::string static escape(const lyramilk::data::string& s);
 		lyramilk::data::string static unescape(const lyramilk::data::string& s);

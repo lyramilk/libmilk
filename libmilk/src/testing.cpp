@@ -45,13 +45,13 @@ namespace lyramilk{ namespace debug
 		printable = true;
 		td.mark();
 	}
-	clocktester::clocktester(timediff& _td,lyramilk::data::string msg):td(_td),outer(std::cout)
+	clocktester::clocktester(timediff& _td,const lyramilk::data::string& msg):td(_td),outer(std::cout)
 	{
 		printable = true;
 		str = msg;
 		td.mark();
 	}
-	clocktester::clocktester(timediff& _td,std::ostream& os,lyramilk::data::string msg):td(_td),outer(os)
+	clocktester::clocktester(timediff& _td,std::ostream& os,const lyramilk::data::string& msg):td(_td),outer(os)
 	{
 		printable = true;
 		str = msg;
@@ -75,7 +75,7 @@ namespace lyramilk{ namespace debug
 		printable = true;
 	}
 
-	void clocktester::setmsg(lyramilk::data::string msg)
+	void clocktester::setmsg(const lyramilk::data::string& msg)
 	{
 		str = msg;
 	}

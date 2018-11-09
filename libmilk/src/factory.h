@@ -14,7 +14,7 @@ namespace lyramilk{ namespace util
 		virtual ~factory()
 		{}
 
-		virtual void define(lyramilk::data::string name,builder ctr,destoryer dtr)
+		virtual void define(const lyramilk::data::string& name,builder ctr,destoryer dtr)
 		{
 			ctrdtr_pair s;
 			s.ctr = ctr;
@@ -22,14 +22,14 @@ namespace lyramilk{ namespace util
 			m[name] = s;
 		}
 
-		virtual void undef(lyramilk::data::string name)
+		virtual void undef(const lyramilk::data::string& name)
 		{
 			m.erase(name);
 		}
 
-		virtual lyramilk::data::var::array keys() const
+		virtual lyramilk::data::array keys() const
 		{
-			lyramilk::data::var::array ar;
+			lyramilk::data::array ar;
 			typename map_type::const_iterator it = m.begin();
 			for(;it!=m.end();++it){
 				ar.push_back(it->first);
@@ -37,7 +37,7 @@ namespace lyramilk{ namespace util
 			return ar;
 		}
 
-		virtual T* create(lyramilk::data::string name,void* args)
+		virtual T* create(const lyramilk::data::string& name,void* args)
 		{
 			typename map_type::iterator it = m.find(name);
 			if(it == m.end()){
@@ -46,7 +46,7 @@ namespace lyramilk{ namespace util
 			return it->second.ctr(args);
 		}
 
-		virtual T* create(lyramilk::data::string name)
+		virtual T* create(const lyramilk::data::string& name)
 		{
 			typename map_type::iterator it = m.find(name);
 			if(it == m.end()){
@@ -55,7 +55,7 @@ namespace lyramilk{ namespace util
 			return it->second.ctr(nullptr);
 		}
 
-		virtual bool destory(lyramilk::data::string name,T* p)
+		virtual bool destory(const lyramilk::data::string& name,T* p)
 		{
 			typename map_type::iterator it = m.find(name);
 			if(it == m.end()){
@@ -82,19 +82,19 @@ namespace lyramilk{ namespace util
 		virtual ~multiton_factory()
 		{}
 
-		virtual void define(lyramilk::data::string name,T* ptr)
+		virtual void define(const lyramilk::data::string& name,T* ptr)
 		{
 			m[name] = ptr;
 		}
 
-		virtual void undef(lyramilk::data::string name)
+		virtual void undef(const lyramilk::data::string& name)
 		{
 			m.erase(name);
 		}
 
-		virtual lyramilk::data::var::array keys() const
+		virtual lyramilk::data::array keys() const
 		{
-			lyramilk::data::var::array ar;
+			lyramilk::data::array ar;
 			typename map_type::const_iterator it = m.begin();
 			for(;it!=m.end();++it){
 				ar.push_back(it->first);
@@ -102,7 +102,7 @@ namespace lyramilk{ namespace util
 			return ar;
 		}
 
-		virtual T* get(lyramilk::data::string name)
+		virtual T* get(const lyramilk::data::string& name)
 		{
 			typename map_type::iterator it = m.find(name);
 			if(it == m.end()){

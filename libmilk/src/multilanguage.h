@@ -18,7 +18,7 @@ namespace lyramilk{namespace data{namespace multilanguage{
 		dict* p;
 		bool inner;
 	  protected:
-		lyramilk::data::var::map m;
+		lyramilk::data::map m;
 	  public:
 		dict();
 		virtual ~dict();
@@ -26,14 +26,14 @@ namespace lyramilk{namespace data{namespace multilanguage{
 			@brief 打开日志记录文件
 			@return 返回true表示打开成功
 		*/
-		virtual bool load(lyramilk::data::string filename);
+		virtual bool load(const lyramilk::data::string& filename);
 
 		/**
 			@brief 翻译失败通知
 			@param 无法翻译的串。
 			@details 发现不能翻译的字符串时发出该通知，可以用该通知记录下未翻译的字符串，以辅助翻译。
 		*/
-		virtual void notify(lyramilk::data::string str);
+		virtual void notify(const lyramilk::data::string& str);
 		
 		/**
 			@brief 格式化并翻译字符串
@@ -64,7 +64,7 @@ namespace lyramilk{namespace data{namespace multilanguage{
 			@param src 源串
 			@return 目标串
 		*/
-		virtual lyramilk::data::string translate(lyramilk::data::string src);
+		virtual lyramilk::data::string translate(const lyramilk::data::string& src);
 
 		/**
 			@brief 重定向字典

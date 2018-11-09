@@ -460,11 +460,11 @@ namespace lyramilk{namespace netio
 #endif
 	}
 
-	bool aiolistener::ssl_load_verify_locations(lyramilk::data::var::array verify_locations)
+	bool aiolistener::ssl_load_verify_locations(const lyramilk::data::array& verify_locations)
 	{
 #ifdef OPENSSL_FOUND
 		int r = 0;
-		lyramilk::data::var::array::iterator it = verify_locations.begin();
+		lyramilk::data::array::const_iterator it = verify_locations.begin();
 		for(;it!=verify_locations.end();++it){
 			r = SSL_CTX_load_verify_locations((SSL_CTX*)sslctx, it->str().c_str(), nullptr);
 			if(r != 1) {
@@ -478,7 +478,7 @@ namespace lyramilk{namespace netio
 #endif
 	}
 
-	bool aiolistener::init_ssl(lyramilk::data::string certfilename, lyramilk::data::string keyfilename)
+	bool aiolistener::init_ssl(const lyramilk::data::string& certfilename, const lyramilk::data::string& keyfilename)
 	{
 #ifdef OPENSSL_FOUND
 		if(sslctx == nullptr){

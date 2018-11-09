@@ -75,7 +75,7 @@ static __ssl _ssl;
 namespace lyramilk{namespace netio
 {
 	/* netaddress */
-	netaddress::netaddress(lyramilk::data::string host, lyramilk::data::uint16 port)
+	netaddress::netaddress(const lyramilk::data::string& host, lyramilk::data::uint16 port)
 	{
 		this->host = host;
 		this->port = port;
@@ -95,7 +95,7 @@ namespace lyramilk{namespace netio
 		this->port = port;
 	}
 
-	netaddress::netaddress(lyramilk::data::string hostandport)
+	netaddress::netaddress(const lyramilk::data::string& hostandport)
 	{
 		std::size_t sz = hostandport.find(':');
 		if(sz == hostandport.npos){
@@ -592,7 +592,7 @@ namespace lyramilk{namespace netio
 		return open(addr.ip_str(),addr.port);
 	}
 
-	bool client::open(lyramilk::data::string host,lyramilk::data::uint16 port)
+	bool client::open(const lyramilk::data::string& host,lyramilk::data::uint16 port)
 	{
 		if(fd() >= 0){
 			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字失败：%s","套接字己经打开。") << std::endl;
@@ -664,7 +664,7 @@ namespace lyramilk{namespace netio
 		this->use_ssl = use_ssl;
 	}
 
-	bool client::init_ssl(lyramilk::data::string certfilename, lyramilk::data::string keyfilename)
+	bool client::init_ssl(const lyramilk::data::string& certfilename, const lyramilk::data::string& keyfilename)
 	{
 #ifdef OPENSSL_FOUND
 		if(sslctx == nullptr){

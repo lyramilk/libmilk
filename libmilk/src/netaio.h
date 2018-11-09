@@ -169,7 +169,7 @@ namespace lyramilk{namespace netio
 			@param verify_locations 客户端ca证书
 			@return false表示失败
 		*/
-		virtual bool ssl_load_verify_locations(lyramilk::data::var::array verify_locations);
+		virtual bool ssl_load_verify_locations(const lyramilk::data::array& verify_locations);
 
 		/**
 			@brief 初始化SSL并自动开启SSL。
@@ -178,7 +178,7 @@ namespace lyramilk{namespace netio
 			@param verify_locations 信任链
 			@return false表示失败
 		*/
-		virtual bool init_ssl(lyramilk::data::string certfilename, lyramilk::data::string keyfilename);
+		virtual bool init_ssl(const lyramilk::data::string& certfilename, const lyramilk::data::string& keyfilename);
 
 		/**
 			@brief 开启或关闭SSL。

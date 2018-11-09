@@ -48,13 +48,13 @@ namespace lyramilk{ namespace debug
 			@brief 使用一个字符串值构造，该字符串作为打印时的模板。输出信息将打印在std::cout中。
 			@param msg 该字符串中需要包含%lld以便获取CPU时钟周期数的数字，该字符串会被翻译。
 		*/
-		clocktester(timediff& td,lyramilk::data::string msg);
+		clocktester(timediff& td,const lyramilk::data::string& msg);
 		/**
 			@brief 使用一个字符串值构造，该字符串作为打印时的模板。
 			@param os stl输出流，支持std::cout和lyramilk::log::logss。
 			@param msg 该字符串中需要包含%lld以便获取CPU时钟周期数的数字，该字符串会被翻译。
 		*/
-		clocktester(timediff& td,std::ostream& os,lyramilk::data::string msg);
+		clocktester(timediff& td,std::ostream& os,const lyramilk::data::string& msg);
 		/**
 			@brief 在析构的同时打印信息。
 		*/
@@ -70,7 +70,7 @@ namespace lyramilk{ namespace debug
 		/**
 			@brief 重新设置消息字符串。
 		*/
-		void setmsg(lyramilk::data::string msg);
+		void setmsg(const lyramilk::data::string& msg);
 	};
 
 	/**

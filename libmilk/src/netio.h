@@ -35,10 +35,10 @@ namespace lyramilk{namespace netio
 		///本地字节序
 		lyramilk::data::uint16 port;
 
-		netaddress(lyramilk::data::string host, lyramilk::data::uint16 port);
+		netaddress(const lyramilk::data::string& host, lyramilk::data::uint16 port);
 		netaddress(lyramilk::data::uint32 ipv4, lyramilk::data::uint16 port);
 		netaddress(lyramilk::data::uint16 port);
-		netaddress(lyramilk::data::string hostandport);
+		netaddress(const lyramilk::data::string& hostandport);
 		netaddress();
 		lyramilk::data::string ip_str() const;
 	};
@@ -219,11 +219,11 @@ namespace lyramilk{namespace netio
 		virtual ~client();
 
 		virtual bool open(const netaddress& addr);
-		virtual bool open(lyramilk::data::string host,lyramilk::data::uint16 port);
+		virtual bool open(const lyramilk::data::string& host,lyramilk::data::uint16 port);
 
 		virtual bool ssl();
 		virtual void ssl(bool use_ssl);
-		virtual bool init_ssl(lyramilk::data::string certfilename = "", lyramilk::data::string keyfilename = "");
+		virtual bool init_ssl(const lyramilk::data::string& certfilename = "", const lyramilk::data::string& keyfilename = "");
 
 		///	取得SSL_CTX*
 		virtual ssl_ctx_type get_ssl_ctx();

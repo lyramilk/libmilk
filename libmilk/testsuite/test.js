@@ -1,29 +1,46 @@
-/*var t1 = new test_system(3);
-t1.print("[js]加载脚本开始。");
+
 function mytest(t,v)
 {
-	myecho("[js]执行test");
-	var k = 0;
-	var tm1 = new Date().getTime();
-	for(var i=0;i<100;++i){
-		k = myaddm({k:k,v:i});
-		//k = myadd(k,i);
+	myecho("step 1-1");
+
+	let obj1 = new test_enum();
+	for(let k in obj1){
+		myecho("ss" + k);
 	}
-	var tm2 = new Date().getTime();
-	myecho("测试时间" + (tm2-tm1) + ",结果" + k);
 
-	var m = {
-		"app":"map_app",
-		"des":"map_des",
-		"tototo":"map_tototo",
-	};
+	myecho("step 1-2");
+	for(let k in obj1){
+		myecho("ss" + k);
+	}
+	myecho("step 1-3");
 
-	t.print("[js]" + v.add(1987));
-	return v.testmap(m);
+	let obj2 = new test_system(3);
+
+	for(let k in obj2){
+		myecho(k);
+	}
+	myecho("step 1-4");
+
+	obj1.test = "test";
+	myecho(obj1.test);
+
+	myecho("step 1-5");
+
+	obj2.test = "test";
+	myecho(obj2.test);
+
+	myecho("step 2");
+	myecho(t);
+
+	myecho("step 3");
+	myecho(v);
+
+	myecho("step 4");
+	myecho(t== v?"true":"false");
+
+
+	myecho("step 5");
+	myecho("IsDebug="+IsDebug);
+
+	return t + v;
 }
-
-t1.print("[js]加载脚本完成。");
-*/
-
-var str = "\ud83d\ude03";
-myecho(str);

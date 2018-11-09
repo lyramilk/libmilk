@@ -10,17 +10,17 @@
 #include "script_js.h"
 #include "script_lua.h"
 
-#define TESTLUA "/root/libmilk/testsuite/test.lua"
-#define TESTJS "/root/libmilk/testsuite/test.js"
+#define TESTLUA "../testsuite/test.lua"
+#define TESTJS "../testsuite/test.js"
 
-class os
+class os:public lyramilk::script::sclass
 {
   public:
-	static void* ctr(const lyramilk::data::var::array& args)
+	static lyramilk::script::sclass* ctr(const lyramilk::data::var::array& args)
 	{
 		return new os();
 	}
-	static void dtr(void* p)
+	static void dtr(lyramilk::script::sclass* p)
 	{
 		delete (os*)p;
 	}
@@ -43,16 +43,16 @@ std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 };
 
 
-class number
+class number:public lyramilk::script::sclass
 {
 	int i;
 	lyramilk::log::logss log;
   public:
-	static void* ctr(const lyramilk::data::var::array& args)
+	static lyramilk::script::sclass* ctr(const lyramilk::data::var::array& args)
 	{
 		return new number();
 	}
-	static void dtr(void* p)
+	static void dtr(lyramilk::script::sclass* p)
 	{
 		delete (number*)p;
 	}

@@ -158,7 +158,7 @@ namespace lyramilk{namespace data
 	{
 		lyramilk::data::string filename;
 		lyramilk::data::string dirname;
-		lyramilk::data::map<lyramilk::io::native_filedescriptor_type,lyramilk::data::string>::iterator it = wm.find(ie->wd);
+		std::map<lyramilk::io::native_filedescriptor_type,lyramilk::data::string>::iterator it = wm.find(ie->wd);
 		if(it!=wm.end()){
 			dirname = it->second;
 		}
@@ -191,17 +191,17 @@ namespace lyramilk{namespace data
 		notify_other(ie);
 	}
 
-	void inotify::notify_add(lyramilk::data::string dirname,lyramilk::data::string filename)
+	void inotify::notify_add(const lyramilk::data::string& dirname,const lyramilk::data::string& filename)
 	{
 		//COUT << "添加文件" << filename << ",请扫描" << std::endl;
 	}
 
-	void inotify::notify_modify(lyramilk::data::string dirname,lyramilk::data::string filename)
+	void inotify::notify_modify(const lyramilk::data::string& dirname,const lyramilk::data::string& filename)
 	{
 		//COUT << "修改文件" << filename << ",请扫描" << std::endl;
 	}
 
-	void inotify::notify_remove(lyramilk::data::string dirname,lyramilk::data::string filename)
+	void inotify::notify_remove(const lyramilk::data::string& dirname,const lyramilk::data::string& filename)
 	{
 		//COUT << "删除文件" << filename << ",请扫描" << std::endl;
 	}
@@ -211,8 +211,9 @@ namespace lyramilk{namespace data
 		
 	}
 
-	lyramilk::io::native_filedescriptor_type inotify::add(lyramilk::data::string pathdirname)
+	lyramilk::io::native_filedescriptor_type inotify::add(const lyramilk::data::string& spathdirname)
 	{
+		lyramilk::data::string pathdirname = spathdirname;
 		struct stat st = {0};
 		if(stat(pathdirname.c_str(),&st) == -1/* && errno != ENOENT*/){
 			if(errno == ENOENT){
@@ -237,7 +238,7 @@ namespace lyramilk{namespace data
 
 		lyramilk::io::native_filedescriptor_type wfd = inotify_add_watch(fd,pathdirname.c_str(),IN_CREATE|IN_MODIFY|IN_MOVED_FROM|IN_MOVED_TO|IN_DELETE|IN_DELETE_SELF|IN_MOVE_SELF);
 
-		lyramilk::data::map<lyramilk::io::native_filedescriptor_type,lyramilk::data::string>::iterator it = wm.find(wfd);
+		std::map<lyramilk::io::native_filedescriptor_type,lyramilk::data::string>::iterator it = wm.find(wfd);
 		if(it!=wm.end()){
 			//lyramilk::klog(lyramilk::log::warning,"lyramilk.io.inotify.add") << lyramilk::kdict("己监视目录[%s]，不需要重复监视。",pathdirname.c_str()) << std::endl;
 			return 0;
@@ -248,7 +249,7 @@ namespace lyramilk{namespace data
 		return wfd;
 	}
 
-	lyramilk::io::native_filedescriptor_type inotify::add(lyramilk::data::string filename,lyramilk::io::uint32 inotify_mask)
+	lyramilk::io::native_filedescriptor_type inotify::add(const lyramilk::data::string& filename,lyramilk::io::uint32 inotify_mask)
 	{
 		return inotify_add_watch(fd,filename.c_str(),inotify_mask);
 	}
@@ -260,8 +261,9 @@ namespace lyramilk{namespace data
 	}
 
 
-	inotify_file::inotify_file(lyramilk::data::string pathdirname)
+	inotify_file::inotify_file(const lyramilk::data::string& spathdirname)
 	{
+		lyramilk::data::string pathdirname = spathdirname;
 		fd = inotify_init();
 
 		struct stat st = {0};

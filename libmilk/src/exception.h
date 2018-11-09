@@ -24,7 +24,7 @@ namespace lyramilk
 			@details 通过一个字符串来构造异常。
 			@param str 格式化参数
 		*/
-		exception(lyramilk::data::string msg) throw();
+		exception(const lyramilk::data::string& msg) throw();
 
 		/**
 			@breif 析构函数
@@ -46,7 +46,7 @@ namespace lyramilk
 	class _lyramilk_api_ notimplementexception :public exception
 	{
 	  public:
-		notimplementexception(lyramilk::data::string msg = "") throw();
+		notimplementexception(const lyramilk::data::string& msg = "") throw();
 	};
 
 }

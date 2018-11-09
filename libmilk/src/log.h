@@ -51,7 +51,7 @@ namespace lyramilk { namespace log
 			@param str 日志消息。
 
 		*/
-		virtual void log(time_t ti,type ty,lyramilk::data::string usr,lyramilk::data::string app,lyramilk::data::string module,lyramilk::data::string str) const;
+		virtual void log(time_t ti,type ty,const lyramilk::data::string& usr,const lyramilk::data::string& app,const lyramilk::data::string& module,const lyramilk::data::string& str) const;
 		/**
 			@brief 构造函数
 		*/
@@ -70,7 +70,7 @@ namespace lyramilk { namespace log
 	class _lyramilk_api_ logbuf : public std::basic_streambuf<char>
 	{
 		friend class logss2;
-		lyramilk::data::vector<char,lyramilk::data::allocator<char> > buf;
+		std::vector<char,lyramilk::data::allocator<char> > buf;
 		logss2& p;
 	  public:
 		/**
@@ -124,13 +124,13 @@ namespace lyramilk { namespace log
 			@brief 构造函数，通过给定一个模块名来构造。
 			@param m 这个流所服务的模块。
 		*/
-		logss(lyramilk::data::string m);
+		logss(const lyramilk::data::string& m);
 		/**
 			@brief 构造函数，通过给定一个默认流来构造。
 			@param qlog 默认的流。
 			@param m 这个流所服务的模块。
 		*/
-		logss(const logss& qlog,lyramilk::data::string m);
+		logss(const logss& qlog,const lyramilk::data::string& m);
 		virtual ~logss();
 		/**
 			@brief 模拟一个函数。通过这个函数来设置日志类型。
@@ -153,7 +153,7 @@ namespace lyramilk { namespace log
 			@param m 子模块名称
 			@return 返回日志流自身以方便 << 运算符表现。
 		*/
-		logss2& operator()(lyramilk::data::string m) const;
+		logss2& operator()(const lyramilk::data::string& m) const;
 		/**
 			@brief 模拟一个函数。通过这个函数来设置日志类型和子模块。
 			@details 例如
@@ -165,7 +165,7 @@ namespace lyramilk { namespace log
 			@param ty 日志类型
 			@return 返回日志流自身以方便 << 运算符表现。
 		*/
-		logss2& operator()(type ty,lyramilk::data::string m) const;
+		logss2& operator()(type ty,const lyramilk::data::string& m) const;
 		/**
 			@brief 将日志输出到指定的logb实现中。
 			@details 将该日志流定向到指定的ploger中，可以改变日志的表现形式以及存储方式。

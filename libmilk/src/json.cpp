@@ -241,7 +241,7 @@ namespace lyramilk{namespace data
 		const char* e;
 		std::size_t l;
 	  public:
-		jsontokenizer(lyramilk::data::string str)
+		jsontokenizer(const lyramilk::data::string& str)
 		{
 			this->str = str;
 			p = this->str.c_str();
@@ -442,11 +442,11 @@ label_badchar:
 		}
 	};
 
-	bool inline zparsearray(jsontoken& token,jsontokenizer& z,lyramilk::data::var::array& v,int deep);
-	bool inline zparseobject(jsontoken& token,jsontokenizer& z,lyramilk::data::var::map& v,int deep);
+	bool inline zparsearray(jsontoken& token,jsontokenizer& z,lyramilk::data::array& v,int deep);
+	bool inline zparseobject(jsontoken& token,jsontokenizer& z,lyramilk::data::map& v,int deep);
 	bool inline zparse(jsontoken& token,jsontokenizer& z,lyramilk::data::var& v,int deep);
 
-	bool inline zparsearray(jsontoken& token,jsontokenizer& z,lyramilk::data::var::array& v,int deep)
+	bool inline zparsearray(jsontoken& token,jsontokenizer& z,lyramilk::data::array& v,int deep)
 	{
 		while(z.next(token)){
 			switch(token.t){
@@ -460,7 +460,7 @@ label_badchar:
 				v.push_back(token.u.d);
 			  }break;
 			  case jsontoken::LBRACK:{
-				lyramilk::data::var::array subarray;
+				lyramilk::data::array subarray;
 				if(zparsearray(token,z,subarray,deep + 1)){
 					v.push_back(subarray);
 				}
@@ -469,7 +469,7 @@ label_badchar:
 				return true;
 			  }break;
 			  case jsontoken::LBRACE:{
-				lyramilk::data::var::map subobject;
+				lyramilk::data::map subobject;
 				if(zparseobject(token,z,subobject,deep + 1)){
 					v.push_back(subobject);
 				}
@@ -491,7 +491,7 @@ label_badchar:
 		}
 		return true;
 	}
-	bool inline zparseobject(jsontoken& token,jsontokenizer& z,lyramilk::data::var::map& v,int deep)
+	bool inline zparseobject(jsontoken& token,jsontokenizer& z,lyramilk::data::map& v,int deep)
 	{
 		while(z.next(token)){
 			switch(token.t){
@@ -535,12 +535,12 @@ label_badchar:
 			  }
 			  case jsontoken::LBRACK:{
 				v.type(lyramilk::data::var::t_array);
-				lyramilk::data::var::array& ar = v;
+				lyramilk::data::array& ar = v;
 				return zparsearray(token,z,ar,deep + 1);
 			  }break;
 			  case jsontoken::LBRACE:{
 				v.type(lyramilk::data::var::t_map);
-				lyramilk::data::var::map& m = v;
+				lyramilk::data::map& m = v;
 				return zparseobject(token,z,m,deep + 1);
 			  }break;
 			  case jsontoken::COMMA:{
@@ -608,7 +608,7 @@ label_badchar:
 		return jsonstr;
 	}
 
-	bool json::str(lyramilk::data::string s)
+	bool json::str(const lyramilk::data::string& s)
 	{
 		if(!parse(s,&v)){
 			v.type(lyramilk::data::var::t_invalid);
@@ -644,8 +644,8 @@ label_badchar:
 				lyramilk::data::string jsonstr;
 				jsonstr.reserve(4096);
 				str.push_back('[');
-				const lyramilk::data::var::array& ar = v;
-				for(lyramilk::data::var::array::const_iterator it=ar.begin();it!=ar.end();++it){
+				const lyramilk::data::array& ar = v;
+				for(lyramilk::data::array::const_iterator it=ar.begin();it!=ar.end();++it){
 					jsonstr.clear();
 					if(json::stringify(*it,&jsonstr) && !jsonstr.empty()){
 						str += jsonstr + ',';
@@ -658,8 +658,8 @@ label_badchar:
 				lyramilk::data::string jsonstr;
 				jsonstr.reserve(4096);
 				str.push_back('{');
-				const lyramilk::data::var::map& m = v;
-				for(lyramilk::data::var::map::const_iterator it=m.begin();it!=m.end();++it){
+				const lyramilk::data::map& m = v;
+				for(lyramilk::data::map::const_iterator it=m.begin();it!=m.end();++it){
 					jsonstr.clear();
 					if(json::stringify(it->second,&jsonstr) && !jsonstr.empty()){
 						str += '"' + escape(it->first) + "\":" + jsonstr + ',';
@@ -678,7 +678,7 @@ label_badchar:
 		return true;
 	}
 
-	bool json::parse(lyramilk::data::string str,lyramilk::data::var* v)
+	bool json::parse(const lyramilk::data::string& str,lyramilk::data::var* v)
 	{
 		jsontoken token;
 		token.s.reserve(256);
@@ -695,7 +695,7 @@ label_badchar:
 		return "";
 	}
 
-	lyramilk::data::var json::parse(lyramilk::data::string str)
+	lyramilk::data::var json::parse(const lyramilk::data::string& str)
 	{
 		lyramilk::data::var v;
 		if(parse(str,&v)){

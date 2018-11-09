@@ -12,20 +12,20 @@ namespace lyramilk{ namespace data
 	*/
 	class _lyramilk_api_ xml
 	{
-		lyramilk::data::var::map& m;
+		lyramilk::data::map& m;
 	  public:
-		xml(lyramilk::data::var::map& o);
+		xml(lyramilk::data::map& o);
 		virtual ~xml();
-		xml& operator =(const lyramilk::data::var::map& o);
+		xml& operator =(const lyramilk::data::map& o);
 
 		lyramilk::data::string str() const;
 		bool str(lyramilk::data::string s);
 
-		static bool stringify(const lyramilk::data::var::map& m,lyramilk::data::string* str);
-		static bool parse(lyramilk::data::string str,lyramilk::data::var::map* m);
+		static bool stringify(const lyramilk::data::map& m,lyramilk::data::string* str);
+		static bool parse(lyramilk::data::string str,lyramilk::data::map* m);
 
-		static lyramilk::data::string stringify(const lyramilk::data::var::map& m);
-		static lyramilk::data::var::map parse(lyramilk::data::string str);
+		static lyramilk::data::string stringify(const lyramilk::data::map& m);
+		static lyramilk::data::map parse(lyramilk::data::string str);
 
 		lyramilk::data::string static escape(const lyramilk::data::string& s);
 		lyramilk::data::string static unescape(const lyramilk::data::string& s);

@@ -13,28 +13,41 @@
 namespace lyramilk{namespace script{namespace js
 {
 	using namespace ::js;
-	JSBool static jsctr(JSContext *cx, unsigned argc, jsval *vp);
-	void static jsdtr(JSFreeOp *fop, JSObject *obj);
-	JSBool static jsinstanceof(JSContext *cx, JSHandleObject obj, const jsval *v, JSBool *bp);
-	static void j2v(JSContext* cx,jsval jv,lyramilk::data::var& retv);
+	static JSBool jsctr(JSContext *cx, unsigned argc, jsval *vp);
+	static void jsdtr(js::FreeOp *fop, JSObject *obj);
+	static JSBool jsinstanceof(JSContext *cx, JSHandleObject obj, const jsval *v, JSBool *bp);
+	static void j2v(JSContext* cx,jsval jv,lyramilk::data::var* retv);
+	static bool j2s(JSContext* cx,jsval jv,lyramilk::data::string* retv);
+	static void v2j(JSContext* cx,const lyramilk::data::var& v,jsval *ret);
 
-	static JSClass globalClass = { "global", JSCLASS_GLOBAL_FLAGS,
+
+	static JSBool jget(JSContext *cx, JSHandleObject obj, JSHandleId id, JSMutableHandleValue vp);
+	static JSBool jset(JSContext *cx, JSHandleObject obj, JSHandleId id, JSBool strict, JSMutableHandleValue vp);
+
+	static JSBool jsnewenum(JSContext *cx, JSHandleObject obj, JSIterateOp enum_op,Value *statep, jsid *idp);
+
+	static js::Class globalClass = { "global", JSCLASS_GLOBAL_FLAGS,
 			JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
             JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub};
 
-	static JSClass classesClass = { "classes", JSCLASS_HAS_PRIVATE,
+	static js::Class classesClass = { "classes", JSCLASS_HAS_PRIVATE,
 			JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
 			JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
-			NULL,NULL,NULL,jsinstanceof,jsctr};
+			nullptr,nullptr,nullptr,jsinstanceof,jsctr};
 
-	static JSClass nativeClass = { "native", JSCLASS_HAS_PRIVATE,
-			JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
+	static js::Class nativeClass = { "native", JSCLASS_HAS_PRIVATE | JSCLASS_NEW_ENUMERATE,
+			JS_PropertyStub, JS_PropertyStub, jget, jset,
 			JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
 			jsdtr};
 
-	static JSClass normalClass = { "normal", 0,
+	static js::Class normalClass = { "normal", 0,
 			JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
             JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub};
+
+/*
+	static JSClass enumClass = { "enum", JSCLASS_NEW_ENUMERATE,
+			JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
+            JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub};*/
 
 	static void script_js_error_report(JSContext *cx, const char *message, JSErrorReport *report)
 	{
@@ -45,7 +58,7 @@ namespace lyramilk{namespace script{namespace js
 				jsval __prop;
 				if(JS_GetProperty(cx,jo,"stack",&__prop)){
 					lyramilk::data::var retv;
-					j2v(cx,__prop,retv);
+					j2v(cx,__prop,&retv);
 					lyramilk::klog(lyramilk::log::warning,"lyramilk.script.js") << lyramilk::kdict("%s(%d:%d)%s",(report->filename ? report->filename : "<no name>"),report->lineno,report->column,message) << "\n" << retv << std::endl;
 					return;
 				}
@@ -59,11 +72,11 @@ namespace lyramilk{namespace script{namespace js
 	{
 		unsigned char magic;
 		engine::class_destoryer dtr;
-		void* pthis;
+		sclass* pthis;
 		lyramilk::script::js::script_js* eng;
-		lyramilk::data::var::map info;
+		lyramilk::data::map info;
 
-		js_obj_pack(engine::class_destoryer da,lyramilk::script::js::script_js* _env,void* dt):dtr(da),pthis(dt),eng(_env)
+		js_obj_pack(engine::class_destoryer da,lyramilk::script::js::script_js* _env,sclass* dt):dtr(da),pthis(dt),eng(_env)
 		{
 			magic = 0x22;
 			//info[engine::s_env_this()].assign(engine::s_user_nativeobject(),pthis);
@@ -89,8 +102,9 @@ namespace lyramilk{namespace script{namespace js
 		return nullptr;
 	}
 
-	void inline jsstr2str(const jschar* cstr,size_t len,lyramilk::data::string& str)
+	void inline jsstr2str(const jschar* cstr,size_t len,lyramilk::data::string* strg)
 	{
+		lyramilk::data::string& str = *strg;
 		const jschar* streof = &cstr[len];
 		str.reserve(len*3);
 		for(;cstr < streof;){
@@ -131,92 +145,92 @@ namespace lyramilk{namespace script{namespace js
 		}
 	}
 
-	static void j2v(JSContext* cx,jsval jv,lyramilk::data::var& retv)
+	void j2v(JSContext* cx,jsval jv,lyramilk::data::var* retv)
 	{
 		if(jv.isNullOrUndefined()){
-			retv = lyramilk::data::var::nil;
+			*retv = lyramilk::data::var::nil;
 			return;
 		}else if(jv.isInt32()){
-			retv = jv.toInt32();
+			*retv = jv.toInt32();
 			return;
 		}else if(jv.isDouble()){
-			retv = jv.toDouble();
-			lyramilk::data::string str = retv.str();
+			*retv = jv.toDouble();
+			lyramilk::data::string str = retv->str();
 			std::size_t pos = str.find_last_not_of(".0");
 			if(pos != str.npos){
 				str.erase(str.begin() + pos + 1,str.end());
 				if(str.find('.') == str.npos){
-					retv.type(lyramilk::data::var::t_int);
+					retv->type(lyramilk::data::var::t_int);
 				}
 			}else{
-				retv.type(lyramilk::data::var::t_int);
+				retv->type(lyramilk::data::var::t_int);
 			}
 			return;
 		}else if(jv.isNumber()){
-			retv = jv.toNumber();
+			*retv = jv.toNumber();
 			return;
 		}else if(jv.isBoolean()){
-			retv = jv.toBoolean();
+			*retv = jv.toBoolean();
 			return;
 		}else if(jv.isString()){
 			JSString* jstr = jv.toString();
 			if(jstr == nullptr){
-				retv = lyramilk::data::var::nil;
+				*retv = lyramilk::data::var::nil;
 				return;
 			}
 			size_t len = 0;
 			const jschar* cstr = JS_GetStringCharsZAndLength(cx,jstr,&len);
-			lyramilk::data::string str;
-			jsstr2str(cstr,len,str);
-			retv = str;
+			lyramilk::data::string tstr;
+			jsstr2str(cstr,len,&tstr);
+			*retv = tstr;
 			return;
 		}else if(jv.isObject()){
 			JSObject *jo = jv.toObjectOrNull();
 			if(JS_IsArrayObject(cx,jo)){
-				retv.type(lyramilk::data::var::t_array);
-				lyramilk::data::var::array& r = retv;
+				retv->type(lyramilk::data::var::t_array);
+				lyramilk::data::array& r = *retv;
 				uint32_t len = 0;
 				if(!JS_GetArrayLength(cx,jo,&len)){
-					retv = lyramilk::data::var::nil;
+					*retv = lyramilk::data::var::nil;
 					return;
 				}
 				r.resize(len);
 				for(uint32_t i=0;i<len;++i){
 					jsval jv;
 					JS_LookupElement(cx,jo,i,&jv);
-					j2v(cx,jv,r[i]);
+					j2v(cx,jv,&r[i]);
 				}
 			}else if(JS_ObjectIsCallable(cx,jo)){
 				jsid jid = OBJECT_TO_JSID(jo);
-				retv.assign(engine::s_user_functionid(),(void*)jid);
+				retv->assign(engine::s_user_functionid(),(void*)jid);
 				return;
 			}else if(JS_ObjectIsDate(cx,jo)){
 				jsval retval;
 				if(JS_TRUE == JS_CallFunctionName(cx,jo,"getTime",0,nullptr,&retval)){
 					j2v(cx,retval,retv);
-					retv.type(lyramilk::data::var::t_uint);
+					retv->type(lyramilk::data::var::t_uint);
 				}
 				return;
 			}else if(JS_IsArrayBufferObject(jo,cx)){
 				uint8_t * p = JS_GetArrayBufferData(jo,cx);
 				uint32_t l = JS_GetArrayBufferByteLength(jo,cx);
 				lyramilk::data::chunk cb(p,l);
-				retv = cb;
+				*retv = cb;
 				return;
-			}else if(JS_GetClass(jo) == &nativeClass){
+			}else if(JS_GetClass(jo) == Jsvalify(&nativeClass)){
 				js_obj_pack *ppack = (js_obj_pack *)JS_GetPrivate(jo);
 				if(ppack && ppack->pthis){
 					jsid joid;
 					JS_GetObjectId(cx,jo,&joid);
-					retv.assign(engine::s_user_objectid(),(void*)joid);
-					retv.userdata(engine::s_user_nativeobject(),ppack->pthis);
+					retv->assign(engine::s_user_objectid(),(void*)joid);
+					retv->userdata(engine::s_user_nativeobject(),ppack->pthis);
 					return;
 				}
 			}else{
 				JSObject *iter = JS_NewPropertyIterator(cx,jo);
 				if(iter){
-					retv.type(lyramilk::data::var::t_map);
-					lyramilk::data::var::map& m = retv;
+					retv->type(lyramilk::data::var::t_map);
+					lyramilk::data::map& m = *retv;
 					jsid jid;
 					while(JS_NextProperty(cx,iter,&jid)){
 						jsval jk,jv;
@@ -232,14 +246,14 @@ namespace lyramilk{namespace script{namespace js
 							}
 							size_t len = 0;
 							const jschar* cstr = JS_GetStringCharsZAndLength(cx,jstr,&len);
-							jsstr2str(cstr,len,skey);
+							jsstr2str(cstr,len,&skey);
 						}
 						if(skey == "__script_var"){
 							void* p = jv.toUnmarkedPtr();
-							retv = *(lyramilk::data::var*)p;
+							*retv = *(lyramilk::data::var*)p;
 							return;
 						}
-						j2v(cx,jv,m[skey]);
+						j2v(cx,jv,&m[skey]);
 					}
 				}
 				return ;
@@ -251,32 +265,47 @@ namespace lyramilk{namespace script{namespace js
 			TODO();
 		}
 	}
-
-	void static v2j(JSContext* cx,const lyramilk::data::var& v,jsval &ret)
+	bool j2s(JSContext* cx,jsval jv,lyramilk::data::string* retv)
+	{
+		if(jv.isString()){
+			JSString* jstr = jv.toString();
+			if(jstr == nullptr){
+				*retv = "";
+				return false;
+			}
+			size_t len = 0;
+			const jschar* cstr = JS_GetStringCharsZAndLength(cx,jstr,&len);
+			jsstr2str(cstr,len,retv);
+			return true;
+		}
+		retv->clear();
+		return false;
+	}
+	void v2j(JSContext* cx,const lyramilk::data::var& v,jsval *ret)
 	{
 		switch(v.type()){
 		  case lyramilk::data::var::t_bool:
-			ret.setBoolean(v);
+			ret->setBoolean(v);
 			return;
 		  case lyramilk::data::var::t_int:
 		  case lyramilk::data::var::t_uint:{
 				double dv = v;
 				if(floor(v) == dv){
 					if(dv > JSVAL_INT_MIN && dv < JSVAL_INT_MAX){
-						ret.setNumber(dv);
+						ret->setNumber(dv);
 						return;
 					}
 				}
 			}
 		  case lyramilk::data::var::t_double:
-			ret.setNumber((double)v);
+			ret->setNumber((double)v);
 			return;
 		  case lyramilk::data::var::t_bin:{
 				const lyramilk::data::chunk& cb = v;
 				JSObject* jo = JS_NewArrayBuffer(cx,cb.size());
 				uint8_t * p = JS_GetArrayBufferData(jo,cx);
 				cb.copy(p,cb.size());
-				ret.setObject(*jo);
+				ret->setObject(*jo);
 				return;
 			}
 		  case lyramilk::data::var::t_wstr:
@@ -284,60 +313,141 @@ namespace lyramilk{namespace script{namespace js
 				lyramilk::data::string s = v;
 				JSString* str = JS_NewStringCopyN(cx,s.c_str(),s.size());
 				if(str == nullptr){
-					 ret.setUndefined();
+					 ret->setUndefined();
 					 return;
 				}
-				ret.setString(str);
+				ret->setString(str);
 				return;
 			}break;
 		  case lyramilk::data::var::t_array:{
 				std::vector<jsval> jvs;
-				const lyramilk::data::var::array& ar = v;
-				lyramilk::data::var::array::const_iterator it = ar.begin();
+				const lyramilk::data::array& ar = v;
+				lyramilk::data::array::const_iterator it = ar.begin();
 				jvs.resize(ar.size());
 				for(int i=0;it!=ar.end();++it,++i){
-					v2j(cx,*it,jvs[i]);
+					v2j(cx,*it,&jvs[i]);
 				}
 
 				JSObject* jo = JS_NewArrayObject(cx,jvs.size(),jvs.data());
-				ret.setObject(*jo);
+				ret->setObject(*jo);
 				return;
 			}break;
 		  case lyramilk::data::var::t_map:{
-				JSObject* jo = JS_NewObject(cx,&normalClass,NULL,JS_GetGlobalObject(cx));
-				const lyramilk::data::var::map& m = v;
-				lyramilk::data::var::map::const_iterator it = m.begin();
+				JSObject* jo = JS_NewObject(cx,Jsvalify(&normalClass),nullptr,JS_GetGlobalObject(cx));
+				const lyramilk::data::map& m = v;
+				lyramilk::data::map::const_iterator it = m.begin();
 				for(;it!=m.end();++it){
 					lyramilk::data::string str = it->first;
 					lyramilk::data::var v = it->second;
 					jsval jv;
-					v2j(cx,v,jv);
+					v2j(cx,v,&jv);
 					JS_SetProperty(cx,jo,str.c_str(),&jv);
 				}
 				//
-				ret.setObject(*jo);
+				ret->setObject(*jo);
 				return ;
 			}break;
 		  case lyramilk::data::var::t_user:{
 				const void* up = v.userdata(engine::s_user_objectid());
 				if(up){
 					JSObject* jsobj = JSID_TO_OBJECT((jsid)up);
-					ret.setObject(*jsobj);
+					ret->setObject(*jsobj);
 					return;
 				}
 
-				JSObject* jo = JS_NewObject(cx,&normalClass,NULL,JS_GetGlobalObject(cx));
+				JSObject* jo = JS_NewObject(cx,Jsvalify(&normalClass),nullptr,JS_GetGlobalObject(cx));
 				jsval jv;
 				jv.setUnmarkedPtr((void*)&v);
 				JS_SetProperty(cx,jo,"__script_var",&jv);
-				ret.setObject(*jo);
+				ret->setObject(*jo);
 				return;
 			}
 		  case lyramilk::data::var::t_invalid:
-			ret.setUndefined();
+			ret->setUndefined();
 			return;
 		}
-		ret.setUndefined();
+		ret->setUndefined();
+	}
+
+
+	JSBool jsnewenum(JSContext *cx, JSHandleObject obj, JSIterateOp enum_op,Value *statep, jsid *idp)
+	{
+		js_obj_pack *ppack = (js_obj_pack*)JS_GetPrivate(obj);
+		if(ppack && ppack->pthis){
+			if(JSENUMERATE_INIT_ALL == enum_op){
+			}else if(JSENUMERATE_INIT == enum_op){
+				if(ppack->pthis->iterator_begin()){
+					statep->setInt32(0);
+				}else{
+					statep->setNull();
+				}
+				if(idp){
+					*idp = INT_TO_JSID(0);
+				}
+			}else if(JSENUMERATE_NEXT == enum_op){
+				int idx = statep->toInt32();
+
+				lyramilk::data::var v;
+				if(!ppack->pthis->iterator_next(idx,&v)){
+					ppack->pthis->iterator_end();
+					statep->setNull();
+					return JS_TRUE;
+				}
+
+				jsval jv;
+				v2j(cx,v,&jv);
+
+				JS_ValueToId(cx,jv,idp);
+				statep->setInt32(idx + 1);
+			}else if(JSENUMERATE_DESTROY == enum_op){
+				statep->setNull();
+			}else{
+			}
+		}
+		return JS_TRUE;
+	}
+
+	JSBool jget(JSContext *cx, JSHandleObject obj, JSHandleId id, JSMutableHandleValue vp)
+	{
+		js_obj_pack *ppack = (js_obj_pack*)JS_GetPrivate(obj);
+		if(ppack && ppack->pthis){
+			jsval jv;
+			JS_IdToValue(cx,id,&jv);
+
+			lyramilk::data::string k;
+			if(j2s(cx,jv,&k) && k == "__iterator__"){
+				return JS_PropertyStub(cx,obj,id,vp);
+			}
+			lyramilk::data::var v;
+			if(!ppack->pthis->get(k,&v)){
+				return JS_PropertyStub(cx,obj,id,vp);
+			}
+			v2j(cx,v,vp.address());
+
+		}
+		return JS_TRUE;
+	}
+
+	JSBool jset(JSContext *cx, JSHandleObject obj, JSHandleId id, JSBool strict, JSMutableHandleValue vp)
+	{
+		js_obj_pack *ppack = (js_obj_pack*)JS_GetPrivate(obj);
+		if(ppack && ppack->pthis){
+			jsval jv;
+			JS_IdToValue(cx,id,&jv);
+
+			lyramilk::data::string k;
+			j2s(cx,jv,&k);
+
+			lyramilk::data::var v;
+			j2v(cx,vp.get(),&v);
+
+			ppack->pthis->set(k,v);
+			/*
+			if(!ppack->pthis->set(k,v)){
+				return JS_PropertyStub(cx,obj,id,vp);
+			}*/
+		}
+		return JS_TRUE;
 	}
 
 	void js_thow(JSContext *cx,const char* s,std::size_t n)
@@ -365,14 +475,14 @@ namespace lyramilk{namespace script{namespace js
 	{
 		CallArgs args = CallArgsFromVp(argc, vp);
 		script_js::class_handler* h = (script_js::class_handler*)JS_GetPrivate(&args.callee());
-		void *pnewobj = NULL;
+		sclass *pnewobj = nullptr;
 		if(h && h->ctr){
-			lyramilk::data::var::array params;
+			lyramilk::data::array params;
 			if(argc>0){
 				jsval* jv = JS_ARGV(cx,vp);
 				params.resize(argc);
 				for(unsigned i=0;i<argc;++i){
-					j2v(cx,jv[i],params[i]);
+					j2v(cx,jv[i],&params[i]);
 				}
 			}
 
@@ -400,7 +510,7 @@ namespace lyramilk{namespace script{namespace js
 			}
 		}
 
-		JSObject* jsret = JS_NewObject(cx,&nativeClass,&args.callee(),JS_GetGlobalObject(cx));
+		JSObject* jsret = JS_NewObject(cx,Jsvalify(&nativeClass),&args.callee(),JS_GetGlobalObject(cx));
 
 		js_obj_pack *ppack = new js_obj_pack(h->dtr,h->eng,pnewobj);
 
@@ -409,7 +519,7 @@ namespace lyramilk{namespace script{namespace js
 		return JS_TRUE;
 	}
 
-	void jsdtr(JSFreeOp *fop, JSObject *obj)
+	void jsdtr(js::FreeOp *fop, JSObject *obj)
 	{
 		//JSRuntime* rt = fop->runtime();
 		js_obj_pack *ppack = (js_obj_pack*)JS_GetPrivate(obj);
@@ -419,7 +529,7 @@ namespace lyramilk{namespace script{namespace js
 		}
 	}
 
-	JSBool static js_func_adapter(JSContext *cx, unsigned argc, Value *vp)
+	static JSBool js_func_adapter(JSContext *cx, unsigned argc, Value *vp)
 	{
 		CallArgs args = CallArgsFromVp(argc, vp);
 		engine::functional_type_inclass pfun = (engine::functional_type_inclass)js_get_func_native(cx,&args.callee());
@@ -428,20 +538,20 @@ namespace lyramilk{namespace script{namespace js
 		if(pfun && ppack){
 			if(ppack->magic == 0x21){
 				script_js::class_handler* pp = (script_js::class_handler*)reinterpret_cast<script_js::class_handler*>(ppack);
-				lyramilk::data::var::map info;
+				lyramilk::data::map info;
 				info[engine::s_env_engine()].assign(engine::s_env_engine(),pp->eng);
 
-				lyramilk::data::var::array params;
+				lyramilk::data::array params;
 				params.resize(argc);
 				for(unsigned i=0;i<argc;++i){
-					j2v(cx,args[i],params[i]);
+					j2v(cx,args[i],&params[i]);
 				}
 				try{
 					lyramilk::data::var ret = pfun(params,info,nullptr);
 					jsval jsret;
-					v2j(cx,ret,jsret);
+					v2j(cx,ret,&jsret);
 					args.rval().set(jsret);
-				}catch(lyramilk::data::string& str){
+				}catch(const lyramilk::data::string& str){
 					js_thow(cx,str.c_str(),str.size());
 					return JS_FALSE;
 				}catch(const char* cstr){
@@ -457,17 +567,17 @@ namespace lyramilk{namespace script{namespace js
 					return JS_FALSE;
 				}
 			}else if(ppack->magic == 0x22 && ppack->pthis){
-				lyramilk::data::var::array params;
+				lyramilk::data::array params;
 				params.resize(argc);
 				for(unsigned i=0;i<argc;++i){
-					j2v(cx,args[i],params[i]);
+					j2v(cx,args[i],&params[i]);
 				}
 				try{
 					lyramilk::data::var ret = pfun(params,ppack->info,ppack->pthis);
 					jsval jsret;
-					v2j(cx,ret,jsret);
+					v2j(cx,ret,&jsret);
 					args.rval().set(jsret);
-				}catch(lyramilk::data::string& str){
+				}catch(const lyramilk::data::string& str){
 					js_thow(cx,str.c_str(),str.size());
 					return JS_FALSE;
 				}catch(const char* cstr){
@@ -492,17 +602,17 @@ namespace lyramilk{namespace script{namespace js
 		CallArgs args = CallArgsFromVp(argc, vp);
 		func_handler* h = (func_handler*)js_get_func_native(cx,&args.callee());
 
-		lyramilk::data::var::array params;
+		lyramilk::data::array params;
 		params.resize(argc);
 		for(unsigned i=0;i<argc;++i){
-			j2v(cx,args[i],params[i]);
+			j2v(cx,args[i],&params[i]);
 		}
 		try{
 			lyramilk::data::var ret = h->func(params,h->eng->info);
 			jsval jsret;
-			v2j(cx,ret,jsret);
+			v2j(cx,ret,&jsret);
 			args.rval().set(jsret);
-		}catch(lyramilk::data::string& str){
+		}catch(const lyramilk::data::string& str){
 			js_thow(cx,str.c_str(),str.size());
 			return JS_FALSE;
 		}catch(const char* cstr){
@@ -537,7 +647,7 @@ namespace lyramilk{namespace script{namespace js
 		}
 		return JS_TRUE;
 	}
-	script_js::script_js():rt(NULL),cx_template(NULL)
+	script_js::script_js():rt(nullptr),cx_template(nullptr)
 	{
 		info[engine::s_env_engine()].assign(engine::s_env_engine(),this);
 
@@ -550,7 +660,7 @@ namespace lyramilk{namespace script{namespace js
 		JS_SetVersion(cx_template, JSVERSION_LATEST);
 		JS_SetErrorReporter(cx_template, script_js_error_report);
 
-		JSObject * glob = JS_NewGlobalObject(cx_template, &globalClass, NULL);
+		JSObject * glob = JS_NewGlobalObject(cx_template, Jsvalify(&globalClass), nullptr);
 		JS::RootedObject global(cx_template, glob);
 		JS_InitStandardClasses(cx_template,global);
 	}
@@ -570,16 +680,16 @@ namespace lyramilk{namespace script{namespace js
 		//JS_ShutDown();
 	}
 
-	bool script_js::load_string(lyramilk::data::string scriptstring)
+	bool script_js::load_string(const lyramilk::data::string& scriptstring)
 	{
 		JS_SetRuntimeThread(rt);
 		init();
 		JSContext* selectedcx = (JSContext *)JS_GetRuntimePrivate(rt);
 		JSObject* global = JS_GetGlobalObject(selectedcx);
 
-		JSScript* script = JS_CompileScript(selectedcx,global,scriptstring.c_str(),scriptstring.size(),NULL,1);
+		JSScript* script = JS_CompileScript(selectedcx,global,scriptstring.c_str(),scriptstring.size(),nullptr,1);
 		if(script){
-			return !!JS_ExecuteScript(selectedcx,global,script,NULL);
+			return !!JS_ExecuteScript(selectedcx,global,script,nullptr);
 		}
 		return false;
 	}
@@ -590,7 +700,7 @@ namespace lyramilk{namespace script{namespace js
 			std::string code;
 		};
 
-	bool script_js::load_file(lyramilk::data::string scriptfile)
+	bool script_js::load_file(const lyramilk::data::string& scriptfile)
 	{
 		if(scriptfilename.empty()){
 			scriptfilename = scriptfile;
@@ -622,7 +732,7 @@ namespace lyramilk{namespace script{namespace js
 			if(it!=bytecodemap.end()){
 				const bytecode& c = it->second;
 				if(st.st_mtime == c.tm){
-					script = JS_DecodeScript(selectedcx,(const void*)c.code.c_str(),c.code.size(),NULL,NULL);
+					script = JS_DecodeScript(selectedcx,(const void*)c.code.c_str(),c.code.size(),nullptr,nullptr);
 				}
 			}
 		}
@@ -652,7 +762,7 @@ namespace lyramilk{namespace script{namespace js
 		}
 	}
 
-	lyramilk::data::var script_js::call(lyramilk::data::var func,lyramilk::data::var::array args)
+	lyramilk::data::var script_js::call(const lyramilk::data::var& func,const lyramilk::data::array& args)
 	{
 		JS_SetRuntimeThread(rt);
 		init();
@@ -664,12 +774,12 @@ namespace lyramilk{namespace script{namespace js
 			std::vector<jsval> jvs;
 			jvs.resize(args.size());
 			for(std::size_t i=0;i < args.size();++i){
-				v2j(selectedcx,args[i],jvs[i]);
+				v2j(selectedcx,args[i],&jvs[i]);
 			}
 
 			if(JS_TRUE == JS_CallFunctionName(selectedcx,global,func.str().c_str(),jvs.size(),jvs.data(),&retval)){
 				lyramilk::data::var ret;
-				j2v(selectedcx,retval,ret);
+				j2v(selectedcx,retval,&ret);
 				return ret;
 			}
 		}else if(func.type() == lyramilk::data::var::t_user){
@@ -684,12 +794,12 @@ namespace lyramilk{namespace script{namespace js
 			std::vector<jsval> jvs;
 			jvs.resize(args.size());
 			for(std::size_t i=0;i < args.size();++i){
-				v2j(selectedcx,args[i],jvs[i]);
+				v2j(selectedcx,args[i],&jvs[i]);
 			}
 
 			if(JS_TRUE == JS_CallFunction(selectedcx,global,fun,jvs.size(),jvs.data(),&retval)){
 				lyramilk::data::var ret;
-				j2v(selectedcx,retval,ret);
+				j2v(selectedcx,retval,&ret);
 				return ret;
 			}
 		}
@@ -707,14 +817,14 @@ namespace lyramilk{namespace script{namespace js
 		}
 	}
 
-	void script_js::define(lyramilk::data::string classname,functional_map m,class_builder builder,class_destoryer destoryer)
+	void script_js::define(const lyramilk::data::string& classname,functional_map m,class_builder builder,class_destoryer destoryer)
 	{
 		JS_SetRuntimeThread(rt);
 		JSContext* selectedcx = cx_template;
 		JSObject* global = JS_GetGlobalObject(selectedcx);
 
 		//std::cout << "注册类：" << classname << ",构造:" << (void*)builder << ",释放" << (void*)destoryer << std::endl;
-		JSObject* jo = JS_DefineObject(selectedcx,global,classname.c_str(),&classesClass,NULL,0);
+		JSObject* jo = JS_DefineObject(selectedcx,global,classname.c_str(),Jsvalify(&classesClass),nullptr,0);
 		assert(jo);
 		jsid joid;
 		JS_GetObjectId(selectedcx,jo,&joid);
@@ -737,8 +847,18 @@ namespace lyramilk{namespace script{namespace js
 			js_set_func_native(selectedcx,fo,(void*)it->second);
 		}
 	}
-	
-	void script_js::define(lyramilk::data::string funcname,functional_type func)
+
+	void script_js::define_const(const lyramilk::data::string& key,const lyramilk::data::var& value)
+	{
+		JS_SetRuntimeThread(rt);
+		JSContext* selectedcx = cx_template;
+		JSObject* global = JS_GetGlobalObject(selectedcx);
+		jsval jv;
+		v2j(selectedcx,value,&jv);
+		JS_DefineProperty(selectedcx,global,key.c_str(),jv,nullptr,nullptr,JSPROP_READONLY);
+	}
+
+	void script_js::define(const lyramilk::data::string& funcname,functional_type func)
 	{
 		JS_SetRuntimeThread(rt);
 		JSContext* selectedcx = cx_template;
@@ -754,7 +874,7 @@ namespace lyramilk{namespace script{namespace js
 		js_set_func_native(selectedcx,fo,&fcache.back());
 	}
 
-	lyramilk::data::var script_js::createobject(lyramilk::data::string classname,lyramilk::data::var::array args)
+	lyramilk::data::var script_js::createobject(const lyramilk::data::string& classname,const lyramilk::data::array& args)
 	{
 		JS_SetRuntimeThread(rt);
 		init();
@@ -767,7 +887,7 @@ namespace lyramilk{namespace script{namespace js
 		std::vector<jsval> jvs;
 		jvs.resize(args.size());
 		for(std::size_t i=0;i < args.size();++i){
-			v2j(selectedcx,args[i],jvs[i]);
+			v2j(selectedcx,args[i],&jvs[i]);
 		}
 
 		JSObject* jsobj = JS_New(selectedcx,&jo.toObject(),jvs.size(),jvs.data());
@@ -780,7 +900,7 @@ namespace lyramilk{namespace script{namespace js
 		jv.setObject(*jsobj);
 
 		lyramilk::data::var v;
-		j2v(selectedcx,jv,v);
+		j2v(selectedcx,jv,&v);
 		return v;
 	}
 
@@ -810,7 +930,7 @@ namespace lyramilk{namespace script{namespace js
 			JS_SetOptions(cx, JSOPTION_VAROBJFIX | JSOPTION_METHODJIT);
 			JS_SetVersion(cx, JSVERSION_LATEST);
 			JS_SetErrorReporter(cx, script_js_error_report);
-			JSObject * glob = JS_NewGlobalObject(cx, &globalClass, NULL);
+			JSObject * glob = JS_NewGlobalObject(cx, Jsvalify(&globalClass), nullptr);
 			JS_InitStandardClasses(cx,glob);
 
 			JS_SetPrototype(cx,glob,JS_GetGlobalObject(cx_template));
@@ -831,6 +951,8 @@ namespace lyramilk{namespace script{namespace js
 
 	static bool ___init()
 	{
+		nativeClass.ops.enumerate = jsnewenum;
+
 		lyramilk::script::engine::define("js",__ctr,__dtr);
 		return true;
 	}

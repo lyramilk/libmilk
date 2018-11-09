@@ -8,17 +8,17 @@
 #include <jsapi.h>
 #define D(x...) lyramilk::kdict(x)
 
-class os
+class os:public lyramilk::script::sclass
 {
 	int i;
   public:
 
-	static void* ctr(const lyramilk::data::var::array& ar)
+	static lyramilk::script::sclass* ctr(const lyramilk::data::var::array& ar)
 	{
 		return new os(ar[0]);
 	}
 
-	static void dtr(void* p)
+	static void dtr(lyramilk::script::sclass* p)
 	{
 		delete (os*)p;
 	}
@@ -47,17 +47,17 @@ printf("%s\n",__FUNCTION__);
 	}
 };
 
-class number
+class number:public lyramilk::script::sclass
 {
 	int i;
 	lyramilk::log::logss log;
   public:
-	static void* ctr(const lyramilk::data::var::array& ar)
+	static lyramilk::script::sclass* ctr(const lyramilk::data::var::array& ar)
 	{
 		return new number(ar[0]);
 	}
 
-	static void dtr(void* p)
+	static void dtr(lyramilk::script::sclass* p)
 	{
 		delete (number*)p;
 	}
@@ -105,15 +105,77 @@ printf("%s\n",__FUNCTION__);
 	}
 };
 
+class test_enum:public lyramilk::script::sclass
+{
+	int i;
+  public:
+
+	static lyramilk::script::sclass* ctr(const lyramilk::data::var::array& ar)
+	{
+		return new test_enum();
+	}
+
+	static void dtr(lyramilk::script::sclass* p)
+	{
+		delete (test_enum*)p;
+	}
+
+	lyramilk::data::var desc(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env)
+	{
+printf("%s\n",__FUNCTION__);
+		return "test_system";
+	}
+
+
+	lyramilk::data::var::array ar;
+
+	test_enum()
+	{
+		ar.push_back("月光");
+		ar.push_back("星辰");
+		ar.push_back("烈日");
+	}
+
+	~test_enum()
+	{
+	}
+
+	virtual int iterator_begin(lyramilk::data::var* v)
+	{
+		return 3;
+	}
+
+	virtual bool iterator_next(std::size_t idx,lyramilk::data::var* v)
+	{
+		if(idx >= ar.size()) return false;
+		*v = ar[idx];
+		return true;
+	}
+
+	virtual void iterator_end()
+	{
+	}
+
+	lyramilk::data::var::map m;
+
+	virtual bool set(const lyramilk::data::string& k,const lyramilk::data::var& v)
+	{
+		lyramilk::data::string prx = "prefix.";
+		m[k] = prx + v.str();
+		return true;
+	}
+
+	virtual bool get(const lyramilk::data::string& k,lyramilk::data::var* v)
+	{
+		*v = m[k] + ".surfix";
+		return true;
+	}
+
+};
+
 lyramilk::data::var echo(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env)
 {
-printf("%s\n",__FUNCTION__);
-	MILK_CHECK_SCRIPT_ARGS(args,0,lyramilk::data::var::t_str);
 	std::cout << lyramilk::ansi_3_64::green << args[0] << lyramilk::ansi_3_64::reset << std::endl;
-
-	lyramilk::data::string str = args[0];
-COUT << "str.size=" << str.size() << std::endl;
-
 	return true;
 }
 
@@ -149,9 +211,18 @@ void test_script(lyramilk::data::string file,lyramilk::script::engine* eng)
 		fn["desc"] = lyramilk::script::engine::functional<os,&os::desc>;
 		eng->define("test_system",fn,os::ctr,os::dtr);
 	}
+
+	{
+		lyramilk::script::engine::functional_map fn;
+		fn["desc"] = lyramilk::script::engine::functional<test_enum,&test_enum::desc>;
+		eng->define("test_enum",fn,test_enum::ctr,test_enum::dtr);
+	}
+
+
 	eng->define("myecho",echo);
 	eng->define("myadd",add);
 	eng->define("myaddm",addm);
+	eng->define_const("IsDebug",true);
 	{
 		eng->load_file(file);
 		//std::cout << "加载" << file << "完成" << std::endl;
@@ -164,6 +235,8 @@ void test_script(lyramilk::data::string file,lyramilk::script::engine* eng)
 		r.push_back(10000000000000011);
 		r.push_back(10000000000000010);
 		std::cout << "调用script的test函数的结果：" << eng->call("mytest",r) << std::endl;
+
+		std::cout << (10000000000000011 + 10000000000000010) << std::endl;
 		eng->gc();
 	}
 	eng->reset();
@@ -176,19 +249,19 @@ int main(int argc,const char* argv[])
 
 	for(int i=0;i<1;++i){
 
-	std::map<lyramilk::data::string,lyramilk::script::engine*> engs;
+		std::map<lyramilk::data::string,lyramilk::script::engine*> engs;
 #ifdef JS17_FOUND
-	engs["js"] = lyramilk::script::engine::createinstance("js");
+		engs["js"] = lyramilk::script::engine::createinstance("js");
 #endif
 #ifdef LUAJIT_FOUND
-	engs["lua"] = lyramilk::script::engine::createinstance("lua");
+		engs["lua"] = lyramilk::script::engine::createinstance("lua");
 #endif
 
-	for(std::map<lyramilk::data::string,lyramilk::script::engine*>::iterator it = engs.begin();it!=engs.end();++it){
-		std::cout << "*********************************************测试" << it->first << "*********************************************" << std::endl;
-		lyramilk::data::string test = "/data/src/libmilk/testsuite/test." + it->first;
-		test_script(test,it->second);
-	}
+		for(std::map<lyramilk::data::string,lyramilk::script::engine*>::iterator it = engs.begin();it!=engs.end();++it){
+			std::cout << "*********************************************测试" << it->first << "*********************************************" << std::endl;
+			lyramilk::data::string test = "/data/src/libmilk/testsuite/test." + it->first;
+			test_script(test,it->second);
+		}
 	}
 	return 0;
 }

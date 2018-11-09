@@ -12,33 +12,48 @@
 
 namespace lyramilk{namespace script
 {
+
+	class _lyramilk_api_ sclass
+	{
+	  public:
+		sclass();
+	  	virtual ~sclass();
+
+	  	virtual bool iterator_begin();
+	  	virtual bool iterator_next(std::size_t idx,lyramilk::data::var* v);
+	  	virtual void iterator_end();
+
+	  	virtual bool set(const lyramilk::data::string& k,const lyramilk::data::var& v);
+	  	virtual bool get(const lyramilk::data::string& k,lyramilk::data::var* v);
+	};
+
 	/**
 		@brief 脚本引擎接口
 	*/
 	class _lyramilk_api_ engine
 	{
 	  protected:
-		lyramilk::data::var::map mparams;
+		lyramilk::data::map mparams;
 	  public:
 
 		// 脚本向C++传递对象id时使用。
-		static lyramilk::data::string s_user_objectid()
+		static inline lyramilk::data::string s_user_objectid()
 		{
 			return "__script_object_id";
 		}
 		// 脚本向C++传递对象指针时使用。
-		static lyramilk::data::string s_user_nativeobject()
+		static inline lyramilk::data::string s_user_nativeobject()
 		{
 			return "__script_native_object";
 		}
 		// 脚本向C++传递函数id时使用。
-		static lyramilk::data::string s_user_functionid()
+		static inline lyramilk::data::string s_user_functionid()
 		{
 			return "__script_function_id";
 		}
 
 		// 环境变量：脚本引擎对象指针。
-		static lyramilk::data::string s_env_engine()
+		static inline lyramilk::data::string s_env_engine()
 		{
 			return "__engine";
 		}
@@ -46,8 +61,8 @@ namespace lyramilk{namespace script
 		/**
 			@brief 函数指针：适配脚本可访问的C++对象中的函数
 		*/
-		typedef lyramilk::data::var (*functional_type_inclass)(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env,void* nativeptr);
-		typedef lyramilk::data::var (*functional_type)(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env);
+		typedef lyramilk::data::var (*functional_type_inclass)(const lyramilk::data::array& args,const lyramilk::data::map& env,void* nativeptr);
+		typedef lyramilk::data::var (*functional_type)(const lyramilk::data::array& args,const lyramilk::data::map& env);
 
 		/**
 			@brief functional_type的map
@@ -57,24 +72,24 @@ namespace lyramilk{namespace script
 		/**
 			@brief 函数指针：创建脚本可访问的C++对象
 		*/
-		typedef void* (*class_builder)(const lyramilk::data::var::array& args);
+		typedef sclass* (*class_builder)(const lyramilk::data::array& args);
 
 		/**
 			@brief 函数指针：销毁脚本可访问的C++对象
 		*/
-		typedef void (*class_destoryer)(void*);
+		typedef void (*class_destoryer)(sclass*);
 
 		engine();
 		virtual ~engine();
 
-		virtual lyramilk::data::var& get(lyramilk::data::string k);
-		virtual bool set(lyramilk::data::string k,lyramilk::data::var v);
+		virtual lyramilk::data::var& get(const lyramilk::data::string& k);
+		virtual bool set(const lyramilk::data::string& k,const lyramilk::data::var& v);
 		/**
 			@brief 从一个字符串中加载脚本代码
 			@param script 字符串形式的脚本代码
 			@return 返回true表示成功
 		*/
-		virtual bool load_string(lyramilk::data::string script) = 0;
+		virtual bool load_string(const lyramilk::data::string& script) = 0;
 
 		/**
 			@brief 从一个文件中加载脚本代码
@@ -82,7 +97,7 @@ namespace lyramilk{namespace script
 			@param permanent 为ture表示reset时不会失效。
 			@return 返回true表示成功
 		*/
-		virtual bool load_file(lyramilk::data::string scriptfile);
+		virtual bool load_file(const lyramilk::data::string& scriptfile);
 
 		/**
 			@brief 执行脚本函数。
@@ -97,7 +112,7 @@ namespace lyramilk{namespace script
 			@param args 参数
 			@return 脚本的返回值
 		*/
-		virtual lyramilk::data::var call(lyramilk::data::var func,lyramilk::data::var::array args) = 0;
+		virtual lyramilk::data::var call(const lyramilk::data::var& func,const lyramilk::data::array& args) = 0;
 
 		/**
 			@brief 重置脚本引擎。
@@ -111,14 +126,21 @@ namespace lyramilk{namespace script
 			@param builder 该对象的创建函数
 			@param destoryer 该对象的销毁函数
 		*/
-		virtual void define(lyramilk::data::string classname,functional_map m,class_builder builder,class_destoryer destoryer) = 0;
+		virtual void define(const lyramilk::data::string& classname,functional_map m,class_builder builder,class_destoryer destoryer) = 0;
 
 		/**
 			@brief 将一个脚本可访问的C++函数注入到脚本引擎中。
 			@param funcname 函数名
 			@param func 脚本可访问的C++本地函数
 		*/
-		virtual void define(lyramilk::data::string funcname,functional_type func) = 0;
+		virtual void define(const lyramilk::data::string& funcname,functional_type func) = 0;
+
+		/**
+			@brief 将一个全局常量属性注入到脚本引擎中。
+			@param key 函数名
+			@param value 函数值
+		*/
+		virtual void define_const(const lyramilk::data::string& key,const lyramilk::data::var& value) = 0;
 
 		/**
 			@brief 将一个脚本可访问的C++对象装载到一个var对象中以作为参数由C++传递给脚本引擎。
@@ -126,7 +148,7 @@ namespace lyramilk{namespace script
 			@param args 参数
 			@return 装载了脚本对象的var对象，该var对象只能传递给创建该对象的脚本引擎对象。
 		*/
-		virtual lyramilk::data::var createobject(lyramilk::data::string classname,lyramilk::data::var::array args) = 0;
+		virtual lyramilk::data::var createobject(const lyramilk::data::string& classname,const lyramilk::data::array& args) = 0;
 
 		/**
 			@brief 对于支持垃圾回收的脚本引擎，主动促使其进行垃圾回收。
@@ -147,8 +169,8 @@ namespace lyramilk{namespace script
 			@brief 该模板用于适配C++可访问的对象的成员函数到脚本引擎支持的形式。
 			@details 该模板用于适配C++可访问的对象的成员函数到脚本引擎支持的形式。举例，如果number是一个C++类，而number的普通成员函数add函数符合functional_type形式，那么 lyramilk::script::engine::functional<number,&number::add>可以将该函数适配到非成员的functional_type形式。
 		*/
-		template <typename T,lyramilk::data::var (T::*Q)(const lyramilk::data::var::array& ,const lyramilk::data::var::map&)>
-		static inline lyramilk::data::var functional(const lyramilk::data::var::array& args,const lyramilk::data::var::map& env,void* nativeptr)
+		template <typename T,lyramilk::data::var (T::*Q)(const lyramilk::data::array& ,const lyramilk::data::map&)>
+		static inline lyramilk::data::var functional(const lyramilk::data::array& args,const lyramilk::data::map& env,void* nativeptr)
 		{
 			T* pthis = (T*)nativeptr;
 			return (pthis->*(Q))(args,env);
@@ -159,24 +181,24 @@ namespace lyramilk{namespace script
 			@param scriptname 脚本引擎的名字
 			@param builder 脚本引擎对象的创建函数
 		*/
-		static bool define(lyramilk::data::string scriptname,lyramilk::script::engine* (*builder)(),void (*destoryer)(lyramilk::script::engine*));
+		static bool define(const lyramilk::data::string& scriptname,lyramilk::script::engine* (*builder)(),void (*destoryer)(lyramilk::script::engine*));
 
 		/**
 			@brief 取消一个脚本引擎与其创建函数的对应关系。
 			@param scriptname 脚本引擎的名字
 		*/
-		static void undef(lyramilk::data::string funcname);
+		static void undef(const lyramilk::data::string& funcname);
 
 		/**
 			@brief 通过脚本引擎的名字创建一个脚本引擎对象。
 			@param scriptname 脚本引擎的名字
 		*/
-		static lyramilk::script::engine* createinstance(lyramilk::data::string scriptname);
+		static lyramilk::script::engine* createinstance(const lyramilk::data::string& scriptname);
 
 		/**
 			@brief 销毁由createinstance创建的引擎对象。
 		*/
-		static void destoryinstance(lyramilk::data::string scriptname,lyramilk::script::engine* eng);
+		static void destoryinstance(const lyramilk::data::string& scriptname,lyramilk::script::engine* eng);
 	};
 
 	class _lyramilk_api_ engines : public lyramilk::threading::rentlist<lyramilk::script::engine>

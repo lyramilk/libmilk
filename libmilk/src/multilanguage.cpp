@@ -34,7 +34,7 @@ namespace lyramilk{namespace data{namespace multilanguage{
 	{
 	}
 
-	bool dict::load(lyramilk::data::string filename)
+	bool dict::load(const lyramilk::data::string& filename)
 	{
 		if(p && p->load(filename)) return true;
 
@@ -49,7 +49,7 @@ namespace lyramilk{namespace data{namespace multilanguage{
 		return true;
 	}
 
-	void dict::notify(lyramilk::data::string str)
+	void dict::notify(const lyramilk::data::string& str)
 	{
 		if(p) {
 			p->notify(str);
@@ -57,14 +57,14 @@ namespace lyramilk{namespace data{namespace multilanguage{
 		}
 	}
 
-	lyramilk::data::string dict::translate(lyramilk::data::string src)
+	lyramilk::data::string dict::translate(const lyramilk::data::string& src)
 	{
 		if(inner){
 			return src;
 		}
 		dict_inner_keeper _(inner);
 		if(p) return p->translate(src);
-		lyramilk::data::var::map::iterator it = m.find(src);
+		lyramilk::data::map::iterator it = m.find(src);
 		if(it!=m.end()){
 			return it->second;
 		}

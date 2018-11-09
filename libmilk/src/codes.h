@@ -17,7 +17,7 @@ namespace lyramilk{ namespace data
 			@brief 用一个字符串构造。在what中会返回该字符串。
 			@param msg 在what中返回的字符串。
 		*/
-		coding_exception(string msg = "");
+		coding_exception(const lyramilk::data::string& msg = "");
 	};
 
 	/**
@@ -26,7 +26,7 @@ namespace lyramilk{ namespace data
 		@param from 源串编码
 		@param to 目标串编码
 	*/
-	string _lyramilk_api_ iconv(const string& str, const string& from, const string& to);
+	lyramilk::data::string _lyramilk_api_ iconv(const lyramilk::data::string& str, const lyramilk::data::string& from, const lyramilk::data::string& to);
 
 	/**
 		@brief 代表一种编码解析器。
@@ -41,13 +41,13 @@ namespace lyramilk{ namespace data
 			@param str 被转换的字符串。
 			@return str转换为原串。
 		*/
-		virtual string decode(const string& str) = 0;
+		virtual lyramilk::data::string decode(const lyramilk::data::string& str) = 0;
 		/**
 			@brief 字符串编码，将字符串或二进制串转换为目标编码或格式。
 			@param str 被转换的字符串。
 			@return 由str编码而来的新字符串。
 		*/
-		virtual string encode(const string& str) = 0;
+		virtual lyramilk::data::string encode(const lyramilk::data::string& str) = 0;
 	};
 
 
@@ -70,17 +70,17 @@ namespace lyramilk{ namespace data
 		/**
 			@brief 定义一种编码及该编码的转换对象。
 		*/
-		bool define(const string& codingname,getter gtr);
+		bool define(const lyramilk::data::string& codingname,getter gtr);
 		/**
 			@brief 取消定义一种编码。
 		*/
-		bool undefine(const string& codingname);
+		bool undefine(const lyramilk::data::string& codingname);
 
 		/**
 			@brief 获取解码器
 			@param codingname 用该名称代表的编码对src进行转换。
 		*/
-		coding* getcoder(const string& codingname);
+		coding* getcoder(const lyramilk::data::string& codingname);
 
 		/**
 			@brief 将字符串转换为目标编码。
@@ -88,7 +88,7 @@ namespace lyramilk{ namespace data
 			@param codingname 用该名称代表的编码对src进行转换。
 			@return 编码后的新数据。
 		*/
-		string encode(const string& codingname,const string& src) throw(lyramilk::exception);
+		lyramilk::data::string encode(const lyramilk::data::string& codingname,const lyramilk::data::string& src) throw(lyramilk::exception);
 
 		/**
 			@brief 将字符串转换为原编码。
@@ -96,14 +96,14 @@ namespace lyramilk{ namespace data
 			@param codingname 编码名称。
 			@return 解码后的原编码。
 		*/
-		string decode(const string& codingname,const string& src) throw(lyramilk::exception);
+		lyramilk::data::string decode(const lyramilk::data::string& codingname,const lyramilk::data::string& src) throw(lyramilk::exception);
 
 		/**
 			@brief 以字符串数组形式返回所有支持的编码。
 		*/
-		lyramilk::data::var::array supports();
+		lyramilk::data::array supports();
 	  protected:
-		typedef class _lyramilk_api_ map<string,getter> builder_type;
+		typedef class _lyramilk_api_ std::map<lyramilk::data::string,getter> builder_type;
 		builder_type builder;
 	};
 }}

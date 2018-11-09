@@ -5,7 +5,7 @@ namespace lyramilk{
 	{
 	}
 
-	exception::exception(lyramilk::data::string msg) throw()
+	exception::exception(const lyramilk::data::string& msg) throw()
 	{
 		str = msg;
 	}
@@ -19,7 +19,7 @@ namespace lyramilk{
 		return str.c_str();
 	}
 
-	notimplementexception::notimplementexception(lyramilk::data::string msg) throw() : exception(msg)
+	notimplementexception::notimplementexception(const lyramilk::data::string& msg) throw() : exception(msg)
 	{
 	}
 }
