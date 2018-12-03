@@ -490,7 +490,7 @@ namespace lyramilk{namespace script{namespace js
 				return JS_PropertyStub(cx,obj,id,vp);
 			}
 			lyramilk::data::var v;
-			if(!ppack->pthis->get(k,&v)){
+			if(!ppack->pthis->get_property(k,&v)){
 				return JS_TRUE;
 			}
 			v2j(cx,v,vp.address());
@@ -516,7 +516,7 @@ namespace lyramilk{namespace script{namespace js
 			lyramilk::data::var v;
 			j2v(cx,vp.get(),&v);
 
-			if(!ppack->pthis->set(k,v)){
+			if(!ppack->pthis->set_property(k,v)){
 				return JS_TRUE;
 				//return JS_PropertyStub(cx,obj,id,vp);
 			}
@@ -737,6 +737,7 @@ namespace lyramilk{namespace script{namespace js
 		JSObject * glob = JS_NewGlobalObject(cx_template, Jsvalify(&globalClass), nullptr);
 		JS::RootedObject global(cx_template, glob);
 		JS_InitStandardClasses(cx_template,global);
+		//js_InitExceptionClasses
 	}
 
 	script_js::~script_js()

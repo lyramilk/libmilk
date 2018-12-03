@@ -43,8 +43,6 @@ namespace lyramilk{namespace netio
 
 		friend class aiosession_sync;
 		friend class aiosession_async;
-		virtual lyramilk::data::int32 read(void* buf, lyramilk::data::int32 len);
-		virtual lyramilk::data::int32 write(const void* buf, lyramilk::data::int32 len);
 	  public:
 		/// 模板化会话对象的销毁函数
 		template <typename T>
@@ -154,7 +152,7 @@ namespace lyramilk{namespace netio
 			@brief 创建一个会话。
 			@return 创建的会话。这个会话应该用destory释放。
 		*/
-		virtual aiosession* create() = 0;
+		virtual lyramilk::netio::aiosession* create() = 0;
 
 		/**
 			@brief 开启客户端验证(双向认证)
@@ -204,9 +202,9 @@ namespace lyramilk{namespace netio
 	template <typename T>
 	class aioserver : public aiolistener
 	{
-		virtual aiosession* create()
+		virtual lyramilk::netio::aiosession* create()
 		{
-			return aiosession::__tbuilder<T>();
+			return lyramilk::netio::aiosession::__tbuilder<T>();
 		}
 	};
 }}

@@ -76,12 +76,17 @@ namespace lyramilk{namespace netio
 		virtual native_socket_type fd() const;
 		virtual void fd(native_socket_type tmpfd);
 
-
 		/*
 			@brief 从套接字中读取数据
 		*/
 
 		virtual lyramilk::data::int32 read(void* buf, lyramilk::data::int32 len);
+
+		/*
+			@brief 从套接字中预览数据
+		*/
+
+		virtual lyramilk::data::int32 peek(void* buf, lyramilk::data::int32 len);
 
 		/*
 			@brief 向套接字写入数据
@@ -106,6 +111,10 @@ namespace lyramilk{namespace netio
 			@brief 检查套接字是有错误
 		*/
 		virtual bool check_error();
+
+		static bool check_read(native_socket_type fd,lyramilk::data::uint32 msec);
+		static bool check_write(native_socket_type fd,lyramilk::data::uint32 msec);
+		static bool check_error(native_socket_type fd);
 	};
 
 	/// 以流的方式操作套接字的流缓冲

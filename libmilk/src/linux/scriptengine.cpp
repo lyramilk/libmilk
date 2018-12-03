@@ -27,12 +27,12 @@ namespace lyramilk{namespace script
 	{
 	}
 
-	bool sclass::set(const lyramilk::data::string& k,const lyramilk::data::var& v)
+	bool sclass::set_property(const lyramilk::data::string& k,const lyramilk::data::var& v)
 	{
 		return false;
 	}
 
-	bool sclass::get(const lyramilk::data::string& k,lyramilk::data::var* v)
+	bool sclass::get_property(const lyramilk::data::string& k,lyramilk::data::var* v)
 	{
 		return false;
 	}

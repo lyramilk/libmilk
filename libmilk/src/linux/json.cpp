@@ -3,6 +3,7 @@
 #include <fstream>
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 
 namespace lyramilk{namespace data
 {
@@ -218,6 +219,7 @@ namespace lyramilk{namespace data
 			TRUE,	//	true		// Boolean
 			FALSE,	//	false		// Boolean
 			NIL,	//	null		// Undefined
+			SLASH,	//	/			// 注释
 		} t;
 		union{
 			long long i;
@@ -429,6 +431,23 @@ label_repeat:
 				token.t = t;
 				return true;
 			  }break;
+			  case jsontoken::SLASH:{
+				if(p[1] == '/'){
+					const char* k = strchr(p,'\n');
+					if(k){
+						p = k + 1;
+						goto label_repeat;
+					}
+				}else if(p[1] == '*'){
+					const char* k = strstr(p,"*/");
+					if(k){
+						p = k + 2;
+						goto label_repeat;
+					}
+				}else{
+					goto label_badchar;
+				}
+			  }break;
 			  default:
 				if(*p == '\t' || *p == ' ' || *p == '\r' || *p == '\n'){
 					++p;
@@ -583,6 +602,7 @@ label_badchar:
 			else if(i == 't') tokentable[i] = jsontoken::TRUE;
 			else if(i == 'f') tokentable[i] = jsontoken::FALSE;
 			else if(i == 'n') tokentable[i] = jsontoken::NIL;
+			else if(i == '/') tokentable[i] = jsontoken::SLASH;
 			else tokentable[i] = jsontoken::UNKNOW;
 		}
 	}

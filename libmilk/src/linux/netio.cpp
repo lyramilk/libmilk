@@ -222,6 +222,30 @@ namespace lyramilk{namespace netio
 		return rt;
 	}
 
+
+	lyramilk::data::int32 socket::peek(void* buf, lyramilk::data::int32 len)
+	{
+		int rt = 0;
+#ifdef OPENSSL_FOUND
+		if(ssl()){
+			rt = SSL_peek((SSL*)get_ssl_obj(), buf, len);
+		}else{
+			rt = ::recv(fd(),buf,len,MSG_PEEK);
+		}
+#else
+		rt = ::recv(fd(),buf,len,MSG_PEEK);
+#endif
+		if(rt < 0){
+			if(errno != EAGAIN){
+				lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.socket.peek") << lyramilk::kdict("从套接字%d中预览数据时发生错误:%s",fd(),strerror(errno)) << std::endl;
+			}
+		}else if(rt == 0){
+			//lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.socket.peek") << lyramilk::kdict("从套接字%d中预览数据时发生错误:%s",fd(),"套接字己关闭") << std::endl;
+		}
+		return rt;
+	}
+
+
 	lyramilk::data::int32 socket::write(const void* buf, lyramilk::data::int32 len)
 	{
 		int rt = 0;
@@ -280,6 +304,51 @@ namespace lyramilk{namespace netio
 	{
 		pollfd pfd;
 		pfd.fd = fd();
+		pfd.events = POLLHUP | POLLERR;
+		pfd.revents = 0;
+		int ret = ::poll(&pfd,1,0);
+		if(ret > 0){
+			if(pfd.revents){
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool socket::check_read(native_socket_type fd,lyramilk::data::uint32 msec)
+	{
+		pollfd pfd;
+		pfd.fd = fd;
+		pfd.events = POLLIN;
+		pfd.revents = 0;
+		int ret = ::poll(&pfd,1,msec);
+		if(ret > 0){
+			if(pfd.revents & POLLIN){
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool socket::check_write(native_socket_type fd,lyramilk::data::uint32 msec)
+	{
+		pollfd pfd;
+		pfd.fd = fd;
+		pfd.events = POLLOUT;
+		pfd.revents = 0;
+		int ret = ::poll(&pfd,1,msec);
+		if(ret > 0){
+			if(pfd.revents & POLLOUT){
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool socket::check_error(native_socket_type fd)
+	{
+		pollfd pfd;
+		pfd.fd = fd;
 		pfd.events = POLLHUP | POLLERR;
 		pfd.revents = 0;
 		int ret = ::poll(&pfd,1,0);
@@ -644,8 +713,8 @@ namespace lyramilk{namespace netio
 #endif
 			/*
 			unsigned int argp = 1;
-			//ioctlsocket(fd(),FIONBIO,&argp);
-			ioctl(fd(),FIONBIO,&argp);*/
+			//ioctlsocket(tmpsock,FIONBIO,&argp);
+			ioctl(tmpsock,FIONBIO,&argp);*/
 			this->fd(tmpsock);
 			return true;
 		}

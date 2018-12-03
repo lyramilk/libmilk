@@ -51,7 +51,7 @@ namespace lyramilk { namespace log
 			@param str 日志消息。
 
 		*/
-		virtual void log(time_t ti,type ty,const lyramilk::data::string& usr,const lyramilk::data::string& app,const lyramilk::data::string& module,const lyramilk::data::string& str) const;
+		virtual void log(time_t ti,lyramilk::log::type ty,const lyramilk::data::string& usr,const lyramilk::data::string& app,const lyramilk::data::string& module,const lyramilk::data::string& str) const;
 		/**
 			@brief 构造函数
 		*/
@@ -101,7 +101,7 @@ namespace lyramilk { namespace log
 		friend class logbuf;
 		friend class logss;
 		lyramilk::data::string module;
-		type t;
+		lyramilk::log::type t;
 	  public:
 		logss2();
 		virtual ~logss2();
@@ -142,7 +142,7 @@ namespace lyramilk { namespace log
 			@param ty 日志类型
 			@return 返回日志流自身以方便 << 运算符表现。
 		*/
-		logss2& operator()(type ty) const;
+		logss2& operator()(lyramilk::log::type ty) const;
 		/**
 			@brief 模拟一个函数。通过这个函数来设置子模块。
 			@details 例如
@@ -165,7 +165,7 @@ namespace lyramilk { namespace log
 			@param ty 日志类型
 			@return 返回日志流自身以方便 << 运算符表现。
 		*/
-		logss2& operator()(type ty,const lyramilk::data::string& m) const;
+		logss2& operator()(lyramilk::log::type ty,const lyramilk::data::string& m) const;
 		/**
 			@brief 将日志输出到指定的logb实现中。
 			@details 将该日志流定向到指定的ploger中，可以改变日志的表现形式以及存储方式。

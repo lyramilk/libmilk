@@ -23,8 +23,8 @@ namespace lyramilk{namespace script
 	  	virtual bool iterator_next(std::size_t idx,lyramilk::data::var* v);
 	  	virtual void iterator_end();
 
-	  	virtual bool set(const lyramilk::data::string& k,const lyramilk::data::var& v);
-	  	virtual bool get(const lyramilk::data::string& k,lyramilk::data::var* v);
+	  	virtual bool set_property(const lyramilk::data::string& k,const lyramilk::data::var& v);
+	  	virtual bool get_property(const lyramilk::data::string& k,lyramilk::data::var* v);
 	};
 
 	/**

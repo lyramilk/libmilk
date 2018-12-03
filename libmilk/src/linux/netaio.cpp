@@ -65,16 +65,6 @@ namespace lyramilk{namespace netio
 		return peer_cert_info;
 	}
 
-	lyramilk::data::int32 aiosession::read(void* buf, lyramilk::data::int32 len)
-	{
-		return lyramilk::netio::socket::read(buf,len);
-	}
-
-	lyramilk::data::int32 aiosession::write(const void* buf, lyramilk::data::int32 len)
-	{
-		return lyramilk::netio::socket::write(buf,len);
-	}
-
 	// aiosession_sync
 	aiosession_sync::aiosession_sync()
 	{

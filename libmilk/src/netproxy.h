@@ -4,6 +4,7 @@
 #include "netaio.h"
 #include "netio.h"
 #include "aio.h"
+#include <arpa/inet.h>
 
 /**
 	@namespace lyramilk::netio
@@ -11,66 +12,86 @@
 
 namespace lyramilk{namespace netio
 {
-
-	class aioproxysession_supper : public lyramilk::netio::aiosession
+	class _lyramilk_api_ aioproxysession_speedy : public lyramilk::netio::aiosession
 	{
-		bool inited;
-		lyramilk::data::stringstream scache;
-		aioproxysession_supper* endpoint;
 		friend class aioproxysession;
-		friend class aioproxysession_upstream;
+		ssl_ctx_type sslctx;
+		bool use_ssl;
 	  public:
-		aioproxysession_supper();
-	  	virtual ~aioproxysession_supper();
+		aioproxysession_speedy* endpoint;
+	  public:
+		aioproxysession_speedy();
+	  	virtual ~aioproxysession_speedy();
 		virtual bool init();
+		virtual bool combine(aioproxysession_speedy* endpoint);
+		virtual bool open(const lyramilk::data::string& host,lyramilk::data::uint16 port,int timeout_msec);
+		virtual bool open(const sockaddr_in& saddr,int timeout_msec);
+
+		virtual bool ssl();
+		virtual void ssl(bool use_ssl);
+		virtual bool init_ssl(const lyramilk::data::string& certfilename = "", const lyramilk::data::string& keyfilename = "");
+
+		///	取得SSL_CTX*
+		virtual ssl_ctx_type get_ssl_ctx();
 	  protected:
 		virtual bool notify_in();
 		virtual bool notify_out();
-		virtual bool ondata(const char* cache, int size,int* size_used, std::ostream& os);
 		virtual bool notify_hup();
 		virtual bool notify_err();
 		virtual bool notify_pri();
-		virtual bool oninit(std::ostream& os) = 0;
-		virtual bool ondownstream(const char* cache, int size,int* size_used, std::ostream& os) = 0;
 	};
 
 
+
 	/**
-		@brief 异步代理会话
-		@details 用作中间人转发上下流数据。
+		@brief 同步套接字会话
+		@details onrequest中向os写数据的时候，以阻塞的方式写出去。
 	*/
-	class _lyramilk_api_ aioproxysession : public lyramilk::netio::aioproxysession_supper
+	class _lyramilk_api_ aioproxysession : public aioproxysession_speedy
 	{
-		friend class aioproxysession_upstream;
+	  protected:
+		bool directmode;
+		socket_ostream aos;
+		virtual bool notify_in();
+		virtual bool notify_out();
+		virtual bool notify_hup();
+		virtual bool notify_err();
+		virtual bool notify_pri();
 	  public:
 		aioproxysession();
 		virtual ~aioproxysession();
-		virtual lyramilk::netio::netaddress get_upstream_address() = 0;
+
+		virtual bool init();
+		virtual void destory();
+
+		virtual bool combine(const lyramilk::data::string& host,lyramilk::data::uint16 port);
+		virtual bool combine(const sockaddr_in& saddr);
+		virtual bool combine(aioproxysession_speedy* dest);
+		virtual bool start_proxy();
+		virtual bool stop_proxy();
 	  protected:
-		virtual bool oninit(std::ostream& os);
-		virtual bool ondata(const char* cache, int size,int* size_used, std::ostream& os);
-		virtual bool onupstream(const char* cache, int size,int* size_used, std::ostream& os);
-		virtual bool ondownstream(const char* cache, int size,int* size_used, std::ostream& os);
+		/**
+			@brief 连接时触发
+			@return 返回false会导致服务器主动断开链接。
+		*/
+		virtual bool oninit(lyramilk::data::ostream& os);
+
+		/**
+			@brief 断开时触发
+			@return 返回false会导致服务器主动断开链接。
+		*/
+		virtual void onfinally(lyramilk::data::ostream& os);
+
+		/**
+			@brief 收到数据时触发。
+			@param cache 这里面有新数据。
+			@param size 新数据的字节数。
+			@param size 在代理会话中实际使用的字节数，如果小于size的话，cache中末尾的数据还会继续触发事件。
+			@return 返回false会导致服务器主动断开链接。
+		*/
+		virtual bool onrequest(const char* cache, int size, int* sizeused, lyramilk::data::ostream& os) = 0;
 	};
 
-
-
-
-
-	/**
-		@brief 由 aioproxysession 支配
-	*/
-	class aioproxysession_upstream : public lyramilk::netio::aioproxysession_supper
-	{
-	  public:
-		aioproxysession_upstream();
-	  	virtual ~aioproxysession_upstream();
-		virtual bool open(lyramilk::data::string host,lyramilk::data::uint16 port);
-	  protected:
-		virtual bool oninit(std::ostream& os);
-		virtual bool ondata(const char* cache, int size,int* size_used, std::ostream& os);
-		virtual bool ondownstream(const char* cache, int size,int* size_used, std::ostream& os);
-	};
 }}
 
 #endif
