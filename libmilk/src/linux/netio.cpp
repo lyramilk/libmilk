@@ -37,7 +37,7 @@
 			SSL_load_error_strings();
 			ERR_load_BIO_strings();
 			OpenSSL_add_all_algorithms();
-			gethostbyname("www.lyramilk.com");
+			gethostbyname("127.0.0.1");
 		}
 		~__ssl()
 		{
@@ -56,7 +56,7 @@
 	{
 		__ssl()
 		{
-			gethostbyname("www.lyramilk.com");
+			gethostbyname("127.0.0.1");
 		}
 		~__ssl()
 		{
