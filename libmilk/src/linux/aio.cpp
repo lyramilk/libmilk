@@ -87,6 +87,7 @@ namespace lyramilk{namespace io
 	aiopoll::aiopoll()
 	{
 		epfd = epoll_create(pool_max);
+		fdcount = 0;
 	}
 
 	native_epool_type aiopoll::getfd()
@@ -121,6 +122,7 @@ namespace lyramilk{namespace io
 			lyramilk::klog(lyramilk::log::error,"lyramilk.aio.epoll.add") << lyramilk::kdict("向epoll中添加套接字%d时发生错误%s",r->getfd(),strerror(errno)) << std::endl;
 			return false;
 		}
+		__sync_add_and_fetch(&fdcount,1);
 		r->mask = mask;
 		return true;
 	}
@@ -162,8 +164,8 @@ namespace lyramilk{namespace io
 			lyramilk::klog(lyramilk::log::error,"lyramilk.aio.epoll.remove") << lyramilk::kdict("从epoll中移除套接字%d时发生错误%s",r->getfd(),strerror(errno)) << std::endl;
 			return false;
 		}
+		__sync_sub_and_fetch(&fdcount,1);
 		r->mask = 0;
-
 		r->ondestory();
 		return true;
 	}
@@ -203,6 +205,11 @@ namespace lyramilk{namespace io
 	{
 		while(transmessage());
 		return 0;
+	}
+
+	lyramilk::data::int64 aiopoll::get_fd_count()
+	{
+		return fdcount;
 	}
 
 	//	aiopoll_safe
@@ -275,6 +282,7 @@ namespace lyramilk{namespace io
 			lyramilk::klog(lyramilk::log::error,"lyramilk.aio.aiopoll_safe.add") << lyramilk::kdict("向epoll[%d]中添加套接字%d时发生错误%s",epi.epfd,r->getfd(),strerror(errno)) << std::endl;
 			return false;
 		}
+		__sync_sub_and_fetch(&fdcount,1);
 		r->mask = mask;
 		return true;
 	}

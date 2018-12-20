@@ -610,12 +610,12 @@ namespace lyramilk{namespace data
 			uint64 u8;
 			double f8;
 
-			char bp[sizeof(lyramilk::data::chunk) + 10];
-			char bs[sizeof(lyramilk::data::string) + 10];
-			char bw[sizeof(lyramilk::data::wstring) + 10];
-			char ba[sizeof(std::vector<int>) + 10];
-			char bm[sizeof(_userdata) + 10];
-			char bo[sizeof(_userdata) + 10];
+			char bp[sizeof(lyramilk::data::chunk)];
+			char bs[sizeof(lyramilk::data::string)];
+			char bw[sizeof(lyramilk::data::wstring)];
+			char ba[sizeof(std::vector<int>)];
+			char bm[sizeof(_userdata)];
+			char bo[sizeof(_userdata)];
 		}u;
 		bool _serialize(ostream& os) const throw(type_invalid);
 		bool _deserialize(istream& is);

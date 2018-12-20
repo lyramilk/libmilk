@@ -170,7 +170,7 @@ namespace lyramilk{namespace netio
 
 	/*
 		@brief 以流的方式操作套接字的流（异步）
-		@details 只支持写，不能保证一次把所有数据都写出去，需要用gcount去读到底写了多少字节。
+		@details 只支持写，不能保证一次把所有数据都写出去，需要用pcount去读到底写了多少字节。
 	*/
 	class _lyramilk_api_ socket_ostream_async : public lyramilk::data::ostringstream
 	{

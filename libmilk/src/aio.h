@@ -83,6 +83,7 @@ namespace lyramilk{namespace io
 	  protected:
 		friend class aioselector;
 		native_epool_type epfd;
+		lyramilk::data::int64 fdcount;
 		virtual bool transmessage();
 		virtual native_epool_type getfd();
 	  public:
@@ -95,6 +96,8 @@ namespace lyramilk{namespace io
 
 		virtual void onevent(aioselector* r,lyramilk::data::int64 events);
 		virtual int svc();
+
+		virtual lyramilk::data::int64 get_fd_count();
 	};
 
 	//TODO 要改为每个线程一个epoll来做。记录业务工作时间，时间过长的时候创建新线程接管，同时标记旧线程。 
@@ -102,8 +105,6 @@ namespace lyramilk{namespace io
 	{
 		lyramilk::threading::atomic<std::size_t> thread_idx;
 		pthread_key_t seq_key;
-		std::size_t min_payload;
-
 		struct epinfo
 		{
 			native_epool_type epfd;

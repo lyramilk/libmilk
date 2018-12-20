@@ -421,7 +421,6 @@ namespace lyramilk{namespace netio
 
 	std::streamsize socket_ostream_buf::xsputn (const char* s, std::streamsize n)
 	{
-//COUT << "xsputn " << putbuf << std::endl;
 		if(putbuf){
 			return std::basic_streambuf<char>::xsputn(s,n);
 		}
@@ -633,6 +632,7 @@ namespace lyramilk{namespace netio
 		sbuf.reset();
 		clear();
 	}
+
 	std::streamsize socket_istream::in_avail()
 	{
 		return sbuf.in_avail();
