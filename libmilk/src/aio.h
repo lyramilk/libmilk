@@ -116,7 +116,9 @@ namespace lyramilk{namespace io
 	  protected:
 		virtual int svc();
 		virtual native_epool_type getfd();
+	  public:
 		virtual bool add_to_thread(lyramilk::data::int64 idx,aioselector* r,lyramilk::data::int64 mask);
+		virtual bool remove_on_thread(lyramilk::data::int64 idx,aioselector* r);
 	  public:
 		aiopoll_safe(std::size_t threadcount);
 		virtual ~aiopoll_safe();
