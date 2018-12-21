@@ -25,10 +25,12 @@ namespace lyramilk{namespace threading
 		cur = 0;
 		cap = 0;
 		lock = new mutex_os;
+		running = true;
 	}
 
 	threads:: ~threads()
 	{
+		running = false;
 		void* tmp;
 		pool_type::iterator it = m.begin();
 		for(;it != m.end();++it){

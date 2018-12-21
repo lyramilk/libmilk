@@ -32,6 +32,8 @@ namespace lyramilk{namespace threading
 	class _lyramilk_api_ threads
 	{
 	  protected:
+		bool running;
+	  protected:
 		typedef int return_type;
 		std::size_t cap;
 		std::size_t cur;

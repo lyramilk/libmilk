@@ -203,7 +203,7 @@ namespace lyramilk{namespace io
 
 	int aiopoll::svc()
 	{
-		while(transmessage());
+		while(running && transmessage());
 		return 0;
 	}
 
@@ -313,7 +313,7 @@ namespace lyramilk{namespace io
 		epinfo& epi = epfds[seq - 1];
 
 		lyramilk::debug::nsecdiff nd;
-		while(true){
+		while(running){
 			const int ee_max = 32;
 			epoll_event ees[ee_max];
 			int ee_count = epoll_wait(epi.epfd, ees, ee_max, -1);
