@@ -282,7 +282,7 @@ namespace lyramilk{namespace io
 			lyramilk::klog(lyramilk::log::error,"lyramilk.aio.aiopoll_safe.add") << lyramilk::kdict("向epoll[%d]中添加套接字%d时发生错误%s",epi.epfd,r->getfd(),strerror(errno)) << std::endl;
 			return false;
 		}
-		__sync_sub_and_fetch(&fdcount,1);
+		__sync_add_and_fetch(&fdcount,1);
 		r->mask = mask;
 		return true;
 	}

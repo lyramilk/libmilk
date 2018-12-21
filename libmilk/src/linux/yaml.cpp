@@ -134,7 +134,7 @@ namespace lyramilk{namespace data
 					if(!z.next(token)) return false;
 					return true;
 				}else{
-					TODO();
+					return false;
 				}
 			}
 		}else if(token->type == YAML_FLOW_SEQUENCE_START_TOKEN){
@@ -208,10 +208,10 @@ namespace lyramilk{namespace data
 							}
 						}
 					}else{
-						TODO();
+						return false;
 					}
 				}else{
-					TODO();
+					return false;
 				}
 
 				if(ar.empty()){
@@ -257,10 +257,10 @@ namespace lyramilk{namespace data
 							if(!z.next(token)) return false;
 						}
 					}else{
-						TODO();
+						return false;
 					}
 				}else{
-					TODO();
+					return false;
 				}
 			}
 			if(!z.next(token)) return false;
@@ -291,7 +291,7 @@ namespace lyramilk{namespace data
 				}
 				return true;
 			}else{
-				TODO();
+				return false;
 			}
 		}else if(token->type == YAML_ANCHOR_TOKEN){
 			lyramilk::data::string anchor_key = (const char*)token->data.anchor.value;
