@@ -284,7 +284,7 @@ namespace lyramilk{namespace io
 
 	bool aiopoll_safe::remove_on_thread(lyramilk::data::int64 supper_idx,aioselector* r)
 	{
-		if(supper_idx < 0 || supper_idx >= epfds.size()){
+		if(supper_idx < 0 || supper_idx >= (lyramilk::data::int64)epfds.size()){
 			return false;
 		}
 		epinfo& epi = epfds[supper_idx];
@@ -298,7 +298,7 @@ namespace lyramilk{namespace io
 		ee.data.ptr = NULL;
 		ee.events = 0;
 
-		if (epoll_ctl(epi.epfd, EPOLL_CTL_DEL, epi.epfd, &ee) == -1) {
+		if (epoll_ctl(epi.epfd, EPOLL_CTL_DEL, r->getfd(), &ee) == -1) {
 			lyramilk::klog(lyramilk::log::error,"lyramilk.aio.epoll.remove") << lyramilk::kdict("从epoll中移除套接字%d时发生错误%s",r->getfd(),strerror(errno)) << std::endl;
 			return false;
 		}
