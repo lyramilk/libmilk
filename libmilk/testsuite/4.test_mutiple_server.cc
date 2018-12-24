@@ -73,7 +73,7 @@ int main(int argc,const char* argv[])
 #ifdef MACRO_ES2
 	lyramilk::io::aiopoll aip;
 	lyramilk::netio::aioserver<server_session> ais2;
-	ais2.open(80);
+	ais2.open("127.0.0.1",80);
 	aip.add(&ais2);
 
 	lyramilk::netio::aioserver<server_session> ais1;

@@ -149,6 +149,14 @@ namespace lyramilk{namespace netio
 		virtual bool open(lyramilk::data::uint16 port);
 
 		/**
+			@brief 打开一个端口并监听。
+			@param host 绑定的ip地址。
+			@param port 被打开的端口。
+			@return 如果打开成功返回true。
+		*/
+		virtual bool open(const lyramilk::data::string& host,lyramilk::data::uint16 port);
+
+		/**
 			@brief 创建一个会话。
 			@return 创建的会话。这个会话应该用destory释放。
 		*/

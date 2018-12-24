@@ -71,7 +71,7 @@ namespace lyramilk{namespace io
 	{
 		const int ee_max = 32;
 		epoll_event ees[ee_max];
-		int ee_count = epoll_wait(getfd(), ees, ee_max,1000);
+		int ee_count = epoll_wait(getfd(), ees, ee_max,100);
 		for(int i=0;i<ee_count;++i){
 			epoll_event &ee = ees[i];
 			aioselector* selector = (aioselector*)ee.data.ptr;
@@ -337,7 +337,7 @@ namespace lyramilk{namespace io
 		while(running){
 			const int ee_max = 32;
 			epoll_event ees[ee_max];
-			int ee_count = epoll_wait(epi.epfd, ees, ee_max, 1000);
+			int ee_count = epoll_wait(epi.epfd, ees, ee_max, 100);
 
 			for(int i=0;i<ee_count;++i){
 				epoll_event &ee = ees[i];

@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <string.h>
 #include <cassert>
+#include <netdb.h>
 
 #ifdef OPENSSL_FOUND
 	#include <openssl/ssl.h>
@@ -408,6 +409,57 @@ namespace lyramilk{namespace netio
 
 		sockaddr_in addr = {0};
 		addr.sin_addr.s_addr = htonl(INADDR_ANY);
+		addr.sin_family = AF_INET;
+		addr.sin_port = htons(port);
+		int opt = 1;
+		setsockopt(tmpsock,SOL_SOCKET,SO_REUSEADDR,&opt,sizeof(opt));
+		if(::bind(tmpsock,(const sockaddr*)&addr,sizeof(addr))){
+			::close(tmpsock);
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiolistener.open") << lyramilk::kdict("绑定地址(%s:%d)时发生错误：%s",inet_ntoa(addr.sin_addr),port,strerror(errno)) << std::endl;
+			return false;
+		}
+		unsigned int argp = 1;
+		ioctl(tmpsock,FIONBIO,&argp);
+
+
+		int ret = listen(tmpsock,5);
+		if(ret == 0){
+			lyramilk::klog(lyramilk::log::debug,"lyramilk.netio.aiolistener.open") << lyramilk::kdict("监听：%d",port) << std::endl;
+			//signal(SIGPIPE, SIG_IGN);
+			fd(tmpsock);
+			return true;
+		}
+		::close(tmpsock);
+		return false;
+	}
+
+	bool aiolistener::open(const lyramilk::data::string& host,lyramilk::data::uint16 port)
+	{
+		if(fd() >= 0){
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiolistener.open") << lyramilk::kdict("打开监听套件字失败，因为该套接字己打开。") << std::endl;
+			return false;
+		}
+
+		hostent* h = gethostbyname(host.c_str());
+		if(h == nullptr){
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("获取IP地址失败：%s",strerror(errno)) << std::endl;
+			return false;
+		}
+
+		in_addr* inaddr = (in_addr*)h->h_addr;
+		if(inaddr == nullptr){
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("获取IP地址失败：%s",strerror(errno)) << std::endl;
+			return false;
+		}
+
+		native_socket_type tmpsock = ::socket(AF_INET,SOCK_STREAM, IPPROTO_IP);
+		if(tmpsock < 0){
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiolistener.open") << lyramilk::kdict("监听时发生错误：%s",strerror(errno)) << std::endl;
+			return false;
+		}
+
+		sockaddr_in addr = {0};
+		addr.sin_addr.s_addr = inaddr->s_addr;
 		addr.sin_family = AF_INET;
 		addr.sin_port = htons(port);
 		int opt = 1;
