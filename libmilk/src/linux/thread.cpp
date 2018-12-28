@@ -59,7 +59,7 @@ namespace lyramilk{namespace threading
 	bool threads::active()
 	{
 		if(capacity() > 0){
-			return active();
+			return false;
 		}
 		std::size_t t = get_nprocs();
 		if(t < 1){
