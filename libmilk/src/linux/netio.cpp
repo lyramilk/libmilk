@@ -664,24 +664,24 @@ namespace lyramilk{namespace netio
 	bool client::open(const lyramilk::data::string& host,lyramilk::data::uint16 port)
 	{
 		if(fd() >= 0){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字失败：%s","套接字己经打开。") << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字(%s:%u)失败：%s",host.c_str(),port,"套接字己经打开。") << std::endl;
 			return false;
 		}
 		hostent* h = gethostbyname(host.c_str());
 		if(h == nullptr){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("获取IP地址失败：%s",strerror(errno)) << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字(%s:%u)失败：%s",host.c_str(),port,strerror(errno)) << std::endl;
 			return false;
 		}
 
 		in_addr* inaddr = (in_addr*)h->h_addr;
 		if(inaddr == nullptr){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("获取IP地址失败：%s",strerror(errno)) << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字(%s:%u)失败：%s",host.c_str(),port,strerror(errno)) << std::endl;
 			return false;
 		}
 
 		native_socket_type tmpsock = ::socket(AF_INET,SOCK_STREAM, IPPROTO_IP);
 		if(tmpsock < 0){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字失败：%s",strerror(errno)) << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字(%s:%u)失败：%s",host.c_str(),port,strerror(errno)) << std::endl;
 			return false;
 		}
 
@@ -697,14 +697,14 @@ namespace lyramilk{namespace netio
 				SSL* sslptr = SSL_new((SSL_CTX*)sslctx);
 				if(SSL_set_fd(sslptr,tmpsock) != 1) {
 					sslptr = nullptr;
-					lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.client.ssl.onevent") << lyramilk::kdict("绑定套接字失败:%s",_ssl.err().c_str()) << std::endl;
+					lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.client.ssl.onevent") << lyramilk::kdict("绑定套接字(%s:%u)失败:%s",host.c_str(),port,_ssl.err().c_str()) << std::endl;
 					::close(tmpsock);
 					return false;
 				}
 
 				SSL_set_connect_state(sslptr);
 				if(SSL_do_handshake(sslptr) != 1) {
-					lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.client.ssl.onevent") << lyramilk::kdict("握手失败:%s",_ssl.err().c_str()) << std::endl;
+					lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.client.ssl.onevent") << lyramilk::kdict("握手(%s:%u)失败:%s",host.c_str(),port,_ssl.err().c_str()) << std::endl;
 					::close(tmpsock);
 					return false;
 				}
@@ -718,7 +718,7 @@ namespace lyramilk{namespace netio
 			this->fd(tmpsock);
 			return true;
 		}
-		lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字失败：%s",strerror(errno)) << std::endl;
+		lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字(%s:%u)失败：%s",host.c_str(),port,strerror(errno)) << std::endl;
 		::close(tmpsock);
 		return false;
 	}
