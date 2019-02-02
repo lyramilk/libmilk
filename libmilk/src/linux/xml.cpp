@@ -26,7 +26,7 @@ namespace lyramilk{namespace data
 			if(it->type() == lyramilk::data::var::t_map){
 				const lyramilk::data::map& childm = *it;
 				lyramilk::data::map::const_iterator it_tag = childm.find("xml.tag");
-				if(it_tag == childm.end()) return false;
+				if(it_tag == childm.end()) continue;	//return false;	当xml.body中某个map不包含xml.tag时，从整个失败改成跳过这一项。
 				if(it_tag->second.type() != lyramilk::data::var::t_str) throw lyramilk::exception(D("%s应该是%s,但它是%s","xml.tag","t_str",it_tag->second.type_name().c_str()));
 
 				TiXmlElement* p = new TiXmlElement(lyramilk::data::str(it_tag->second.str()));

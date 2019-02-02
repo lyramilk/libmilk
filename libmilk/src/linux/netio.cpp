@@ -157,6 +157,9 @@ namespace lyramilk{namespace netio
 		pfd.revents = 0;
 		int ret = ::poll(&pfd,1,0);
 		if(ret > 0){
+			if(pfd.revents & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)){
+				return false;
+			}
 			if(pfd.revents & POLLOUT){
 				return true;
 			}

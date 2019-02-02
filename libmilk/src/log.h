@@ -17,29 +17,28 @@ namespace lyramilk { namespace log
 	*/
 	enum type{
 		/// 调试日志，发布版本可能会忽略这种日志。
-		debug,
+		debug = 0,
 		/// 跟踪日志，通过该种类日志打印正常的运行信息。
-		trace,
+		trace = 1,
 		/// 调试日志，程序运行参数不准确，程序运行不会受到影响，但输出可能不精确。
-		warning,
+		warning = 2,
 		/// 错误日志，程序运行参数不正确，程序运行可能会受到影响，输出不准确或有遗漏。
-		error
+		error = 3
 	};
+
 	/**
 		@brief 基本日志
 		@details 提供基本日志功能。这个模块将日志输出到控制台。
 	*/
 	class _lyramilk_api_ logb
 	{
-		const logb* proxy;
-	  protected:
-		/**
-			@brief 格式化时间
-			@details 将时间格式化后输出到日志中。
-			@param ti 时间整数，从1970年1月1号到现在的秒数。
-		*/
-		virtual lyramilk::data::string strtime(time_t ti) const;
+		mutable tm daytime;
 	  public:
+		/**
+			@brief 构造函数
+		*/
+		logb();
+		~logb();
 		/**
 			@brief 记录日志。
 			@details 提供基本日志功能。这个模块将日志输出到控制台。
@@ -52,12 +51,39 @@ namespace lyramilk { namespace log
 
 		*/
 		virtual void log(time_t ti,lyramilk::log::type ty,const lyramilk::data::string& usr,const lyramilk::data::string& app,const lyramilk::data::string& module,const lyramilk::data::string& str) const;
+	};
+
+	/**
+		@brief 基本文件日志
+		@details 提供基本日志功能。这个模块将日志输出到文件。
+	*/
+	class _lyramilk_api_ logf:public logb
+	{
+	  protected:
+		lyramilk::data::string filefmt;
+		mutable int fd;
+		mutable lyramilk::threading::mutex_os lock;
+		mutable tm daytime;
+	  public:
 		/**
 			@brief 构造函数
 		*/
-		logb();
-		void set_proxy(const logb* pr);
-		~logb();
+		logf(const lyramilk::data::string& filefmt);
+		~logf();
+
+
+		virtual bool ok();
+		/**
+			@brief 记录日志。
+			@details 提供基本日志功能。这个模块将日志输出到控制台。
+			@param ti 时间，内部会调用strtime被格式化成字符串。
+			@param ty 类型，调试信息的类别，例如trace。
+			@param usr 当前用户。
+			@param app 当前进程名。
+			@param module 模块名。
+			@param str 日志消息。
+		*/
+		virtual void log(time_t ti,lyramilk::log::type ty,const lyramilk::data::string& usr,const lyramilk::data::string& app,const lyramilk::data::string& module,const lyramilk::data::string& str) const;
 	};
 
 	class _lyramilk_api_ logss2;
@@ -96,14 +122,15 @@ namespace lyramilk { namespace log
 
 	class _lyramilk_api_ logss2 : public lyramilk::data::ostringstream
 	{
-		logb loger;
+		logb* loger;
 		logbuf db;
 		friend class logbuf;
 		friend class logss;
 		lyramilk::data::string module;
 		lyramilk::log::type t;
-	  public:
+
 		logss2();
+	  public:
 		virtual ~logss2();
 	};
 
