@@ -12,11 +12,6 @@ namespace lyramilk{namespace threading
 		__sync_add_and_fetch(&p->cur,1);
 		ret = p->svc();
 		__sync_sub_and_fetch(&p->cur,1);
-
-		mutex_os* lock = (mutex_os*)p->lock;
-		mutex_sync _(*lock);
-		pthread_t thread = pthread_self();
-		p->m.erase(thread);
 		return ret;
 	}
 
@@ -24,7 +19,6 @@ namespace lyramilk{namespace threading
 	{
 		cur = 0;
 		cap = 0;
-		lock = new mutex_os;
 		running = true;
 	}
 
@@ -36,7 +30,6 @@ namespace lyramilk{namespace threading
 		for(;it != m.end();++it){
 			pthread_join(*it,&tmp);
 		}
-		delete (mutex_os*)lock;
 	}
 
 	bool threads::active(std::size_t threadcount)
@@ -44,9 +37,7 @@ namespace lyramilk{namespace threading
 		cap = threadcount;
 		std::size_t cc = cur;
 
-		mutex_os* lock = (mutex_os*)this->lock;
 		while(cc < cap){
-			mutex_sync _(*lock);
 			pthread_t thread;
 			if(pthread_create(&thread,NULL,(void* (*)(void*))thread_task,this) == 0){
 				m.insert(thread);

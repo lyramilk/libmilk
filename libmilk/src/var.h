@@ -192,6 +192,21 @@ namespace lyramilk{namespace data
 		snprintf(buff,sizeof(buff),"%lld",i);
 		return buff;
 	}
+
+	lyramilk::data::string inline str(unsigned long i)
+	{
+		char buff[64];
+		snprintf(buff,sizeof(buff),"%lu",i);
+		return buff;
+	}
+
+	lyramilk::data::string inline str(long i)
+	{
+		char buff[64];
+		snprintf(buff,sizeof(buff),"%ld",i);
+		return buff;
+	}
+
 	lyramilk::data::string inline str(unsigned int i)
 	{
 		char buff[64];

@@ -69,7 +69,7 @@ namespace lyramilk { namespace log
 			@brief 构造函数
 		*/
 		logf(const lyramilk::data::string& filefmt);
-		~logf();
+		virtual ~logf();
 
 
 		virtual bool ok();
