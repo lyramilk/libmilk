@@ -173,7 +173,7 @@ namespace lyramilk{namespace netio
 	{
 		if(endpoint){
 			endpoint->endpoint = nullptr;
-			//pool->remove(endpoint);
+			pool->remove(endpoint);
 		}
 	}
 	bool aioproxysession_speedy::init()
@@ -332,10 +332,10 @@ namespace lyramilk{namespace netio
 		return oninit(aos);
 	}
 
-	void aioproxysession::destory()
+	void aioproxysession::ondestory()
 	{
 		onfinally(aos);
-		aiosession::destory();
+		aiosession::ondestory();
 	}
 	
 	bool aioproxysession::oninit(lyramilk::data::ostream& os)
@@ -361,7 +361,7 @@ namespace lyramilk{namespace netio
 			}
 			stop_proxy();
 		}
-		delete endpoint;
+		endpoint->destory();
 		endpoint = nullptr;
 		return false;
 	}
@@ -380,7 +380,7 @@ namespace lyramilk{namespace netio
 			}
 			stop_proxy();
 		}
-		delete endpoint;
+		endpoint->destory();
 		endpoint = nullptr;
 		return false;
 	}

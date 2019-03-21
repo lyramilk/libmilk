@@ -107,7 +107,7 @@ namespace lyramilk{namespace io
 		if(mask == -1) mask = EPOLLIN;
 		assert(r);
 		if(!r->mlock.test()){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.aio.epoll.add") << lyramilk::kdict("向epoll中添加套接字%d时发生错误%s",r->getfd(),"事件己上锁") << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.aio.epoll.add") << lyramilk::kdict("向epoll[%d]中添加套接字%d时发生错误%s",getfd(),r->getfd(),"事件己上锁") << std::endl;
 			return false;
 		}
 
@@ -115,11 +115,11 @@ namespace lyramilk{namespace io
 		ee.data.ptr = r;
 		ee.events = mask;
 		if(!r->notify_attach(this)){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.aio.epoll.add") << lyramilk::kdict("向epoll中添加套接字%d时发生错误%s",r->getfd(),"关联失败") << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.aio.epoll.add") << lyramilk::kdict("向epoll[%d]中添加套接字%d时发生错误%s",getfd(),r->getfd(),"关联失败") << std::endl;
 			return false;
 		}
 		if (epoll_ctl(getfd(), EPOLL_CTL_ADD, r->getfd(), &ee) == -1) {
-			lyramilk::klog(lyramilk::log::error,"lyramilk.aio.epoll.add") << lyramilk::kdict("向epoll中添加套接字%d时发生错误%s",r->getfd(),strerror(errno)) << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.aio.epoll.add") << lyramilk::kdict("向epoll[%d]中添加套接字%d时发生错误%s",getfd(),r->getfd(),strerror(errno)) << std::endl;
 			return false;
 		}
 		__sync_add_and_fetch(&fdcount,1);
@@ -135,7 +135,7 @@ namespace lyramilk{namespace io
 		ee.events = mask;
 
 		if (r->mlock.test() && epoll_ctl(getfd(), EPOLL_CTL_MOD, r->getfd(), &ee) == -1) {
-			lyramilk::klog(lyramilk::log::error,"lyramilk.aio.epoll.reset") << lyramilk::kdict("修改epoll中的套接字%d时发生错误%s",r->getfd(),strerror(errno)) << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.aio.epoll.reset") << lyramilk::kdict("修改epoll[%d]中的套接字%d时发生错误%s",getfd(),r->getfd(),strerror(errno)) << std::endl;
 			return false;
 		}
 		r->mask = mask;
@@ -147,7 +147,7 @@ namespace lyramilk{namespace io
 		assert(r);
 
 		if(!r->mlock.test()){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.aio.epoll.remove") << lyramilk::kdict("向epoll中添加套接字%d时发生错误%s",r->getfd(),"事件己上锁") << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.aio.epoll.remove") << lyramilk::kdict("从epoll[%d]中移除套接字%d时发生错误%s",getfd(),r->getfd(),"事件己上锁") << std::endl;
 			return false;
 		}
 
@@ -156,7 +156,7 @@ namespace lyramilk{namespace io
 		ee.events = 0;
 
 		if (epoll_ctl(getfd(), EPOLL_CTL_DEL, r->getfd(), &ee) == -1) {
-			lyramilk::klog(lyramilk::log::error,"lyramilk.aio.epoll.remove") << lyramilk::kdict("从epoll中移除套接字%d时发生错误%s",r->getfd(),strerror(errno)) << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.aio.epoll.remove") << lyramilk::kdict("从epoll[%d]中移除套接字%d时发生错误%s",getfd(),r->getfd(),strerror(errno)) << std::endl;
 			return false;
 		}
 		__sync_sub_and_fetch(&fdcount,1);
@@ -290,7 +290,7 @@ namespace lyramilk{namespace io
 		epinfo& epi = epfds[supper_idx];
 
 		if(!r->mlock.test()){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.aio.epoll.remove") << lyramilk::kdict("从epoll中移除套接字%d时发生错误%s",r->getfd(),"事件己上锁") << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.aio.epoll.remove") << lyramilk::kdict("从epoll[%d]中移除套接字%d时发生错误%s",getfd(),r->getfd(),"事件己上锁") << std::endl;
 			return false;
 		}
 
@@ -299,7 +299,7 @@ namespace lyramilk{namespace io
 		ee.events = 0;
 
 		if (epoll_ctl(epi.epfd, EPOLL_CTL_DEL, r->getfd(), &ee) == -1) {
-			lyramilk::klog(lyramilk::log::error,"lyramilk.aio.epoll.remove") << lyramilk::kdict("从epoll中移除套接字%d时发生错误%s",r->getfd(),strerror(errno)) << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.aio.epoll.remove") << lyramilk::kdict("从epoll[%d]中移除套接字%d时发生错误%s",getfd(),r->getfd(),strerror(errno)) << std::endl;
 			return false;
 		}
 		__sync_sub_and_fetch(&fdcount,1);
@@ -335,7 +335,7 @@ namespace lyramilk{namespace io
 
 		lyramilk::debug::nsecdiff nd;
 		while(running){
-			const int ee_max = 32;
+			const int ee_max = 1;
 			epoll_event ees[ee_max];
 			int ee_count = epoll_wait(epi.epfd, ees, ee_max, 100);
 

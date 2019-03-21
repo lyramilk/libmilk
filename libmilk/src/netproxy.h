@@ -57,12 +57,12 @@ namespace lyramilk{namespace netio
 		virtual bool notify_hup();
 		virtual bool notify_err();
 		virtual bool notify_pri();
+		virtual void ondestory();
 	  public:
 		aioproxysession();
 		virtual ~aioproxysession();
 
 		virtual bool init();
-		virtual void destory();
 
 		virtual bool combine(const lyramilk::data::string& host,lyramilk::data::uint16 port);
 		virtual bool combine(const sockaddr_in& saddr);

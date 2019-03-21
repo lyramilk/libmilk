@@ -319,7 +319,7 @@ namespace lyramilk{namespace data
 			result = ar;
 			return true;
 		}else{
-COUT << "未知描述符:" << z.token_name(token) << std::endl;
+			throw lyramilk::exception(D("yaml解析错误:","未知描述符：%s",z.token_name(token).c_str()));
 		}
 		return false;
 	}
