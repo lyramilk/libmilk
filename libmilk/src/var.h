@@ -51,7 +51,7 @@ namespace lyramilk{namespace data
 		enum vt
 		{
 			t_invalid = 0x20,
-			t_valid = 0x21,	///泛指所有非t_invalid类型，只能用作判断，不可作为实际的类型。
+			t_valid = 0x23,	///泛指所有非t_invalid类型，只能用作判断，不可作为实际的类型。
 			t_any = 0x22,	///泛指所有类型，只能用作判断，不可作为实际的类型。
 			t_user = 0x53,	///自定义类型
 			t_bin = 0x50,	///bin类型和str的区别
