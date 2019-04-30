@@ -33,26 +33,27 @@ namespace lyramilk{namespace script
 	class _lyramilk_api_ engine
 	{
 	  protected:
-		lyramilk::data::map mparams;
+		lyramilk::data::map userdata_0;
+		lyramilk::data::map userdata_tmp;
 	  public:
 
-		// 脚本向C++传递对象id时使用。
+		/// 脚本向C++传递对象id时使用。
 		static inline lyramilk::data::string s_user_objectid()
 		{
 			return "__script_object_id";
 		}
-		// 脚本向C++传递对象指针时使用。
+		/// 脚本向C++传递对象指针时使用。
 		static inline lyramilk::data::string s_user_nativeobject()
 		{
 			return "__script_native_object";
 		}
-		// 脚本向C++传递函数id时使用。
+		/// 脚本向C++传递函数id时使用。
 		static inline lyramilk::data::string s_user_functionid()
 		{
 			return "__script_function_id";
 		}
 
-		// 环境变量：脚本引擎对象指针。
+		/// 环境变量：脚本引擎对象指针。
 		static inline lyramilk::data::string s_env_engine()
 		{
 			return "__engine";
@@ -82,8 +83,8 @@ namespace lyramilk{namespace script
 		engine();
 		virtual ~engine();
 
-		virtual lyramilk::data::var& get(const lyramilk::data::string& k);
-		virtual bool set(const lyramilk::data::string& k,const lyramilk::data::var& v);
+		virtual lyramilk::data::var& get_userdata(const lyramilk::data::string& k);
+		virtual bool set_userdata(const lyramilk::data::string& k,const lyramilk::data::var& v,bool temporary);
 		/**
 			@brief 从一个字符串中加载脚本代码
 			@param script 字符串形式的脚本代码
@@ -94,10 +95,16 @@ namespace lyramilk{namespace script
 		/**
 			@brief 从一个文件中加载脚本代码
 			@param scriptfile 脚本文件路径
-			@param permanent 为ture表示reset时不会失效。
 			@return 返回true表示成功
 		*/
 		virtual bool load_file(const lyramilk::data::string& scriptfile);
+
+		/**
+			@brief 加载模块
+			@param modulefile 脚本文件路径
+			@return 返回true表示成功
+		*/
+		virtual bool load_module(const lyramilk::data::string& modulefile) = 0;
 
 		/**
 			@brief 执行脚本函数。
@@ -117,7 +124,7 @@ namespace lyramilk{namespace script
 		/**
 			@brief 重置脚本引擎。
 		*/
-		virtual void reset() = 0;
+		virtual void reset();
 
 		/**
 			@brief 将一个脚本可访问的C++对象注入到脚本引擎中。

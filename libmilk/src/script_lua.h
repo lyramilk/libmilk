@@ -32,6 +32,8 @@ namespace lyramilk{namespace script{namespace lua
 		virtual ~script_lua();
 		virtual bool load_string(const lyramilk::data::string& script);
 		virtual bool load_file(const lyramilk::data::string& scriptfile);
+		virtual bool load_module(const lyramilk::data::string& modulefile);
+
 		virtual lyramilk::data::var call(const lyramilk::data::var& func,const lyramilk::data::array& args);
 		virtual void define(const lyramilk::data::string& classname,functional_map m,class_builder builder,class_destoryer destoryer);
 		virtual void define(const lyramilk::data::string& funcname,functional_type func);

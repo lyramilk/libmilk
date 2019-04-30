@@ -82,7 +82,7 @@ namespace lyramilk{namespace netio
 		do{
 			i = read(buff,sizeof(buff));
 			if(i == 0) return false;
-			if(i == -1){
+			if(i < 0){
 				if(errno == EAGAIN ) break;
 				if(errno == EINTR) continue;
 				return false;
@@ -162,7 +162,7 @@ namespace lyramilk{namespace netio
 			i = read(buff,sizeof(buff));
 
 			if(i == 0) return false;
-			if(i == -1){
+			if(i < 0){
 				if(errno == EAGAIN ) break;
 				if(errno == EINTR) continue;
 				return false;
@@ -197,7 +197,7 @@ namespace lyramilk{namespace netio
 			int rt = write(buff,sendcount);
 
 			if(rt == 0) return false;
-			if(rt == -1){
+			if(rt < 0){
 				if(errno == EAGAIN || errno == EINTR){
 					cache_clear();
 					retransmitcache.assign(buff,sendcount);

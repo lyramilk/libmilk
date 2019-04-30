@@ -44,18 +44,21 @@ namespace lyramilk{namespace script
 	engine::~engine()
 	{}
 
-	lyramilk::data::var& engine::get(const lyramilk::data::string& k)
+	lyramilk::data::var& engine::get_userdata(const lyramilk::data::string& k)
 	{
-		/*
-		lyramilk::data::map::iterator it = _mparams.find(k);
-		if(it == _mparams.end()) return lyramilk::data::var::nil;
-		return it->second;*/
-		return mparams[k];
+		lyramilk::data::map::iterator it = userdata_0.find(k);
+		if(it != userdata_0.end()) return it->second;
+
+		return userdata_tmp[k];
 	}
 
-	bool engine::set(const lyramilk::data::string& k,const lyramilk::data::var& v)
+	bool engine::set_userdata(const lyramilk::data::string& k,const lyramilk::data::var& v,bool temporary)
 	{
-		mparams[k] = v;
+		if(temporary){
+			userdata_tmp[k] = v;
+		}else{
+			userdata_0[k] = v;
+		}
 		return true;
 	}
 
@@ -80,7 +83,12 @@ namespace lyramilk{namespace script
 		lyramilk::data::array a;
 		return call(func,a);
 	}
-	
+
+	void engine::reset()
+	{
+		userdata_tmp.clear();
+	}
+
 	void engine::gc()
 	{}
 

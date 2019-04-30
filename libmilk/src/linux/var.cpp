@@ -22,8 +22,6 @@
 	#include <arpa/inet.h>
 #endif
 
-std::locale::id id;
-
 namespace lyramilk { namespace data{
 
 const var var::nil;
@@ -256,30 +254,6 @@ T reverse_order(T t)
 	#define u2t(x) u2a(x)
 #endif
 
-void* milk_malloc(size_t size)
-{
-	return ::malloc(size);
-}
-
-void milk_free(void* p, size_t size)
-{
-	::free(p);
-}
-
-type_invalid::type_invalid(const string& msg)
-{
-	p = msg;
-}
-
-type_invalid::~type_invalid() throw()
-{
-}
-
-const char* type_invalid::what() const throw()
-{
-	return p.c_str();
-}
-
 var::var()
 {
 	t = t_invalid;
@@ -423,6 +397,19 @@ var::var(const map& v)
 }
 
 var::var(const stringdict& v)
+{
+	t = t_invalid;
+	assign(v);
+}
+
+
+var::var(const case_insensitive_unordered_map& v)
+{
+	t = t_invalid;
+	assign(v);
+}
+
+var::var(const case_insensitive_map& v)
 {
 	t = t_invalid;
 	assign(v);
@@ -982,6 +969,30 @@ var& var::assign(const stringdict& v)
 	t = t_map;
 	map* bm = new (u.bm) map(v.bucket_count());
 	stringdict::const_iterator it = v.begin();
+	for(;it!=v.end();++it){
+		bm->operator[](it->first) = it->second;
+	}
+	return *this;
+}
+
+var& var::assign(const case_insensitive_unordered_map& v)
+{
+	clear();
+	t = t_map;
+	map* bm = new (u.bm) map(v.bucket_count());
+	case_insensitive_unordered_map::const_iterator it = v.begin();
+	for(;it!=v.end();++it){
+		bm->operator[](it->first) = it->second;
+	}
+	return *this;
+}
+
+var& var::assign(const case_insensitive_map& v)
+{
+	clear();
+	t = t_map;
+	map* bm = new (u.bm) map();
+	case_insensitive_map::const_iterator it = v.begin();
 	for(;it!=v.end();++it){
 		bm->operator[](it->first) = it->second;
 	}
@@ -1952,7 +1963,11 @@ bool var::type_like(vt nt) const
 	if(nt == t_user && t == t_user){
 		return true;
 	}
-	if(nt != t_invalid && nt == t) return true;
+
+	if(nt == t_any) return true;
+	if(nt == t_invalid) return false;
+	if(nt == t_valid) return true;
+	if(nt == t) return true;
 	return false;
 }
 
@@ -2500,84 +2515,3 @@ std::istream& operator >> (std::istream& is, lyramilk::data::var& t)
 
 	return is;
 }
-
-lyramilk::data::bostream& operator << (lyramilk::data::bostream& os, char c)
-{
-	return os << (unsigned char)c;
-}
-
-lyramilk::data::bostream& operator << (lyramilk::data::bostream& os, signed char c)
-{
-	return os << (unsigned char)c;
-}
-
-lyramilk::data::bostream& operator << (lyramilk::data::bostream& os, const char* c)
-{
-	return os << (const unsigned char*)c;
-}
-
-lyramilk::data::bostream& operator << (lyramilk::data::bostream& os, const signed char* c)
-{
-	return os << (const unsigned char*)c;
-}
-
-
-
-#ifdef Z_HAVE_UNORDEREDMAP
-namespace std{
-#elif defined Z_HAVE_TR1_UNORDEREDMAP
-namespace std{namespace tr1{
-#endif
-
-#if (defined Z_HAVE_UNORDEREDMAP) || (defined Z_HAVE_TR1_UNORDEREDMAP)
-	template <>
-	std::size_t hash<lyramilk::data::string>::operator()(lyramilk::data::string d) const
-	{
-		const static std::size_t seed = 0xee6b27eb;
-		const static std::size_t m = 0xc6a4a7935bd1e995ULL;
-		const static int r = 47;
-
-		const std::size_t* p = (const std::size_t*)d.c_str();
-		std::size_t l = d.size();
-
-		const std::size_t* end = p + (l/8);
-		std::size_t h = seed ^ (l * m);
-
-		while(p != end)
-		{
-			std::size_t k = *p++;
-
-			k *= m; 
-			k ^= k >> r; 
-			k *= m; 
-
-			h ^= k;
-			h *= m; 
-		}
-
-		const unsigned char * p2 = (const unsigned char*)p;
-
-		switch(l & 7)
-		{
-		  case 7: h ^= std::size_t(p2[6]) << 48;
-		  case 6: h ^= std::size_t(p2[5]) << 40;
-		  case 5: h ^= std::size_t(p2[4]) << 32;
-		  case 4: h ^= std::size_t(p2[3]) << 24;
-		  case 3: h ^= std::size_t(p2[2]) << 16;
-		  case 2: h ^= std::size_t(p2[1]) << 8;
-		  case 1: h ^= std::size_t(p2[0]);
-			h *= m;
-		};
-
-		h ^= h >> r;
-		h *= m;
-		h ^= h >> r;
-
-		return h;
-	}
-#endif
-#ifdef Z_HAVE_UNORDEREDMAP
-}
-#elif defined Z_HAVE_TR1_UNORDEREDMAP
-}}
-#endif

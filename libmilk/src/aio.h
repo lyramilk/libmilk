@@ -90,8 +90,18 @@ namespace lyramilk{namespace io
 		aiopoll();
 		virtual ~aiopoll();
 
+		/*
+			@brief 把事件添加到消息池中
+			@details  注意！！！执行完这一行代码后，r就有被释放掉的可能性。不能再用了。
+		*/
 		virtual bool add(aioselector* r,lyramilk::data::int64 mask = -1);
+		/*
+			@brief 重置池中的事件
+			@details  注意！！！执行完这一行代码后，r就有被释放掉的可能性。不能再用了。
+		*/
 		virtual bool reset(aioselector* r,lyramilk::data::int64 mask);
+
+		/// 把r从池中移除，会导致r被释放。
 		virtual bool remove(aioselector* r);
 
 		virtual void onevent(aioselector* r,lyramilk::data::int64 events);

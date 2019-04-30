@@ -74,7 +74,6 @@ namespace lyramilk{ namespace util
 		map_type m;
 	};
 
-
 	template <typename T>
 	class multiton_factory
 	{
@@ -115,6 +114,45 @@ namespace lyramilk{ namespace util
 		map_type m;
 	};
 
+	template <typename K,typename T>
+	class multiton_factory2
+	{
+	  public:
+		virtual ~multiton_factory2()
+		{}
+
+		virtual void define(K name,T* ptr)
+		{
+			m[name] = ptr;
+		}
+
+		virtual void undef(K name)
+		{
+			m.erase(name);
+		}
+
+		virtual lyramilk::data::array keys() const
+		{
+			lyramilk::data::array ar;
+			typename map_type::const_iterator it = m.begin();
+			for(;it!=m.end();++it){
+				ar.push_back(it->first);
+			}
+			return ar;
+		}
+
+		virtual T* get(K name)
+		{
+			typename map_type::iterator it = m.find(name);
+			if(it == m.end()){
+				return nullptr;
+			}
+			return it->second;
+		}
+	  protected:
+		typedef std::map<K,T*> map_type;
+		map_type m;
+	};
 
 }}
 

@@ -777,9 +777,11 @@ namespace lyramilk{namespace script{namespace js
 
 	bool script_js::load_file(const lyramilk::data::string& scriptfile)
 	{
-		if(scriptfilename.empty()){
-			scriptfilename = scriptfile;
+		if(!scriptfilename.empty()){
+			return false;
 		}
+
+		scriptfilename = scriptfile;
 
 		JS_SetRuntimeThread(rt);
 		init();
@@ -837,6 +839,69 @@ namespace lyramilk{namespace script{namespace js
 		}
 	}
 
+	bool script_js::load_module(const lyramilk::data::string& modulefile)
+	{
+		JS_SetRuntimeThread(rt);
+		init();
+		JSContext* selectedcx = (JSContext *)JS_GetRuntimePrivate(rt);
+		JSObject* global = JS_GetGlobalObject(selectedcx);
+
+		/*
+		JSScript* script = nullptr;
+		script = JS_CompileUTF8File(selectedcx,global,scriptfile.c_str());
+		if(!script)return false;
+		return !!JS_ExecuteScript(selectedcx,global,script,nullptr);
+		*/
+		static std::map<lyramilk::data::string,bytecode> bytecodemap;
+		static lyramilk::threading::mutex_rw bytecodelock;
+		JSScript* script = nullptr;
+
+		struct stat st = {0};
+		if(0 !=::stat(modulefile.c_str(),&st)){
+			return false;
+		}
+		{
+			//尝试读取
+			lyramilk::threading::mutex_sync _(bytecodelock.r());
+			std::map<lyramilk::data::string,bytecode>::const_iterator it = bytecodemap.find(modulefile);
+			if(it!=bytecodemap.end()){
+				const bytecode& c = it->second;
+				if(st.st_mtime == c.tm){
+					script = JS_DecodeScript(selectedcx,(const void*)c.code.c_str(),c.code.size(),nullptr,nullptr);
+				}
+			}
+		}
+		if(script){
+			return !!JS_ExecuteScript(selectedcx,global,script,nullptr);
+		}else{
+			JS::CompileOptions options(selectedcx);
+			//options.setSourcePolicy(JS::CompileOptions::NO_SOURCE);
+			JS::RootedObject g(selectedcx,global);
+			script = JS::Compile(selectedcx,g,options,modulefile.c_str());
+			if(!script)return false;
+			if(JS_ExecuteScript(selectedcx,global,script,nullptr)){
+				uint32_t len = 0;
+				void* p = JS_EncodeScript(selectedcx,script,&len);
+				if(p && len){
+					bytecode c;
+					c.tm = st.st_mtime;
+					c.code.assign((const char*)p,len);
+					{
+						lyramilk::threading::mutex_sync _(bytecodelock.w());
+						bytecodemap[modulefile] = c;
+					}
+				}
+				return true;
+			}
+			return false;
+		}
+	}
+
+
+
+
+
+
 	lyramilk::data::var script_js::call(const lyramilk::data::var& func,const lyramilk::data::array& args)
 	{
 		JS_SetRuntimeThread(rt);
@@ -890,6 +955,7 @@ namespace lyramilk{namespace script{namespace js
 			JS_SetRuntimePrivate(rt,nullptr);
 			scriptfilename.clear();
 		}
+		engine::reset();
 	}
 
 	void script_js::define(const lyramilk::data::string& classname,functional_map m,class_builder builder,class_destoryer destoryer)

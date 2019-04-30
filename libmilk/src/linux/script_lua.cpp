@@ -381,11 +381,12 @@ namespace lyramilk{namespace script{namespace lua
 	bool script_lua::load_file(const lyramilk::data::string& scriptfile)
 	{
 		init();
-		bool mainfile = false;
-		if(scriptfilename.empty()){
-			scriptfilename = scriptfile;
-			mainfile = true;
+		if(!scriptfilename.empty()){
+			return false;
 		}
+
+		scriptfilename = scriptfile;
+
 		if(luaL_loadfile(L, scriptfile.c_str()) == 0){
 			if(lua_pcall(L,0,LUA_MULTRET,0) == 0){
 				lyramilk::data::var sret = lyramilk::data::var::nil;
@@ -401,13 +402,39 @@ namespace lyramilk{namespace script{namespace lua
 			clear();
 			//lua_gc(L,LUA_GCCOLLECT,0);
 			lyramilk::klog(lyramilk::log::error,"lyramilk.script.lua.engine.load_file") << err << std::endl;
-			if(mainfile) scriptfilename.clear();
+			scriptfilename.clear();
 			return false;
 		}
 		const char* perr = lua_tostring(L, -1);
 		lyramilk::data::string err = perr?perr:"";
 		lyramilk::klog(lyramilk::log::error,"lyramilk.script.lua.engine.load_file") << err << std::endl;
-		if(mainfile) scriptfilename.clear();
+		scriptfilename.clear();
+		return false;
+	}
+
+	bool script_lua::load_module(const lyramilk::data::string& modulefile)
+	{
+		init();
+		if(luaL_loadfile(L, modulefile.c_str()) == 0){
+			if(lua_pcall(L,0,LUA_MULTRET,0) == 0){
+				lyramilk::data::var sret = lyramilk::data::var::nil;
+				if(lua_gettop(L) > 0){
+					sret = luaget(L,-1);
+				}
+				clear();
+				//lua_gc(L,LUA_GCCOLLECT,0);
+				return true;
+			}
+			const char* perr = lua_tostring(L, -1);
+			lyramilk::data::string err = perr?perr:"";
+			clear();
+			//lua_gc(L,LUA_GCCOLLECT,0);
+			lyramilk::klog(lyramilk::log::error,"lyramilk.script.lua.engine.load_file") << err << std::endl;
+			return false;
+		}
+		const char* perr = lua_tostring(L, -1);
+		lyramilk::data::string err = perr?perr:"";
+		lyramilk::klog(lyramilk::log::error,"lyramilk.script.lua.engine.load_file") << err << std::endl;
 		return false;
 	}
 
@@ -440,6 +467,7 @@ namespace lyramilk{namespace script{namespace lua
 			L = nullptr;
 			scriptfilename.clear();
 		}
+		engine::reset();
 	}
 
 	void script_lua::define(const lyramilk::data::string& classname,functional_map m,class_builder builder,class_destoryer destoryer)

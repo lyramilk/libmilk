@@ -202,7 +202,7 @@ namespace lyramilk{namespace netio
 	bool aioproxysession_speedy::notify_in()
 	{
 		if(endpoint == nullptr) return false;
-		// 发生读事件时，由对端的写事件驱动。这里应该可以改成ET模式。
+		// 发生读事件时，由对端的写事件驱动。
 		return pool->reset(endpoint,EPOLLOUT| flag_default) && pool->reset(this,flag_default);
 	}
 

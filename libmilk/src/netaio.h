@@ -48,7 +48,7 @@ namespace lyramilk{namespace netio
 		template <typename T>
 		static void __tdestoryer(aiosession* s)
 		{
-			delete static_cast<T*>(s);
+			delete (T*)(s);
 		}
 
 		destoryer dtr;

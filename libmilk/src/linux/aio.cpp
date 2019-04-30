@@ -114,6 +114,8 @@ namespace lyramilk{namespace io
 		epoll_event ee;
 		ee.data.ptr = r;
 		ee.events = mask;
+		r->mask = mask;
+
 		if(!r->notify_attach(this)){
 			lyramilk::klog(lyramilk::log::error,"lyramilk.aio.epoll.add") << lyramilk::kdict("向epoll[%d]中添加套接字%d时发生错误%s",getfd(),r->getfd(),"关联失败") << std::endl;
 			return false;
@@ -123,7 +125,7 @@ namespace lyramilk{namespace io
 			return false;
 		}
 		__sync_add_and_fetch(&fdcount,1);
-		r->mask = mask;
+		//r->mask = mask;	有bug。对象刚被add到池中就可能己经被删掉除了。
 		return true;
 	}
 
@@ -133,12 +135,13 @@ namespace lyramilk{namespace io
 		epoll_event ee;
 		ee.data.ptr = r;
 		ee.events = mask;
+		r->mask = mask;
 
 		if (r->mlock.test() && epoll_ctl(getfd(), EPOLL_CTL_MOD, r->getfd(), &ee) == -1) {
 			lyramilk::klog(lyramilk::log::error,"lyramilk.aio.epoll.reset") << lyramilk::kdict("修改epoll[%d]中的套接字%d时发生错误%s",getfd(),r->getfd(),strerror(errno)) << std::endl;
 			return false;
 		}
-		r->mask = mask;
+		//r->mask = mask;
 		return true;
 	}
 
@@ -212,20 +215,30 @@ namespace lyramilk{namespace io
 	{
 		pthread_key_create(&seq_key,nullptr);
 		thread_idx = 0;
-		epfds.resize(threadcount);
 
-		for(std::size_t idx = 0;idx < epfds.size();++idx){
-			epfds[idx].epfd = epoll_create(pool_max);
-			epfds[idx].payload = 0;
+		if(threadcount > 0){
+			epfds.resize(threadcount);
+			epfds[0].epfd = epfd;
+			epfds[0].payload = 0;
+			epfd = -1;
+
+			for(std::size_t idx = 1;idx < epfds.size();++idx){
+				epfds[idx].epfd = epoll_create(pool_max);
+				epfds[idx].payload = 0;
+			}
+
+
+			lyramilk::threading::threads::active(threadcount);
+		
 		}
-
-
-		lyramilk::threading::threads::active(threadcount);
 	}
 
 
 	aiopoll_safe::~aiopoll_safe()
 	{
+		for(std::size_t idx = 0;idx < epfds.size();++idx){
+			::close(epfds[idx].epfd);
+		}
 		pthread_key_delete(seq_key);
 	}
 
@@ -269,6 +282,7 @@ namespace lyramilk{namespace io
 		epoll_event ee;
 		ee.data.ptr = r;
 		ee.events = mask;
+		r->mask = mask;
 		if(!r->notify_attach(this)){
 			lyramilk::klog(lyramilk::log::error,"lyramilk.aio.aiopoll_safe.add") << lyramilk::kdict("向epoll[%d]中添加套接字%d时发生错误%s",epi.epfd,r->getfd(),"关联失败") << std::endl;
 			return false;
@@ -278,7 +292,6 @@ namespace lyramilk{namespace io
 			return false;
 		}
 		__sync_add_and_fetch(&fdcount,1);
-		r->mask = mask;
 		return true;
 	}
 
@@ -335,12 +348,10 @@ namespace lyramilk{namespace io
 
 		lyramilk::debug::nsecdiff nd;
 		while(running){
-			const int ee_max = 1;
-			epoll_event ees[ee_max];
-			int ee_count = epoll_wait(epi.epfd, ees, ee_max, 100);
+			epoll_event ee;
+			int ee_count = epoll_wait(epi.epfd, &ee,1, 100);
 
 			for(int i=0;i<ee_count;++i){
-				epoll_event &ee = ees[i];
 				aioselector* selector = (aioselector*)ee.data.ptr;
 				if(selector){
 					nd.mark();

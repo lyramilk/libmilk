@@ -381,7 +381,7 @@ namespace lyramilk{namespace netio
 				if(r > 0){
 					sendbytes += r;
 					seq_w += r;
-				}else if(r == -1 && errno== EAGAIN){
+				}else if(r < 0 && errno== EAGAIN){
 					usleep(10);
 					continue;
 				}else{
@@ -435,7 +435,7 @@ namespace lyramilk{namespace netio
 			if(r > 0){
 				sendbytes += r;
 				seq_w += r;
-			}else if(r == -1 && errno== EAGAIN){
+			}else if(r < 0 && errno== EAGAIN){
 				usleep(10);
 				continue;
 			}else{
@@ -576,7 +576,7 @@ namespace lyramilk{namespace netio
 				if(errno == EAGAIN){
 					usleep(10);
 				}
-			}while(r == -1 && errno == EAGAIN);
+			}while(r < 0 && errno == EAGAIN);
 			if(r>0){
 				seq_r += r;
 				setg(getbuf,getbuf,getbuf + r);

@@ -16,7 +16,7 @@ using namespace lyramilk::log;
 
 logss lyramilk::klog;
 
-logb::logb()
+logb::logb():daytime()
 {
 }
 
