@@ -132,7 +132,7 @@ namespace lyramilk{namespace netio
 
 		int r = ::connect(tmpsock,(const sockaddr*)&saddr,sizeof(saddr));
 
-		if(r == -1 && errno == EINPROGRESS && check_write(tmpsock,timeout_msec)){
+		if(r == -1 && errno == EINPROGRESS && (timeout_msec == -2 || check_write(tmpsock,timeout_msec))){
 #ifdef OPENSSL_FOUND
 			if(use_ssl && sslctx){
 				SSL* sslptr = SSL_new((SSL_CTX*)sslctx);

@@ -7,7 +7,8 @@
 
 namespace lyramilk{namespace data
 {
-	//转义
+	// 转义
+	// lyramilk::data::string 应该是一个utf8字符串。
 	lyramilk::data::string json::escape(const lyramilk::data::string& s)
 	{
 		if(s.empty()) return s;
@@ -51,7 +52,16 @@ namespace lyramilk{namespace data
 				ret.push_back('\\');
 				break;
 			  default:
-				ret.push_back(*p);
+				if(((*p & 0x80) == 0) && !isprint(*p)){
+					char buff[10];
+					int r = snprintf(buff,sizeof(buff),"\\u00%02x",(unsigned char)*p);
+					if(r > 0){
+						ret.append(buff,r);
+					}
+				}else{
+					ret.push_back(*p);
+				}
+
 			}
 		}
 		return ret;

@@ -24,7 +24,18 @@ namespace lyramilk{namespace netio
 	  	virtual ~aioproxysession_speedy();
 		virtual bool init();
 		virtual bool combine(aioproxysession_speedy* endpoint);
+
+		/**
+			@brief 连接上游服务
+			@param timeout_msec 毫秒超时间，设置为-2则立即成功。
+			@return true成功 false失败。
+		*/
 		virtual bool open(const lyramilk::data::string& host,lyramilk::data::uint16 port,int timeout_msec);
+		/**
+			@brief 连接上游服务
+			@param timeout_msec 毫秒超时间，设置为-2则立即成功。
+			@return true成功 false失败。
+		*/
 		virtual bool open(const sockaddr_in& saddr,int timeout_msec);
 
 		virtual bool ssl();

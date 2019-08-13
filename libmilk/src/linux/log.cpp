@@ -264,24 +264,27 @@ int logbuf::sync()
 
 	lyramilk::data::string module = p.module;
 
-	static lyramilk::data::string str;
-	static pid_t pid = getpid();
-
-	if(pid == getpid() && str.empty()){
+	static lyramilk::data::string exename;
+	if(exename.empty()){
 		char buff[PATH_MAX] = {0};
 		ssize_t sz = readlink("/proc/self/exe",buff,PATH_MAX);
 		if(sz > 0){
-			str.assign(buff,sz);
+			exename.assign(buff,sz);
 		}
 	}
 
-	const char* loginuser = getlogin();
+	static uid_t uid = geteuid() + 1;
 
+	static lyramilk::data::string loginuser = "unknow_user";
+	if(uid != geteuid()){
+		uid = geteuid();
+		loginuser =  getlogin();;
+	}
 	if(p.loger){
-		p.loger->log(time(nullptr),p.t,loginuser?loginuser:"unknow_user",str.c_str(),module,lyramilk::data::string(pstr,len));
+		p.loger->log(time(nullptr),p.t,loginuser.c_str(),exename.c_str(),module,lyramilk::data::string(pstr,len));
 	}else{
 		static logb* default_logb = new logb;
-		default_logb->log(time(nullptr),p.t,loginuser?loginuser:"unknow_user",str.c_str(),module,lyramilk::data::string(pstr,len));
+		default_logb->log(time(nullptr),p.t,loginuser.c_str(),exename.c_str(),module,lyramilk::data::string(pstr,len));
 	}
 	setp(buf.data(),buf.data() + buf.size());
 	return 0;

@@ -112,4 +112,27 @@ namespace lyramilk{namespace data
 		return ret;
 	}
 
+
+	lyramilk::data::string replace(const lyramilk::data::string& str,const lyramilk::data::string& src,const lyramilk::data::string& dest)
+	{
+		lyramilk::data::string ret;
+
+		lyramilk::data::string::size_type pos, tpos = 0;
+		bool bHasReplaced = false;
+
+		pos = str.find(src);
+		while(pos != lyramilk::data::string::npos) {
+			ret += str.substr(tpos, pos - tpos) + dest;		
+			tpos = pos + src.length();
+			pos = str.find(src, tpos);
+			bHasReplaced = true;
+		}
+
+		if(bHasReplaced) {
+			ret += str.substr(tpos);
+			return ret;
+		}
+		return str;
+	}
+
 }}

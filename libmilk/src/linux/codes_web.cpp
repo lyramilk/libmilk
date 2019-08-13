@@ -349,6 +349,10 @@ class coding_b64:public lyramilk::data::coding
 		ret.reserve(str.size());
 		unsigned int len = str.size();
 		if(len == 0) return "";
+		std::size_t n = str.find_last_not_of('=');
+		if(n != str.npos){
+			len = n + 1;
+		}
 		unsigned int m = len&0x3;
 		if(!m)m=4;
 		len -= m;
@@ -359,7 +363,8 @@ class coding_b64:public lyramilk::data::coding
 			unsigned int i;
 			unsigned char c[3];
 		}u;
-		for(const unsigned char* p = b;p<e;p+=4){
+		const unsigned char* p = b;
+		for(;p<e;p+=4){
 			unsigned int i1 = mc_debase64[p[0]];
 			unsigned int i2 = mc_debase64[p[1]];
 			unsigned int i3 = mc_debase64[p[2]];
@@ -374,8 +379,8 @@ class coding_b64:public lyramilk::data::coding
 			ret.push_back(u.c[1]);
 			ret.push_back(u.c[0]);
 		}
+		u.i = 0;
 		if(m == 4){
-			const unsigned char* p = e;
 			unsigned int i1 = mc_debase64[p[0]];
 			unsigned int i2 = mc_debase64[p[1]];
 			unsigned int i3 = mc_debase64[p[2]];
@@ -385,6 +390,7 @@ class coding_b64:public lyramilk::data::coding
 			u.i |= i2<<12;
 			u.i |= i3<<6;
 			u.i |= i4;
+
 			ret.push_back(u.c[2]);
 			ret.push_back(u.c[1]);
 			ret.push_back(u.c[0]);
@@ -399,7 +405,6 @@ class coding_b64:public lyramilk::data::coding
 			u.i |= i3<<6;
 			ret.push_back(u.c[2]);
 			ret.push_back(u.c[1]);
-			ret.push_back(u.c[0]);
 		}else if(m == 2){
 			const unsigned char* p = e;
 			unsigned int i1 = mc_debase64[p[0]];
@@ -408,7 +413,6 @@ class coding_b64:public lyramilk::data::coding
 			u.i = i1<<18;
 			u.i |= i2<<12;
 			ret.push_back(u.c[2]);
-			ret.push_back(u.c[1]);
 		}else if(m == 1){
 			const unsigned char* p = e;
 			unsigned int i1 = mc_debase64[p[0]];
@@ -466,7 +470,7 @@ class coding_b64:public lyramilk::data::coding
 	}
 };
 
-////////////////////////////////////	Url safe base64
+////////////////////////////////////	Url safe base64 解决+/=在url中被编码的问题
 class coding_urlb64:public lyramilk::data::coding
 {
   public:
@@ -476,6 +480,10 @@ class coding_urlb64:public lyramilk::data::coding
 		ret.reserve(str.size());
 		unsigned int len = str.size();
 		if(len == 0) return "";
+		std::size_t n = str.find_last_not_of('=');
+		if(n != str.npos){
+			len = n + 1;
+		}
 		unsigned int m = len&0x3;
 		if(!m)m=4;
 		len -= m;
@@ -486,7 +494,8 @@ class coding_urlb64:public lyramilk::data::coding
 			unsigned int i;
 			unsigned char c[3];
 		}u;
-		for(const unsigned char* p = b;p<e;p+=4){
+		const unsigned char* p = b;
+		for(;p<e;p+=4){
 			unsigned int i1 = mc_debase64[p[0]];
 			unsigned int i2 = mc_debase64[p[1]];
 			unsigned int i3 = mc_debase64[p[2]];
@@ -501,6 +510,7 @@ class coding_urlb64:public lyramilk::data::coding
 			ret.push_back(u.c[1]);
 			ret.push_back(u.c[0]);
 		}
+		u.i = 0;
 		if(m == 4){
 			const unsigned char* p = e;
 			unsigned int i1 = mc_debase64[p[0]];
@@ -526,7 +536,6 @@ class coding_urlb64:public lyramilk::data::coding
 			u.i |= i3<<6;
 			if(u.c[2])ret.push_back(u.c[2]);
 			if(u.c[1])ret.push_back(u.c[1]);
-			if(u.c[0])ret.push_back(u.c[0]);
 		}else if(m == 2){
 			const unsigned char* p = e;
 			unsigned int i1 = mc_debase64[p[0]];
@@ -535,16 +544,12 @@ class coding_urlb64:public lyramilk::data::coding
 			u.i = i1<<18;
 			u.i |= i2<<12;
 			if(u.c[2])ret.push_back(u.c[2]);
-			if(u.c[1])ret.push_back(u.c[1]);
-			if(u.c[0])ret.push_back(u.c[0]);
 		}else if(m == 1){
 			const unsigned char* p = e;
 			unsigned int i1 = mc_debase64[p[0]];
 			if(i1&0x80) throw lyramilk::data::coding_exception(D("解码%s时发生错误：不该出现该字符","base64"));
 			u.i = i1<<18;
 			if(u.c[2])ret.push_back(u.c[2]);
-			if(u.c[1])ret.push_back(u.c[1]);
-			if(u.c[0])ret.push_back(u.c[0]);
 		}
 		return ret;
 	}
