@@ -119,13 +119,13 @@ namespace lyramilk{namespace threading
 			}
 		};
 		node* ring;
-		unsigned long long headseq;
-		unsigned long long ringsize;
-		unsigned long long tailseq;
+		unsigned int headseq;
+		unsigned int ringsize;
+		unsigned int tailseq;
 	  public:
 		lockfreequeue()
 		{
-			ringsize = 8192;
+			ringsize = 1024;
 			ring = new node[ringsize];
 			headseq = 0;
 			tailseq = 0;
@@ -142,19 +142,25 @@ namespace lyramilk{namespace threading
 			delete [] ring;
 		}
 
+		bool try_push(const T& t)
+		{
+			unsigned int seq = tailseq;
+			node& n = ring[seq%ringsize];
+			if(__sync_bool_compare_and_swap(&n.s,s_free,s_lock)){
+				if(__sync_bool_compare_and_swap(&tailseq,seq,(seq + 1)%ringsize)){
+					n.data = t;
+					n.s = s_data;
+					return true;
+				}
+				n.s = s_free;
+			}
+			return false;
+		}
+
 		void push(const T& t)
 		{
 			while(true){
-				unsigned int seq = tailseq;
-				node& n = ring[seq%ringsize];
-				if(__sync_bool_compare_and_swap(&n.s,s_free,s_lock)){
-					if(__sync_bool_compare_and_swap(&tailseq,seq,seq + 1)){
-						n.data = t;
-						n.s = s_data;
-						return;
-					}
-					n.s = s_free;
-				}
+				if(try_push(t)) break;
 				usleep(1);
 			}
 		}
@@ -166,7 +172,7 @@ namespace lyramilk{namespace threading
 
 		std::size_t size()
 		{
-			return tailseq - headseq;
+			return (tailseq + ringsize - headseq)%ringsize;
 		}
 
 		bool try_pop(T* t)
@@ -175,7 +181,7 @@ namespace lyramilk{namespace threading
 
 			node& n = ring[seq%ringsize];
 			if(__sync_bool_compare_and_swap(&n.s,s_data,s_lock)){
-				if(__sync_bool_compare_and_swap(&headseq,seq,seq + 1)){
+				if(__sync_bool_compare_and_swap(&headseq,seq,(seq + 1)%ringsize)){
 					*t = n.data;
 					n.s = s_free;
 					return true;
@@ -188,16 +194,7 @@ namespace lyramilk{namespace threading
 		void pop(T* t)
 		{
 			while(true){
-				unsigned int seq = headseq;
-				node& n = ring[seq%ringsize];
-				if(__sync_bool_compare_and_swap(&n.s,s_data,s_lock)){
-					if(__sync_bool_compare_and_swap(&headseq,seq,seq + 1)){
-						*t = n.data;
-						n.s = s_free;
-						return;
-					}
-					n.s = s_data;
-				}
+				if(try_pop(t)) break;
 				usleep(1);
 			}
 		}

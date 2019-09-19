@@ -277,6 +277,12 @@ namespace lyramilk{namespace netio
 #ifdef OPENSSL_FOUND
 		SSL* sslptr = nullptr;
 		if(use_ssl && sslctx){
+			struct timeval timeout;
+			timeout.tv_sec = 3;
+			timeout.tv_usec = 0;
+			setsockopt(acceptfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+			setsockopt(acceptfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
+
 			sslptr = SSL_new((SSL_CTX*)sslctx);
 			if(SSL_set_fd(sslptr,acceptfd) != 1) {
 				SSL_shutdown(sslptr);
