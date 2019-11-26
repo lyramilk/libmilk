@@ -25,7 +25,9 @@ namespace lyramilk{namespace netio
 	lyramilk::data::string inline ssl_err()
 	{
 		char buff[4096] = {0};
+#ifdef OPENSSL_FOUND
 		ERR_error_string(ERR_get_error(),buff);
+#endif
 		return buff;
 	}
 

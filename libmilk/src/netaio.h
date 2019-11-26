@@ -215,6 +215,58 @@ namespace lyramilk{namespace netio
 			return lyramilk::netio::aiosession::__tbuilder<T>();
 		}
 	};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+	/**
+		@brief UDP套接字监听会话
+	*/
+	class _lyramilk_api_ udplistener : public lyramilk::io::aioselector,public socket
+	{
+		virtual bool notify_in();
+		virtual bool notify_out();
+		virtual bool notify_hup();
+		virtual bool notify_err();
+		virtual bool notify_pri();
+	public:
+		udplistener();
+		virtual ~udplistener();
+
+		/**
+			@brief 打开一个端口并监听。
+			@param port 被打开的端口。
+			@return 如果打开成功返回true。
+		*/
+		virtual bool open(lyramilk::data::uint16 port);
+
+		/**
+			@brief 打开一个端口并监听。
+			@param host 绑定的ip地址。
+			@param port 被打开的端口。
+			@return 如果打开成功返回true。
+		*/
+		virtual bool open(const lyramilk::data::string& host,lyramilk::data::uint16 port);
+
+
+		virtual lyramilk::io::native_filedescriptor_type getfd();
+		virtual void ondestory();
+
+
+		virtual bool onrequest(const char* cache, int size, lyramilk::data::ostream& os) = 0;
+
+	};
 }}
 
 #endif

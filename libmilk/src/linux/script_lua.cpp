@@ -438,25 +438,25 @@ namespace lyramilk{namespace script{namespace lua
 		return false;
 	}
 
-	lyramilk::data::var script_lua::call(const lyramilk::data::var& func,const lyramilk::data::array& args)
+	bool script_lua::call(const lyramilk::data::var& func,const lyramilk::data::array& args,lyramilk::data::var* ret)
 	{
+		if(ret) ret->clear();
 		init();
 		lua_getglobal(L, func.str().c_str());
 		vtos(L,args);
 		if(lua_pcall(L,args.size(),LUA_MULTRET,0) == 0){
-			lyramilk::data::var sret = lyramilk::data::var::nil;
 			if(lua_gettop(L) > 0){
-				sret = luaget(L,-1);
+				if(ret) *ret = luaget(L,-1);
 			}
 			clear();
 			//lua_gc(L,LUA_GCCOLLECT,0);
-			return sret;
+			return true;
 		}
 		lyramilk::data::string err = lua_tostring(L, -1);
 		clear();
 		//lua_gc(L,LUA_GCCOLLECT,0);
 		lyramilk::klog(lyramilk::log::error,"lyramilk.script.lua.engine.pcall") << err << std::endl;
-		return lyramilk::data::var::nil;
+		return false;
 	}
 
 	void script_lua::reset()

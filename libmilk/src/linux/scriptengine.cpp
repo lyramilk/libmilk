@@ -78,10 +78,10 @@ namespace lyramilk{namespace script
 		return load_string(str);
 	}
 
-	lyramilk::data::var engine::call(lyramilk::data::var func)
+	bool engine::call(lyramilk::data::var func,lyramilk::data::var* ret)
 	{
 		lyramilk::data::array a;
-		return call(func,a);
+		return call(func,a,ret);
 	}
 
 	void engine::reset()

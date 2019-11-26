@@ -481,7 +481,7 @@ namespace lyramilk{namespace netio
 
 		int ret = listen(tmpsock,5);
 		if(ret == 0){
-			lyramilk::klog(lyramilk::log::debug,"lyramilk.netio.aiolistener.open") << lyramilk::kdict("监听：%d",port) << std::endl;
+			lyramilk::klog(lyramilk::log::debug,"lyramilk.netio.aiolistener.open") << lyramilk::kdict("监听：%s:%d",host.c_str(),port) << std::endl;
 			//signal(SIGPIPE, SIG_IGN);
 			fd(tmpsock);
 			return true;
@@ -607,4 +607,169 @@ namespace lyramilk{namespace netio
 	{
 	}
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	bool udplistener::notify_in()
+	{
+		struct sockaddr_in addr = {};
+		socklen_t addr_len = sizeof(addr);
+		char buff[65536];
+		int r = recvfrom(fd(),buff,sizeof(buff),0,(sockaddr*)&addr,&addr_len);
+
+		lyramilk::data::ostringstream oss;
+		if(onrequest(buff, r, oss)){
+			lyramilk::data::string out = oss.str();
+			r = sendto(fd(),out.c_str(),out.size(),0,(sockaddr*)&addr,addr_len);
+			lyramilk::klog(lyramilk::log::debug,"lyramilk.netio.udplistener.notify_in") << lyramilk::kdict("向(%s:%d)发送数据%llu个字节",inet_ntoa(addr.sin_addr),addr.sin_port,r) << std::endl;
+		}
+
+		return true;
+	}
+
+	bool udplistener::notify_out()
+	{
+		return true;
+	}
+
+	bool udplistener::notify_hup()
+	{
+		return true;
+	}
+
+	bool udplistener::notify_err()
+	{
+		return true;
+	}
+
+	bool udplistener::notify_pri()
+	{
+		return true;
+	}
+
+	udplistener::udplistener()
+	{
+	}
+
+	udplistener::~udplistener()
+	{
+		close();
+	}
+
+	bool udplistener::open(lyramilk::data::uint16 port)
+	{
+		if(fd() >= 0){
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.udplistener.open") << lyramilk::kdict("打开监听套件字失败，因为该套接字己打开。") << std::endl;
+			return false;
+		}
+
+		native_socket_type tmpsock = ::socket(AF_INET,SOCK_DGRAM, 0);
+		if(tmpsock < 0){
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.udplistener.open") << lyramilk::kdict("监听时发生错误：%s",strerror(errno)) << std::endl;
+			return false;
+		}
+
+		sockaddr_in addr = {0};
+		addr.sin_addr.s_addr = htonl(INADDR_ANY);
+		addr.sin_family = AF_INET;
+		addr.sin_port = htons(port);
+		int opt = 1;
+		setsockopt(tmpsock,SOL_SOCKET,SO_REUSEADDR,&opt,sizeof(opt));
+		if(::bind(tmpsock,(const sockaddr*)&addr,sizeof(addr))){
+			::close(tmpsock);
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.udplistener.open") << lyramilk::kdict("绑定地址(%s:%d)时发生错误：%s",inet_ntoa(addr.sin_addr),port,strerror(errno)) << std::endl;
+			return false;
+		}
+		lyramilk::klog(lyramilk::log::debug,"lyramilk.netio.udplistener.open") << lyramilk::kdict("监听：%d",port) << std::endl;
+		fd(tmpsock);
+		return true;
+	}
+
+	bool udplistener::open(const lyramilk::data::string& host,lyramilk::data::uint16 port)
+	{
+		if(fd() >= 0){
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.udplistener.open") << lyramilk::kdict("打开监听套件字失败，因为该套接字己打开。") << std::endl;
+			return false;
+		}
+
+		hostent* h = gethostbyname(host.c_str());
+		if(h == nullptr){
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("获取IP地址失败：%s",strerror(errno)) << std::endl;
+			return false;
+		}
+
+		in_addr* inaddr = (in_addr*)h->h_addr;
+		if(inaddr == nullptr){
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("获取IP地址失败：%s",strerror(errno)) << std::endl;
+			return false;
+		}
+
+		native_socket_type tmpsock = ::socket(AF_INET,SOCK_DGRAM, 0);
+		if(tmpsock < 0){
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.udplistener.open") << lyramilk::kdict("监听时发生错误：%s",strerror(errno)) << std::endl;
+			return false;
+		}
+
+		sockaddr_in addr = {0};
+		addr.sin_addr.s_addr = inaddr->s_addr;
+		addr.sin_family = AF_INET;
+		addr.sin_port = htons(port);
+		int opt = 1;
+		setsockopt(tmpsock,SOL_SOCKET,SO_REUSEADDR,&opt,sizeof(opt));
+		if(::bind(tmpsock,(const sockaddr*)&addr,sizeof(addr))){
+			::close(tmpsock);
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.udplistener.open") << lyramilk::kdict("绑定地址(%s:%d)时发生错误：%s",inet_ntoa(addr.sin_addr),port,strerror(errno)) << std::endl;
+			return false;
+		}
+			lyramilk::klog(lyramilk::log::debug,"lyramilk.netio.udplistener.open") << lyramilk::kdict("监听：%s:%d",host.c_str(),port) << std::endl;
+		fd(tmpsock);
+		return true;
+	}
+
+	lyramilk::io::native_filedescriptor_type udplistener::getfd()
+	{
+		return socket::fd();
+	}
+
+	
+	void udplistener::ondestory()
+	{
+	}
+
 }}
+
+
+//		virtual bool onrequest(const char* cache, int size, lyramilk::data::ostream& os) = 0;

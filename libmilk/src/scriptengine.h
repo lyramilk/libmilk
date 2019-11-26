@@ -4,6 +4,7 @@
 #include "var.h"
 #include "atom.h"
 #include "exception.h"
+#include "datawrapper.h"
 
 /**
 	@namespace lyramilk::script
@@ -109,17 +110,19 @@ namespace lyramilk{namespace script
 		/**
 			@brief 执行脚本函数。
 			@param func 脚本函数名
-			@return 脚本的返回值
+			@param ret 脚本的返回值
+			@return 返回true表示成功
 		*/
-		virtual lyramilk::data::var call(lyramilk::data::var func);
+		virtual bool call(lyramilk::data::var func,lyramilk::data::var* ret);
 
 		/**
 			@brief 执行脚本函数。
 			@param func 脚本函数名
 			@param args 参数
-			@return 脚本的返回值
+			@param ret 脚本的返回值
+			@return 返回true表示成功
 		*/
-		virtual lyramilk::data::var call(const lyramilk::data::var& func,const lyramilk::data::array& args) = 0;
+		virtual bool call(const lyramilk::data::var& func,const lyramilk::data::array& args,lyramilk::data::var* ret) = 0;
 
 		/**
 			@brief 重置脚本引擎。
@@ -243,6 +246,68 @@ namespace lyramilk{namespace script
 		}	\
 	}
 
+
+	class objadapter_datawrapper:public lyramilk::data::datawrapper
+	{
+	  public:
+		sclass* _sclass;
+
+		objadapter_datawrapper(sclass* _sc):_sclass(_sc)
+		{}
+		virtual ~objadapter_datawrapper()
+		{}
+
+		static inline lyramilk::data::string class_name()
+		{
+			return "lyramilk.datawrapper.script.objadapter";
+		}
+
+		virtual lyramilk::data::string name() const
+		{
+			return class_name();
+		}
+
+		virtual lyramilk::data::string subclassname() const = 0;
+
+		virtual bool type_like(lyramilk::data::var::vt nt) const
+		{
+			return false;
+		}
+	};
+
+	class engine_datawrapper:public lyramilk::data::datawrapper
+	{
+	  public:
+		engine* eng;
+
+		engine_datawrapper(engine* _eng):eng(_eng)
+		{}
+		virtual ~engine_datawrapper()
+		{}
+
+		static inline lyramilk::data::string class_name()
+		{
+			return "lyramilk.datawrapper.script.engine";
+		}
+
+		virtual lyramilk::data::string name() const
+		{
+			return class_name();
+		}
+
+		virtual lyramilk::data::datawrapper* clone() const
+		{
+			return new engine_datawrapper(eng);
+		}
+		virtual void destory()
+		{
+			delete this;
+		}
+		virtual bool type_like(lyramilk::data::var::vt nt) const
+		{
+			return false;
+		}
+	};
 
 
 }}

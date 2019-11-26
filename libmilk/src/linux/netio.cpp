@@ -654,9 +654,11 @@ namespace lyramilk{namespace netio
 
 	client::~client()
 	{
+#ifdef OPENSSL_FOUND
 		if(sslctx){
 			SSL_CTX_free((SSL_CTX*)sslctx);
 		}
+#endif
 	}
 
 	bool client::open(const netaddress& addr)

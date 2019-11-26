@@ -139,7 +139,7 @@ namespace lyramilk{namespace data
 				  case 'u':
 					if(_IsHexChar(p[2]) && _IsHexChar(p[3]) && _IsHexChar(p[4]) && _IsHexChar(p[5])){
 						unsigned short jwc = (_ToHex(p[2]) << 12)  | (_ToHex(p[3]) << 8) | (_ToHex(p[4]) << 4) | (_ToHex(p[5]));
-						unsigned wchar_t wc = jwc;
+						wchar_t wc = jwc;
 						if(jwc >= 0xd800 && jwc <= 0xdfff){
 							if(p[6] != '\\') return "";
 							if(p[7] != 'u') return "";
@@ -170,7 +170,7 @@ namespace lyramilk{namespace data
 							ret.push_back((unsigned char)((wc>>12)&0x3f) | 0x80);
 							ret.push_back((unsigned char)((wc>>6)&0x3f) | 0x80);
 							ret.push_back((unsigned char)((wc>>0)&0x3f) | 0x80);
-						}else if(wc < 0x80000000){
+						}else if(wc < 0x80000000L){
 							ret.push_back((unsigned char)((wc>>30)&0x1) | 0xfc);
 							ret.push_back((unsigned char)((wc>>24)&0x3f) | 0xf0);
 							ret.push_back((unsigned char)((wc>>18)&0x3f) | 0x80);
@@ -301,7 +301,7 @@ label_repeat:
 							if(!_IsHexChar(c3)) goto label_badchar;
 							std::char_traits<char>::int_type c4 = *p++;
 							if(!_IsHexChar(c4)) goto label_badchar;
-							unsigned wchar_t wc = (_ToHex(c1) << 12) | (_ToHex(c2) << 8) | (_ToHex(c3) << 4) | (_ToHex(c4) << 0);
+							wchar_t wc = (_ToHex(c1) << 12) | (_ToHex(c2) << 8) | (_ToHex(c3) << 4) | (_ToHex(c4) << 0);
 							if(wc >= 0xd800 && wc <= 0xdfff){
 								if(p + 6 >= e) goto label_badchar;
 								if(*p++ != '\\') goto label_badchar;
@@ -314,7 +314,7 @@ label_repeat:
 								if(!_IsHexChar(c3)) goto label_badchar;
 								std::char_traits<char>::int_type c4 = *p++;
 								if(!_IsHexChar(c4)) goto label_badchar;
-								unsigned wchar_t wc2 = (_ToHex(c1) << 12) | (_ToHex(c2) << 8) | (_ToHex(c3) << 4) | (_ToHex(c4) << 0);
+								wchar_t wc2 = (_ToHex(c1) << 12) | (_ToHex(c2) << 8) | (_ToHex(c3) << 4) | (_ToHex(c4) << 0);
 								wc = (wc2&0x03ff) + (((wc&0x03ff) + 0x40) << 10);
 							}
 							if(wc < 0x80){
@@ -337,7 +337,7 @@ label_repeat:
 								token.s.push_back((unsigned char)((wc>>12)&0x3f) | 0x80);
 								token.s.push_back((unsigned char)((wc>>6)&0x3f) | 0x80);
 								token.s.push_back((unsigned char)((wc>>0)&0x3f) | 0x80);
-							}else if(wc < 0x80000000){
+							}else if(wc < 0x80000000L){
 								token.s.push_back((unsigned char)((wc>>30)&0x1) | 0xfc);
 								token.s.push_back((unsigned char)((wc>>24)&0x3f) | 0xf0);
 								token.s.push_back((unsigned char)((wc>>18)&0x3f) | 0x80);
