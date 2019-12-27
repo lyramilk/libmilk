@@ -215,6 +215,7 @@ namespace lyramilk{namespace threading
 				this->t = t;
 				this->c = c;
 				r = 0;
+				l.lock();
 			}
 
 			~item()
@@ -313,7 +314,6 @@ namespace lyramilk{namespace threading
 					mutex_sync _(l);
 					es.push_back(item(tmp,this));
 					pe = &es.back();
-					pe->lock();
 				}
 				return ptr(pe);
 			}
@@ -347,7 +347,7 @@ namespace lyramilk{namespace threading
 
 		typedef std::list<item> list_type;
 		list_type es;
-		mutex_spin l;
+		mutex_os l;
 	};
 }}
 

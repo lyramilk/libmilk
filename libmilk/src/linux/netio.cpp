@@ -1,6 +1,5 @@
 ﻿#include "netio.h"
 #include "dict.h"
-#include "ansi_3_64.h"
 #include "log.h"
 #include <sys/epoll.h>
 #include <sys/poll.h>

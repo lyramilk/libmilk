@@ -1,8 +1,6 @@
 ﻿#include "netaio.h"
 #include "dict.h"
-#include "ansi_3_64.h"
 #include "log.h"
-#include "testing.h"
 
 #include <sys/epoll.h>
 #include <sys/poll.h>
@@ -407,7 +405,7 @@ namespace lyramilk{namespace netio
 			return false;
 		}
 
-		native_socket_type tmpsock = ::socket(AF_INET,SOCK_STREAM, IPPROTO_IP);
+		native_socket_type tmpsock = ::socket(PF_INET,SOCK_STREAM, IPPROTO_IP);
 		if(tmpsock < 0){
 			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiolistener.open") << lyramilk::kdict("监听时发生错误：%s",strerror(errno)) << std::endl;
 			return false;
@@ -458,7 +456,7 @@ namespace lyramilk{namespace netio
 			return false;
 		}
 
-		native_socket_type tmpsock = ::socket(AF_INET,SOCK_STREAM, IPPROTO_IP);
+		native_socket_type tmpsock = ::socket(PF_INET,SOCK_STREAM, IPPROTO_IP);
 		if(tmpsock < 0){
 			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiolistener.open") << lyramilk::kdict("监听时发生错误：%s",strerror(errno)) << std::endl;
 			return false;
@@ -607,40 +605,6 @@ namespace lyramilk{namespace netio
 	{
 	}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	bool udplistener::notify_in()
@@ -651,10 +615,10 @@ namespace lyramilk{namespace netio
 		int r = recvfrom(fd(),buff,sizeof(buff),0,(sockaddr*)&addr,&addr_len);
 
 		lyramilk::data::ostringstream oss;
-		if(onrequest(buff, r, oss)){
+		if(onrequest(buff, r, oss,(sockaddr*)&addr,addr_len)){
 			lyramilk::data::string out = oss.str();
 			r = sendto(fd(),out.c_str(),out.size(),0,(sockaddr*)&addr,addr_len);
-			lyramilk::klog(lyramilk::log::debug,"lyramilk.netio.udplistener.notify_in") << lyramilk::kdict("向(%s:%d)发送数据%llu个字节",inet_ntoa(addr.sin_addr),addr.sin_port,r) << std::endl;
+			//lyramilk::klog(lyramilk::log::debug,"lyramilk.netio.udplistener.notify_in") << lyramilk::kdict("向(%s:%d)发送数据%llu个字节",inet_ntoa(addr.sin_addr),addr.sin_port,r) << std::endl;
 		}
 
 		return true;
@@ -696,7 +660,7 @@ namespace lyramilk{namespace netio
 			return false;
 		}
 
-		native_socket_type tmpsock = ::socket(AF_INET,SOCK_DGRAM, 0);
+		native_socket_type tmpsock = ::socket(PF_INET,SOCK_DGRAM, 0);
 		if(tmpsock < 0){
 			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.udplistener.open") << lyramilk::kdict("监听时发生错误：%s",strerror(errno)) << std::endl;
 			return false;
@@ -737,7 +701,7 @@ namespace lyramilk{namespace netio
 			return false;
 		}
 
-		native_socket_type tmpsock = ::socket(AF_INET,SOCK_DGRAM, 0);
+		native_socket_type tmpsock = ::socket(PF_INET,SOCK_DGRAM, 0);
 		if(tmpsock < 0){
 			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.udplistener.open") << lyramilk::kdict("监听时发生错误：%s",strerror(errno)) << std::endl;
 			return false;

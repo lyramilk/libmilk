@@ -1,6 +1,7 @@
 prefix=/usr
-libdir=/usr/lib64
-includedir=/usr/include
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib64
+includedir=${prefix}/include
 
 Name: libmilk
 Description: lyramilk utility library.

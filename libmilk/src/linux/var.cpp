@@ -1407,7 +1407,7 @@ lyramilk::data::var::operator const lyramilk::data::map& () const throw(lyramilk
 
 lyramilk::data::chunk lyramilk::data::var::conv(const lyramilk::data::chunk& if_not_compat) const
 {
-	if(type_like(t_str)) return *this;
+	if(type_like(t_bin)) return *this;
 	return if_not_compat;
 }
 
@@ -1461,68 +1461,68 @@ lyramilk::data::chunk lyramilk::data::var::conv(unsigned char* if_not_compat) co
 
 bool lyramilk::data::var::conv(bool if_not_compat) const
 {
-	if(type_like(t_str)) return *this;
+	if(type_like(t_bool)) return *this;
 	return if_not_compat;
 }
 
 lyramilk::data::uint64 lyramilk::data::var::conv(lyramilk::data::int8 if_not_compat) const
 {
-	if(type_like(t_str)) return *this;
+	if(type_like(t_int)) return *this;
 	return if_not_compat;
 }
 lyramilk::data::uint64 lyramilk::data::var::conv(lyramilk::data::uint8 if_not_compat) const
 {
-	if(type_like(t_str)) return *this;
+	if(type_like(t_int)) return *this;
 	return if_not_compat;
 }
 lyramilk::data::uint64 lyramilk::data::var::conv(lyramilk::data::int16 if_not_compat) const
 {
-	if(type_like(t_str)) return *this;
+	if(type_like(t_int)) return *this;
 	return if_not_compat;
 }
 lyramilk::data::uint64 lyramilk::data::var::conv(lyramilk::data::uint16 if_not_compat) const
 {
-	if(type_like(t_str)) return *this;
+	if(type_like(t_int)) return *this;
 	return if_not_compat;
 }
 lyramilk::data::uint64 lyramilk::data::var::conv(lyramilk::data::int32 if_not_compat) const
 {
-	if(type_like(t_str)) return *this;
+	if(type_like(t_int)) return *this;
 	return if_not_compat;
 }
 lyramilk::data::uint64 lyramilk::data::var::conv(lyramilk::data::uint32 if_not_compat) const
 {
-	if(type_like(t_str)) return *this;
+	if(type_like(t_int)) return *this;
 	return if_not_compat;
 }
 
 lyramilk::data::uint64 lyramilk::data::var::conv(lyramilk::data::int64 if_not_compat) const
 {
-	if(type_like(t_str)) return *this;
+	if(type_like(t_int)) return *this;
 	return if_not_compat;
 }
 
 lyramilk::data::uint64 lyramilk::data::var::conv(lyramilk::data::uint64 if_not_compat) const
 {
-	if(type_like(t_str)) return *this;
+	if(type_like(t_int)) return *this;
 	return if_not_compat;
 }
 
 lyramilk::data::uint64 lyramilk::data::var::conv(long if_not_compat) const
 {
-	if(type_like(t_str)) return *this;
+	if(type_like(t_int)) return *this;
 	return if_not_compat;
 }
 
 lyramilk::data::uint64 lyramilk::data::var::conv(unsigned long if_not_compat) const
 {
-	if(type_like(t_str)) return *this;
+	if(type_like(t_int)) return *this;
 	return if_not_compat;
 }
 
 double lyramilk::data::var::conv(double if_not_compat) const
 {
-	if(type_like(t_str)) return *this;
+	if(type_like(t_double)) return *this;
 	return if_not_compat;
 }
 
@@ -1579,7 +1579,12 @@ lyramilk::data::var& lyramilk::data::var::operator[](const lyramilk::data::wstri
 
 lyramilk::data::var& lyramilk::data::var::operator[](lyramilk::data::uint64 index) throw(lyramilk::data::type_invalid)
 {
-	return at((lyramilk::data::uint32)index);
+	return at(index);
+}
+
+lyramilk::data::var& lyramilk::data::var::operator[](int index) throw(lyramilk::data::type_invalid)
+{
+	return at((lyramilk::data::uint64)index);
 }
 
 const lyramilk::data::var& lyramilk::data::var::operator[](const char* index) const throw(lyramilk::data::type_invalid)
@@ -1604,7 +1609,12 @@ const lyramilk::data::var& lyramilk::data::var::operator[](const lyramilk::data:
 
 const lyramilk::data::var& lyramilk::data::var::operator[](lyramilk::data::uint64 index) const throw(lyramilk::data::type_invalid)
 {
-	return at((lyramilk::data::uint32)index);
+	return at(index);
+}
+
+const lyramilk::data::var& lyramilk::data::var::operator[](int index) const throw(lyramilk::data::type_invalid)
+{
+	return at((lyramilk::data::uint64)index);
 }
 
 lyramilk::data::var::vt lyramilk::data::var::type() const
@@ -1726,12 +1736,7 @@ lyramilk::data::var& lyramilk::data::var::type(lyramilk::data::var::vt nt) throw
 
 bool lyramilk::data::var::type_like(lyramilk::data::var::vt nt) const
 {
-	if((nt == t_bin || nt == t_str || nt == t_wstr) && (t == t_bin || t == t_str || t == t_wstr ||   t == t_int ||  t == t_uint ||  t == t_double)){
-		return true;
-	}
-
-	if((nt == t_int || nt == t_uint || nt == t_double) &&
-		(t == t_int ||  t == t_uint ||  t == t_double)){
+	if((nt == t_bin || nt == t_str || nt == t_wstr || nt == t_int ||  nt == t_uint ||  nt == t_double) && (t == t_bin || t == t_str || t == t_wstr || t == t_int ||  t == t_uint ||  t == t_double)){
 		return true;
 	}
 

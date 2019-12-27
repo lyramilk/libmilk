@@ -49,6 +49,39 @@ namespace lyramilk{namespace script{namespace lua
 		void clear();
 	};
 
+
+	class lua_datawrapper:public lyramilk::script::objadapter_datawrapper
+	{
+
+	  public:
+		lyramilk::data::string name;
+	  public:
+		lua_datawrapper(const lyramilk::data::string& __name,sclass* __sclass):lyramilk::script::objadapter_datawrapper(__sclass),name(__name)
+		{}
+
+	  	virtual ~lua_datawrapper()
+		{}
+
+		static lyramilk::data::string subclass_name()
+		{
+			return "lyramilk.lua.objadapter";
+		}
+
+		virtual lyramilk::data::string subclassname() const
+		{
+			return subclass_name();
+		}
+
+		virtual lyramilk::data::datawrapper* clone() const
+		{
+			return new lua_datawrapper(name,_sclass);
+		}
+		virtual void destory()
+		{
+			delete this;
+		}
+	};
+
 }}}
 
 #endif

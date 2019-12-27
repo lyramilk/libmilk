@@ -114,10 +114,7 @@ namespace lyramilk{namespace script{namespace lua
 				return v;
 			}break;
 		  case LUA_TFUNCTION:{
-				//未测试
-				lyramilk::data::var v;
-				v.assign(engine::s_user_functionid(),(void*)lua_tocfunction(L,index));
-				return v;
+			  	TODO();
 				return lyramilk::data::var::nil;
 			}break;
 		  default:
@@ -174,20 +171,24 @@ namespace lyramilk{namespace script{namespace lua
 			}
 			break;
 		  case lyramilk::data::var::t_user:
-			if(v.userdata(engine::s_user_objectid())){
-				const void* pid = v.userdata(engine::s_user_objectid());
-				//const void* pobj = v.userdata(engine::s_user_nativeobject());
-				lyramilk::data::string* pstr = (lyramilk::data::string*)pid;
-				
-				lyramilk::data::var** p = (lyramilk::data::var**)lua_newuserdata(L,sizeof(void*));
-				*p = new lyramilk::data::var;
-				(**p) = v;
-				//lua_pushvar(L,&v);
+			if(v.type() == lyramilk::data::var::t_user){
+				lyramilk::data::datawrapper* urd = v.userdata();
+				if(urd && urd->name() == objadapter_datawrapper::class_name()){
+					objadapter_datawrapper* urd2 = (objadapter_datawrapper*)urd;
+					if(urd2->subclassname() == lua_datawrapper::subclass_name()){
+						lua_datawrapper* urdp = (lua_datawrapper*)urd2;
+						lyramilk::data::var** p = (lyramilk::data::var**)lua_newuserdata(L,sizeof(void*));
+						*p = new lyramilk::data::var;
+						(**p) = v;
+						//lua_pushvar(L,&v);
+						//lua_pushlightuserdata(L,(void*)pobj);
+						lua_getglobal(L,urdp->name.c_str());
+						lua_setmetatable(L,-2);
+						break;
 
-				//lua_pushlightuserdata(L,(void*)pobj);
-				lua_getglobal(L,pstr->c_str());
-				lua_setmetatable(L,-2);
-				break;
+
+					}
+				}
 			}
 			lua_pushvar(L,&v);
 			break;
@@ -235,7 +236,7 @@ namespace lyramilk{namespace script{namespace lua
 			lua_pop(L,1);
 
 			lyramilk::data::map env;
-			env[engine::s_env_engine()].assign(engine::s_env_engine(),penv);
+			env[engine::s_env_engine()].assign(engine_datawrapper((lyramilk::script::engine*)penv));
 			lyramilk::data::var ret = func(params,env);
 			luaset(L,ret);
 			return 1;
@@ -257,12 +258,21 @@ namespace lyramilk{namespace script{namespace lua
 			lua_pop(L,lua_gettop(L));
 
 			lyramilk::data::map env;
-			//env[engine::s_env_this()].assign(engine::s_user_nativeobject(),(*pthis)->userdata(engine::s_user_nativeobject()));
-			env[engine::s_env_engine()].assign(engine::s_env_engine(),mi->env);
-			lyramilk::data::var ret = func(params,env,(void*)(*pthis)->userdata(engine::s_user_nativeobject()));
-			luaset(L,ret);
-			return 1;
+			env[engine::s_env_engine()].assign(engine_datawrapper(mi->env));
 
+			if((*pthis)->type() == lyramilk::data::var::t_user){
+				lyramilk::data::datawrapper* urd = (*pthis)->userdata();
+				if(urd && urd->name() == objadapter_datawrapper::class_name()){
+					objadapter_datawrapper* urd2 = (objadapter_datawrapper*)urd;
+					if(urd2->subclassname() == lua_datawrapper::subclass_name()){
+						lua_datawrapper* urdp = (lua_datawrapper*)urd2;
+
+						lyramilk::data::var ret = func(params,env,(void*)urdp->_sclass);
+						luaset(L,ret);
+						return 1;
+					}
+				}
+			}
 		}
 		return 0;
 	}
@@ -316,8 +326,7 @@ namespace lyramilk{namespace script{namespace lua
 
 		lyramilk::data::var** p = (lyramilk::data::var**)lua_newuserdata(L,sizeof(void*));
 		*p = new lyramilk::data::var;
-		(*p)->assign(engine::s_user_objectid(),&mi->name);
-		(*p)->assign(engine::s_user_nativeobject(),mi->ctr(r));
+		(*p)->assign(lua_datawrapper(mi->name,mi->ctr(r)));
 		lua_insert(L,1);
 		lua_setmetatable(L,-2);
 
@@ -334,9 +343,22 @@ namespace lyramilk{namespace script{namespace lua
 		lua_pop(L,1);
 		script_lua::metainfo* mi = (script_lua::metainfo*)cls;
 		lyramilk::data::var** p = (lyramilk::data::var**)lua_touserdata(L,1);
-		lyramilk::script::sclass* pdata = (lyramilk::script::sclass*)(*p)->userdata(engine::s_user_nativeobject());
-		mi->dtr(pdata);
-		delete *p;
+
+
+
+		if((*p)->type() == lyramilk::data::var::t_user){
+			lyramilk::data::datawrapper* urd = (*p)->userdata();
+			if(urd && urd->name() == objadapter_datawrapper::class_name()){
+				objadapter_datawrapper* urd2 = (objadapter_datawrapper*)urd;
+				if(urd2->subclassname() == lua_datawrapper::subclass_name()){
+					lua_datawrapper* urdp = (lua_datawrapper*)urd2;
+					lyramilk::script::sclass* pdata = urdp->_sclass;
+					mi->dtr(pdata);
+					delete *p;
+				}
+			}
+		}
+
 		return 0;
 	}
 
@@ -534,8 +556,7 @@ namespace lyramilk{namespace script{namespace lua
 		if(mi == nullptr) return lyramilk::data::var::nil;
 
 		lyramilk::data::var v;
-		v.assign(engine::s_user_objectid(),&mi->name);
-		v.userdata(engine::s_user_nativeobject(),mi->ctr(args));
+		v.assign(lua_datawrapper(mi->name,mi->ctr(args)));
 		return v;
 	}
 

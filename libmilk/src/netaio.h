@@ -3,6 +3,7 @@
 
 #include "netio.h"
 #include "aio.h"
+#include <arpa/inet.h>
 
 namespace lyramilk{namespace netio
 {
@@ -216,20 +217,6 @@ namespace lyramilk{namespace netio
 		}
 	};
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-	
 	/**
 		@brief UDP套接字监听会话
 	*/
@@ -264,7 +251,7 @@ namespace lyramilk{namespace netio
 		virtual void ondestory();
 
 
-		virtual bool onrequest(const char* cache, int size, lyramilk::data::ostream& os) = 0;
+		virtual bool onrequest(const char* cache, int size, lyramilk::data::ostream& os,const struct sockaddr* addr,socklen_t addr_len) = 0;
 
 	};
 }}
