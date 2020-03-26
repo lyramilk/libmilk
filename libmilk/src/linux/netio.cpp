@@ -11,6 +11,8 @@
 #include <netdb.h>
 #include <errno.h>
 #include <string.h>
+#include <netinet/tcp.h>
+
 #include <cassert>
 
 #include <iostream>
@@ -166,6 +168,43 @@ namespace lyramilk{namespace netio
 		return false;
 	}
 
+	bool socket::setkeepalive(int interval,int cnt)
+	{
+		if(fd() < 0) return false;
+		if(interval < 1) return false;
+		if(cnt < 1) cnt = 1;;
+
+		int tmpfd = fd();
+		int val = 1;
+		if (setsockopt(tmpfd, SOL_SOCKET, SO_KEEPALIVE, &val, sizeof(val)) == -1){
+			return false;
+		}
+
+		if (setsockopt(tmpfd, IPPROTO_TCP, TCP_KEEPIDLE, &interval, sizeof(interval)) == -1){
+			return false;
+		}
+
+		if (setsockopt(tmpfd, IPPROTO_TCP, TCP_KEEPINTVL, &interval, sizeof(interval)) == -1){
+			return false;
+		}
+
+		if (setsockopt(tmpfd, IPPROTO_TCP, TCP_KEEPCNT, &cnt, sizeof(cnt)) == -1){
+			return false;
+		}
+		return true;
+	}
+
+	bool socket::setnodelay(bool enable_tcp_nodelay)
+	{
+		if(fd() < 0) return false;
+		int val = enable_tcp_nodelay?1:0;
+
+		if (setsockopt(fd(), IPPROTO_TCP, TCP_NODELAY, &val, sizeof(val)) == -1){
+			return false;
+		}
+		return true;
+	}
+
 	bool socket::close()
 	{
 		if(sock >= 0){
@@ -183,12 +222,23 @@ namespace lyramilk{namespace netio
 		if(getsockname(fd(),(sockaddr*)&addr,&size) !=0 ) return netaddress();
 		return netaddress(addr.sin_addr.s_addr,ntohs(addr.sin_port));
 	}
+/*
+#ifndef SO_ORIGINAL_DST
+	#define SO_ORIGINAL_DST 80
+#endif
+*/
 
 	netaddress socket::dest() const
 	{
 		sockaddr_in addr;
 		socklen_t size = sizeof addr;
-		if(getpeername(fd(),(sockaddr*)&addr,&size) !=0 ) return netaddress();
+		if(getpeername(fd(),(sockaddr*)&addr,&size) !=0 ){
+			return netaddress();
+			/*
+			if(getsockopt(fd(), SOL_IP, SO_ORIGINAL_DST, &addr, &size) != 0){
+				return netaddress();
+			}*/
+		}
 		return netaddress(addr.sin_addr.s_addr,ntohs(addr.sin_port));
 	}
 

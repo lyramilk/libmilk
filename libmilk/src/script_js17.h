@@ -45,6 +45,7 @@ namespace lyramilk{namespace script{namespace js
 		virtual bool load_module(const lyramilk::data::string& modulefile);
 
 		virtual bool call(const lyramilk::data::var& func,const lyramilk::data::array& args,lyramilk::data::var* ret);
+		virtual bool call_method(objadapter_datawrapper* obj,const lyramilk::data::var& meth,const lyramilk::data::array& args,lyramilk::data::var* ret);
 		virtual void define(const lyramilk::data::string& classname,functional_map m,class_builder builder,class_destoryer destoryer);
 		virtual void define(const lyramilk::data::string& funcname,functional_type func);
 		virtual void define_const(const lyramilk::data::string& key,const lyramilk::data::var& value);

@@ -54,17 +54,23 @@ namespace lyramilk{namespace netio
 	  public:
 		socket();
 		virtual ~socket();
-		//检查该套接字的通信是否己加密
+		// 检查该套接字的通信是否己加密
 		virtual bool ssl();
 
 		///	取得SSL*
 		virtual ssl_type get_ssl_obj();
 
-		//判断套接字是否可用
+		// 判断套接字是否可用
 		virtual bool isalive();
 
-		//关闭套接字
+		// 关闭套接字
 		virtual bool close();
+
+		// 设置 SO_KEEPALIVE
+		virtual bool setkeepalive(int interval = 30,int cnt = 3);
+
+		// 设置 TCP_NODELAY
+		virtual bool setnodelay(bool enable_tcp_nodelay = true);
 
 		/// 取得本端ip
 		virtual netaddress source() const;

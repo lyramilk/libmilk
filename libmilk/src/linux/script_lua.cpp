@@ -481,6 +481,11 @@ namespace lyramilk{namespace script{namespace lua
 		return false;
 	}
 
+	bool script_lua::call_method(objadapter_datawrapper* obj,const lyramilk::data::var& meth,const lyramilk::data::array& args,lyramilk::data::var* ret)
+	{
+		TODO();
+	}
+
 	void script_lua::reset()
 	{
 		if(L){

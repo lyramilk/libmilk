@@ -201,6 +201,27 @@ namespace lyramilk { namespace log
 		*/
 		logb* rebase(logb* ploger);
 	};
+
+
+
+
+	class _lyramilk_api_ logfile
+	{
+		lyramilk::data::string filefmt;
+		int fd;
+		lyramilk::threading::mutex_os lock;
+		tm daytime;
+	  protected:
+		virtual void check_split();
+	  public:
+		logfile();
+		virtual ~logfile();
+		virtual bool init(const lyramilk::data::string& filefmt,bool create_on_init);
+		virtual bool append(const char* p,lyramilk::data::uint64 s);
+	};
+
+
+
 }}
 
 

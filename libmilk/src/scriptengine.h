@@ -14,6 +14,8 @@
 namespace lyramilk{namespace script
 {
 
+	class objadapter_datawrapper;
+
 	class _lyramilk_api_ sclass
 	{
 	  public:
@@ -38,20 +40,10 @@ namespace lyramilk{namespace script
 		lyramilk::data::map userdata_tmp;
 	  public:
 
-		/// 脚本向C++传递对象id时使用。
-		static inline lyramilk::data::string s_user_objectid()
+		/// 脚本向C++传递对象时使用。
+		static inline lyramilk::data::string s_script_object()
 		{
-			return "__script_object_id";
-		}
-		/// 脚本向C++传递对象指针时使用。
-		static inline lyramilk::data::string s_user_nativeobject()
-		{
-			return "__script_native_object";
-		}
-		/// 脚本向C++传递函数id时使用。
-		static inline lyramilk::data::string s_user_functionid()
-		{
-			return "__script_function_id";
+			return "__script_object";
 		}
 
 		/// 环境变量：脚本引擎对象指针。
@@ -123,6 +115,16 @@ namespace lyramilk{namespace script
 			@return 返回true表示成功
 		*/
 		virtual bool call(const lyramilk::data::var& func,const lyramilk::data::array& args,lyramilk::data::var* ret) = 0;
+
+		/**
+			@brief 执行脚本函数。
+			@param obj 对象
+			@param meth 函数名
+			@param args 参数
+			@param ret 脚本的返回值
+			@return 返回true表示成功
+		*/
+		virtual bool call_method(objadapter_datawrapper* obj,const lyramilk::data::var& meth,const lyramilk::data::array& args,lyramilk::data::var* ret) = 0;
 
 		/**
 			@brief 重置脚本引擎。

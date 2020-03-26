@@ -26,6 +26,7 @@ namespace lyramilk{ namespace debug
 		return get_nprocs();
 	}
 
+	//	nsecdiff
 	void nsecdiff::mark()
 	{
 		clock_gettime(CLOCK_MONOTONIC_RAW, &timestamp);
@@ -40,6 +41,22 @@ namespace lyramilk{ namespace debug
 		return s * 1000000000 + n;
 	}
 
+	//	usecdiff
+	void usecdiff::mark()
+	{
+		clock_gettime(CLOCK_MONOTONIC_RAW, &timestamp);
+	}
+
+	long long usecdiff::diff()
+	{
+		struct timespec ts;
+		clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
+		long long s = ts.tv_sec - timestamp.tv_sec;
+		long long n = ts.tv_nsec - timestamp.tv_nsec;
+		return (s * 1000000000 + n) / 1000;
+	}
+
+	// clocktester
 	clocktester::clocktester(timediff& _td):td(_td),outer(std::cout)
 	{
 		printable = true;
@@ -61,7 +78,7 @@ namespace lyramilk{ namespace debug
 	{
 		if(printable){
 			long long des = td.diff();
-			outer << str << D("耗时：%lld(纳秒)",des) << std::endl;
+			outer << str << D("耗时：%lld",des) << std::endl;
 		}
 	}
 

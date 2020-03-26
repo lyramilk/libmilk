@@ -12,6 +12,7 @@
 #include <string.h>
 #include <cassert>
 #include <netdb.h>
+#include <sys/file.h>
 
 #ifdef OPENSSL_FOUND
 	#include <openssl/ssl.h>
@@ -428,6 +429,10 @@ namespace lyramilk{namespace netio
 
 		int ret = listen(tmpsock,5);
 		if(ret == 0){
+			int flags = fcntl(tmpsock, F_GETFD);
+			flags |= FD_CLOEXEC;
+			fcntl(tmpsock, F_SETFD, flags);
+
 			lyramilk::klog(lyramilk::log::debug,"lyramilk.netio.aiolistener.open") << lyramilk::kdict("监听：%d",port) << std::endl;
 			//signal(SIGPIPE, SIG_IGN);
 			fd(tmpsock);
@@ -479,6 +484,10 @@ namespace lyramilk{namespace netio
 
 		int ret = listen(tmpsock,5);
 		if(ret == 0){
+			int flags = fcntl(tmpsock, F_GETFD);
+			flags |= FD_CLOEXEC;
+			fcntl(tmpsock, F_SETFD, flags);
+
 			lyramilk::klog(lyramilk::log::debug,"lyramilk.netio.aiolistener.open") << lyramilk::kdict("监听：%s:%d",host.c_str(),port) << std::endl;
 			//signal(SIGPIPE, SIG_IGN);
 			fd(tmpsock);
@@ -677,6 +686,15 @@ namespace lyramilk{namespace netio
 			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.udplistener.open") << lyramilk::kdict("绑定地址(%s:%d)时发生错误：%s",inet_ntoa(addr.sin_addr),port,strerror(errno)) << std::endl;
 			return false;
 		}
+
+		int flags = fcntl(tmpsock, F_GETFD);
+		flags |= FD_CLOEXEC;
+		fcntl(tmpsock, F_SETFD, flags);
+
+		flags = fcntl(tmpsock, F_GETFL);
+		flags |= O_NONBLOCK;
+		fcntl(tmpsock, F_GETFL, flags);
+
 		lyramilk::klog(lyramilk::log::debug,"lyramilk.netio.udplistener.open") << lyramilk::kdict("监听：%d",port) << std::endl;
 		fd(tmpsock);
 		return true;
@@ -718,7 +736,17 @@ namespace lyramilk{namespace netio
 			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.udplistener.open") << lyramilk::kdict("绑定地址(%s:%d)时发生错误：%s",inet_ntoa(addr.sin_addr),port,strerror(errno)) << std::endl;
 			return false;
 		}
-			lyramilk::klog(lyramilk::log::debug,"lyramilk.netio.udplistener.open") << lyramilk::kdict("监听：%s:%d",host.c_str(),port) << std::endl;
+
+
+		int flags = fcntl(tmpsock, F_GETFD);
+		flags |= FD_CLOEXEC;
+		fcntl(tmpsock, F_SETFD, flags);
+
+		flags = fcntl(tmpsock, F_GETFL);
+		flags |= O_NONBLOCK;
+		fcntl(tmpsock, F_GETFL, flags);
+
+		lyramilk::klog(lyramilk::log::debug,"lyramilk.netio.udplistener.open") << lyramilk::kdict("监听：%s:%d",host.c_str(),port) << std::endl;
 		fd(tmpsock);
 		return true;
 	}

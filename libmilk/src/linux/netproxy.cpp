@@ -3,6 +3,7 @@
 #include "ansi_3_64.h"
 #include "log.h"
 #include "debug.h"
+#include "testing.h"
 
 #include <sys/epoll.h>
 #include <sys/poll.h>
@@ -35,63 +36,27 @@ namespace lyramilk{namespace netio
 	// aioproxysession_speedy
 
 	const unsigned int flag_default = EPOLLERR | EPOLLHUP | EPOLLRDHUP | EPOLLONESHOT;
+	//const unsigned int flag_default = EPOLLERR | EPOLLHUP | EPOLLRDHUP | EPOLLET;
 	
 
 	bool aioproxysession_speedy::ssl()
 	{
-		return socket::ssl();
+		return false;
 	}
 
 	void aioproxysession_speedy::ssl(bool use_ssl)
 	{
-		this->use_ssl = use_ssl;
 	}
 
 	bool aioproxysession_speedy::init_ssl(const lyramilk::data::string& certfilename, const lyramilk::data::string& keyfilename)
 	{
-#ifdef OPENSSL_FOUND
-		if(sslctx == nullptr){
-			sslctx = SSL_CTX_new(SSLv23_client_method());
-		}
-		int r = 0;
-		if(!certfilename.empty()){
-			r = SSL_CTX_use_certificate_file((SSL_CTX*)sslctx, certfilename.c_str(), SSL_FILETYPE_PEM);
-			if(r != 1) {
-				lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.aioproxysession_speedy.ssl.init_ssl") << lyramilk::kdict("设置公钥失败:%s",ssl_err().c_str()) << std::endl;
-				return false;
-			}
-		}
-		if(!keyfilename.empty()){
-			r = SSL_CTX_use_PrivateKey_file((SSL_CTX*)sslctx, keyfilename.c_str(), SSL_FILETYPE_PEM);
-			if(r != 1) {
-				lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.aioproxysession_speedy.ssl.init_ssl") << lyramilk::kdict("设置私钥失败:%s",ssl_err().c_str()) << std::endl;
-				return false;
-			}
-		}
-		if(!certfilename.empty() && !keyfilename.empty()){
-			r = SSL_CTX_check_private_key((SSL_CTX*)sslctx);
-			if(r != 1) {
-				lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.aioproxysession_speedy.ssl.init_ssl") << lyramilk::kdict("验证公钥失败:%s",ssl_err().c_str()) << std::endl;
-				return false;
-			}
-		}
-		SSL_CTX_set_options((SSL_CTX*)sslctx, SSL_OP_TLS_ROLLBACK_BUG);
-		ssl(true);
-		return true;
-#else
 		lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_speedy.ssl.init_ssl") << lyramilk::kdict("不支持SSL") << std::endl;
 		return false;
-#endif
 	}
 
 	ssl_ctx_type aioproxysession_speedy::get_ssl_ctx()
 	{
-#ifdef OPENSSL_FOUND
-		if(sslctx == nullptr){
-			sslctx = SSL_CTX_new(SSLv23_client_method());
-		}
-#endif
-		return sslctx;
+		return nullptr;
 	}
 
 	bool aioproxysession_speedy::open(const lyramilk::data::string& host,lyramilk::data::uint16 port,int timeout_msec)
@@ -135,26 +100,9 @@ namespace lyramilk{namespace netio
 		int r = ::connect(tmpsock,(const sockaddr*)&saddr,sizeof(saddr));
 
 		if(r == -1 && errno == EINPROGRESS && (timeout_msec == -2 || check_write(tmpsock,timeout_msec))){
-#ifdef OPENSSL_FOUND
-			if(use_ssl && sslctx){
-				SSL* sslptr = SSL_new((SSL_CTX*)sslctx);
-				if(SSL_set_fd(sslptr,tmpsock) != 1) {
-					sslptr = nullptr;
-					lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.aioproxysession_speedy.ssl.onevent") << lyramilk::kdict("绑定套接字失败:%s",ssl_err().c_str()) << std::endl;
-					::close(tmpsock);
-					return false;
-				}
-
-				SSL_set_connect_state(sslptr);
-				if(SSL_do_handshake(sslptr) != 1) {
-					lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.aioproxysession_speedy.ssl.onevent") << lyramilk::kdict("握手失败:%s",ssl_err().c_str()) << std::endl;
-					::close(tmpsock);
-					return false;
-				}
-				this->sslobj = sslptr;
-			}
-#endif
 			this->fd(tmpsock);
+			setnodelay(true);
+			setkeepalive(20,3);
 			return true;
 		}
 
@@ -165,9 +113,6 @@ namespace lyramilk{namespace netio
 
 	aioproxysession_speedy::aioproxysession_speedy()
 	{
-		sslctx = nullptr;
-		use_ssl = false;
-
 		endpoint = nullptr;
 		flag = EPOLLIN | flag_default;
 	}
@@ -192,7 +137,7 @@ namespace lyramilk{namespace netio
 
 
 		lyramilk::io::aiopoll_safe* pool = (lyramilk::io::aiopoll_safe*)this->pool;
-		if(pool->add(endpoint,EPOLLERR | EPOLLHUP | EPOLLRDHUP | EPOLLONESHOT,true)){
+		if(pool->add(endpoint,EPOLLIN | flag_default,true)){
 			return true;
 		}
 
@@ -236,7 +181,6 @@ namespace lyramilk{namespace netio
 				i = endpoint->read(buff,r);
 			}
 		}while(i > 0);
-
 		// 对端己经读不到数据了，此时重置两端读事件。
 		return pool->reset(endpoint,EPOLLIN | flag_default) && pool->reset(this,EPOLLIN | flag_default);
 	}
@@ -356,9 +300,11 @@ namespace lyramilk{namespace netio
 
 		if(endpoint->open(host,port,200)){
 			endpoint->endpoint = this;
+			setnodelay(true);
+			setkeepalive(20,3);
 
 			lyramilk::io::aiopoll_safe* pool = (lyramilk::io::aiopoll_safe*)this->pool;
-			if(start_proxy() && pool->add(endpoint,EPOLLERR | EPOLLHUP | EPOLLRDHUP | EPOLLONESHOT,true)){
+			if(start_proxy() && pool->add(endpoint,EPOLLIN | flag_default,true)){
 				return true;
 			}
 			stop_proxy();
@@ -375,9 +321,11 @@ namespace lyramilk{namespace netio
 
 		if(endpoint->open(saddr,200)){
 			endpoint->endpoint = this;
+			setnodelay(true);
+			setkeepalive(20,3);
 
 			lyramilk::io::aiopoll_safe* pool = (lyramilk::io::aiopoll_safe*)this->pool;
-			if(start_proxy() && pool->add(endpoint,EPOLLERR | EPOLLHUP | EPOLLRDHUP | EPOLLONESHOT,true)){
+			if(start_proxy() && pool->add(endpoint,EPOLLIN | flag_default,true)){
 				return true;
 			}
 			stop_proxy();
@@ -392,9 +340,11 @@ namespace lyramilk{namespace netio
 		if(endpoint) return false;
 		endpoint = dest;
 		endpoint->endpoint = this;
+		setnodelay(true);
+		setkeepalive(20,3);
 
 		lyramilk::io::aiopoll_safe* pool = (lyramilk::io::aiopoll_safe*)this->pool;
-		if(start_proxy() && pool->add(endpoint,EPOLLERR | EPOLLHUP | EPOLLRDHUP | EPOLLONESHOT,true)){
+		if(start_proxy() && pool->add(endpoint,EPOLLIN | flag_default,true)){
 			return true;
 		}
 		endpoint = nullptr;

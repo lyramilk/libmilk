@@ -12,11 +12,10 @@
 
 namespace lyramilk{namespace netio
 {
+
 	class _lyramilk_api_ aioproxysession_speedy : public lyramilk::netio::aiosession
 	{
 		friend class aioproxysession;
-		ssl_ctx_type sslctx;
-		bool use_ssl;
 	  public:
 		aioproxysession_speedy* endpoint;
 	  public:
@@ -52,8 +51,6 @@ namespace lyramilk{namespace netio
 		virtual bool notify_pri();
 	};
 
-
-
 	/**
 		@brief 同步套接字会话
 		@details onrequest中向os写数据的时候，以阻塞的方式写出去。
@@ -78,9 +75,10 @@ namespace lyramilk{namespace netio
 		virtual bool combine(const lyramilk::data::string& host,lyramilk::data::uint16 port);
 		virtual bool combine(const sockaddr_in& saddr);
 		virtual bool combine(aioproxysession_speedy* dest);
+	  protected:
 		virtual bool start_proxy();
 		virtual bool stop_proxy();
-	  protected:
+
 		/**
 			@brief 连接时触发
 			@return 返回false会导致服务器主动断开链接。

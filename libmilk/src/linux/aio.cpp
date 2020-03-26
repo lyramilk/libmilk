@@ -353,6 +353,8 @@ namespace lyramilk{namespace io
 
 			for(int i=0;i<ee_count;++i){
 				aioselector* selector = (aioselector*)ee.data.ptr;
+				onevent(selector,ee.events);
+				/*
 				if(selector){
 					nd.mark();
 					onevent(selector,ee.events);
@@ -372,7 +374,7 @@ namespace lyramilk{namespace io
 						}
 					}
 
-				}
+				}*/
 			}
 		}
 		return 0;

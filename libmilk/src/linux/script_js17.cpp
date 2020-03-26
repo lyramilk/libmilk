@@ -20,7 +20,7 @@ namespace lyramilk{namespace script{namespace js
 	static JSBool jsinstanceof(JSContext *cx, JSHandleObject obj, const Value *v, JSBool *bp);
 	static void j2v(JSContext* cx,Value jv,lyramilk::data::var* retv);
 	static bool j2s(JSContext* cx,Value jv,lyramilk::data::string* retv);
-	static void v2j(JSContext* cx,const lyramilk::data::var& v,Value *ret);
+	static bool v2j(JSContext* cx,const lyramilk::data::var& v,Value *ret);
 
 	static JSBool jget(JSContext *cx, JSHandleObject obj, JSHandleId id, JSMutableHandleValue vp);
 	static JSBool jset(JSContext *cx, JSHandleObject obj, JSHandleId id, JSBool strict, JSMutableHandleValue vp);
@@ -284,43 +284,54 @@ namespace lyramilk{namespace script{namespace js
 		retv->clear();
 		return false;
 	}
-	void v2j(JSContext* cx,const lyramilk::data::var& v,Value *ret)
+	bool v2j(JSContext* cx,const lyramilk::data::var& v,Value *ret)
 	{
 		switch(v.type()){
 		  case lyramilk::data::var::t_bool:
 			ret->setBoolean(v);
-			return;
+			return true;
 		  case lyramilk::data::var::t_int:
 		  case lyramilk::data::var::t_uint:{
 				double dv = v;
 				if(floor(dv) == dv){
 					if(dv > JSVAL_INT_MIN && dv < JSVAL_INT_MAX){
 						ret->setNumber(dv);
-						return;
+						return true;
 					}
 				}
 			}
 		  case lyramilk::data::var::t_double:
 			ret->setNumber((double)v);
-			return;
+			return true;
 		  case lyramilk::data::var::t_bin:{
 				const lyramilk::data::chunk& cb = v;
 				JSObject* jo = JS_NewArrayBuffer(cx,cb.size());
 				uint8_t * p = JS_GetArrayBufferData(jo,cx);
 				cb.copy(p,cb.size());
 				ret->setObject(*jo);
-				return;
+				return true;
 			}
 		  case lyramilk::data::var::t_wstr:
 		  case lyramilk::data::var::t_str:{
+				if(JS_IsExceptionPending(cx)) return false;
 				lyramilk::data::string s = v;
 				JSString* str = JS_NewStringCopyN(cx,s.c_str(),s.size());
+				if(JS_IsExceptionPending(cx)){
+					JS_ClearPendingException(cx);
+
+					JSObject* jo = JS_NewArrayBuffer(cx,s.size());
+					uint8_t * p = JS_GetArrayBufferData(jo,cx);
+					s.copy((char*)p,s.size());
+					ret->setObject(*jo);
+					return true;
+				}
+
 				if(str == nullptr){
 					 ret->setUndefined();
-					 return;
+					 return true;
 				}
 				ret->setString(str);
-				return;
+				return true;
 			}break;
 		  case lyramilk::data::var::t_array:{
 				std::vector<Value> jvs;
@@ -333,7 +344,7 @@ namespace lyramilk{namespace script{namespace js
 
 				JSObject* jo = JS_NewArrayObject(cx,jvs.size(),jvs.data());
 				ret->setObject(*jo);
-				return;
+				return true;
 			}break;
 		  case lyramilk::data::var::t_map:{
 				JSObject* jo = JS_NewObject(cx,Jsvalify(&normalClass),nullptr,JS_GetGlobalObject(cx));
@@ -348,7 +359,7 @@ namespace lyramilk{namespace script{namespace js
 				}
 				//
 				ret->setObject(*jo);
-				return ;
+				return true ;
 			}break;
 		  case lyramilk::data::var::t_user:{
 				lyramilk::data::datawrapper* urd = v.userdata();
@@ -358,7 +369,7 @@ namespace lyramilk{namespace script{namespace js
 						mozjsobject_datawrapper* urdp = (mozjsobject_datawrapper*)urd2;
 						JSObject* jsobj = JSID_TO_OBJECT(urdp->_jsid);
 						ret->setObject(*jsobj);
-						return;
+						return true;
 					}
 				}
 
@@ -367,13 +378,14 @@ namespace lyramilk{namespace script{namespace js
 				jv.setUnmarkedPtr((void*)&v);
 				JS_SetProperty(cx,jo,"__script_var",&jv);
 				ret->setObject(*jo);
-				return;
+				return true;
 			}
 		  case lyramilk::data::var::t_invalid:
 			ret->setUndefined();
-			return;
+			return true;
 		}
 		ret->setUndefined();
+		return true;
 	}
 
 	JSBool jsnewenum(JSContext *cx, JSHandleObject obj, JSIterateOp enum_op,Value *statep, jsid *idp)
@@ -606,8 +618,11 @@ namespace lyramilk{namespace script{namespace js
 	static JSBool js_func_adapter(JSContext *cx, unsigned argc, Value *vp)
 	{
 		CallArgs args = CallArgsFromVp(argc, vp);
+		
 		engine::functional_type_inclass pfun = (engine::functional_type_inclass)js_get_func_native(cx,&args.callee());
-		js_obj_pack *ppack = (js_obj_pack*)JS_GetPrivate(&args.thisv().toObject());
+		JSObject* thisv = &args.thisv().toObject();
+
+		js_obj_pack *ppack = (js_obj_pack*)JS_GetPrivate(thisv);
 
 		if(pfun && ppack){
 			if(ppack->magic == 0x21){
@@ -620,11 +635,15 @@ namespace lyramilk{namespace script{namespace js
 				for(unsigned i=0;i<argc;++i){
 					j2v(cx,args[i],&params[i]);
 				}
+
 				try{
 					lyramilk::data::var ret = pfun(params,info,nullptr);
 					Value jsret;
-					v2j(cx,ret,&jsret);
-					args.rval().set(jsret);
+					if(v2j(cx,ret,&jsret)){
+						args.rval().set(jsret);
+						return JS_TRUE;
+					}
+					return JS_FALSE;
 				}catch(const lyramilk::data::string& str){
 					js_throw(cx,str.c_str(),str.size());
 					return JS_FALSE;
@@ -646,11 +665,21 @@ namespace lyramilk{namespace script{namespace js
 				for(unsigned i=0;i<argc;++i){
 					j2v(cx,args[i],&params[i]);
 				}
+
 				try{
+
+					if(ppack->info.find(engine::s_script_object()) == ppack->info.end()){
+						jsid joid;
+						JS_GetObjectId(cx,thisv,&joid);
+						ppack->info[engine::s_script_object()].assign(mozjsobject_datawrapper(ppack->eng,joid,ppack->pthis));
+					}
+
 					lyramilk::data::var ret = pfun(params,ppack->info,ppack->pthis);
 					Value jsret;
-					v2j(cx,ret,&jsret);
-					args.rval().set(jsret);
+					if(v2j(cx,ret,&jsret)){
+						args.rval().set(jsret);
+						return JS_TRUE;
+					}
 				}catch(const lyramilk::data::string& str){
 					js_throw(cx,str.c_str(),str.size());
 					return JS_FALSE;
@@ -684,8 +713,10 @@ namespace lyramilk{namespace script{namespace js
 		try{
 			lyramilk::data::var ret = h->func(params,h->eng->info);
 			Value jsret;
-			v2j(cx,ret,&jsret);
-			args.rval().set(jsret);
+			if(v2j(cx,ret,&jsret)){
+				args.rval().set(jsret);
+				return JS_TRUE;
+			}
 		}catch(const lyramilk::data::string& str){
 			js_throw(cx,str.c_str(),str.size());
 			return JS_FALSE;
@@ -928,6 +959,8 @@ namespace lyramilk{namespace script{namespace js
 			lyramilk::data::datawrapper *urd = func.userdata();
 			if(urd && urd->name() == mozjsobject_datawrapper::class_name()){
 				mozjsobject_datawrapper* urdp = (mozjsobject_datawrapper*)urd;
+
+
 				jsid jid = urdp->_jsid;
 				if(!jid) return false;
 				Value retval;
@@ -951,6 +984,63 @@ namespace lyramilk{namespace script{namespace js
 		}
 		return false;
 	}
+
+	bool script_js::call_method(objadapter_datawrapper* obj,const lyramilk::data::var& meth,const lyramilk::data::array& args,lyramilk::data::var* ret)
+	{
+		JS_SetRuntimeThread(rt);
+		init();
+		JSContext* selectedcx = (JSContext *)JS_GetRuntimePrivate(rt);
+
+		if(obj->subclassname() == mozjsobject_datawrapper::subclass_name()){
+			mozjsobject_datawrapper* urdp = (mozjsobject_datawrapper*)obj;
+			JSObject* jsobj = JSID_TO_OBJECT(urdp->_jsid);
+
+			if(meth.type_like(lyramilk::data::var::t_str)){
+				Value retval;
+				std::vector<Value> jvs;
+				jvs.resize(args.size());
+				for(std::size_t i=0;i < args.size();++i){
+					v2j(selectedcx,args[i],&jvs[i]);
+				}
+				if(JS_TRUE == JS_CallFunctionName(selectedcx,jsobj,meth.str().c_str(),jvs.size(),jvs.data(),&retval)){
+					if(ret){
+						j2v(selectedcx,retval,ret);
+					}
+					return true;
+				}
+			}else if(meth.type() == lyramilk::data::var::t_user){
+				//调用回调函数
+				lyramilk::data::datawrapper *urd = meth.userdata();
+				if(urd && urd->name() == mozjsobject_datawrapper::class_name()){
+					mozjsobject_datawrapper* urdp = (mozjsobject_datawrapper*)urd;
+
+
+					jsid jid = urdp->_jsid;
+					if(!jid) return false;
+					Value retval;
+					Value jv;
+					JS_IdToValue(selectedcx,jid,&jv);
+					JSFunction *fun = JS_ValueToFunction(selectedcx,jv);
+
+					std::vector<Value> jvs;
+					jvs.resize(args.size());
+					for(std::size_t i=0;i < args.size();++i){
+						v2j(selectedcx,args[i],&jvs[i]);
+					}
+
+					if(JS_TRUE == JS_CallFunction(selectedcx,jsobj,fun,jvs.size(),jvs.data(),&retval)){
+						if(ret){
+							j2v(selectedcx,retval,ret);
+						}
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+
 
 	void script_js::reset()
 	{

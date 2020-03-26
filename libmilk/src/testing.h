@@ -30,6 +30,15 @@ namespace lyramilk{ namespace debug
 		long long diff();
 	};
 
+	class _lyramilk_api_ usecdiff : public timediff
+	{
+		/// 微秒时间戳
+		struct timespec timestamp;
+	  public:
+		void mark();
+		long long diff();
+	};
+
 	/**
 		@brief 测试从构造到析构所用掉的cpu时钟周期数。
 	*/

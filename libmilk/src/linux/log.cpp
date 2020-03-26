@@ -163,6 +163,9 @@ bool logf::ok()
 					}
 
 					fd = open(newfilename.c_str(),O_WRONLY | O_CREAT | O_APPEND,0644);
+					int flags = fcntl(fd, F_GETFD);
+					flags |= FD_CLOEXEC;
+					fcntl(fd, F_SETFD, flags);
 				}
 			}
 		}
@@ -201,6 +204,9 @@ void logf::log(time_t ti,type ty,const lyramilk::data::string& usr,const lyramil
 				}
 
 				fd = open(newfilename.c_str(),O_WRONLY | O_CREAT | O_APPEND,0644);
+				int flags = fcntl(fd, F_GETFD);
+				flags |= FD_CLOEXEC;
+				fcntl(fd, F_SETFD, flags);
 			}
 		}
 	}
@@ -397,4 +403,76 @@ lyramilk::log::logb* logss::rebase(lyramilk::log::logb* ploger)
 	return old;
 }
 //		lyramilk::threading::mutex lock;
+
+
+
+
+		lyramilk::data::string filefmt;
+		int fd;
+		lyramilk::threading::mutex_os lock;
+		tm daytime;
+
+
+
+logfile::logfile():daytime()
+{
+	fd = -1;
+}
+
+logfile::~logfile()
+{
+	if(fd != -1){
+		::close(fd);
+	}
+}
+
+void logfile::check_split()
+{
+	//输入日志时只用当前时间分页。
+	time_t t_now = time(nullptr);
+	tm __t;
+	tm *t = localtime_r(&t_now,&__t);
+
+	if(daytime.tm_year != __t.tm_year || daytime.tm_mon != __t.tm_mon || daytime.tm_mday != __t.tm_mday){
+		lyramilk::threading::mutex_sync _(lock);
+		if(daytime.tm_year != __t.tm_year || daytime.tm_mon != __t.tm_mon || daytime.tm_mday != __t.tm_mday){
+			daytime = __t;
+			lyramilk::data::string newfilename;
+
+			lyramilk::data::string::const_iterator it = filefmt.begin();
+			for(;it!=filefmt.end();++it){
+				if(*it == '?'){
+					char buff[128];
+					int r = ::strftime(buff,sizeof(buff),"%F",t);
+					newfilename.append(buff,r);
+				}else{
+					newfilename.push_back(*it);
+				}
+			}
+			if(fd != -1){
+				::close(fd);
+			}
+			fd = open(newfilename.c_str(),O_WRONLY | O_CREAT | O_APPEND,0644);
+			int flags = fcntl(fd, F_GETFD);
+			flags |= FD_CLOEXEC;
+			fcntl(fd, F_SETFD, flags);
+		}
+	}
+}
+
+bool logfile::init(const lyramilk::data::string& filefmt,bool create_on_init)
+{
+	this->filefmt = filefmt;
+	if(create_on_init){
+		check_split();
+		return fd != -1;
+	}
+	return true;
+}
+
+bool logfile::append(const char* p,lyramilk::data::uint64 s)
+{
+	check_split();
+	return s == (lyramilk::data::uint64)::write(fd,p,s);
+}
 
