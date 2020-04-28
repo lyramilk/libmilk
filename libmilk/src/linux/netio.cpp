@@ -172,7 +172,9 @@ namespace lyramilk{namespace netio
 	{
 		if(fd() < 0) return false;
 		if(interval < 1) return false;
-		if(cnt < 1) cnt = 1;;
+		if(cnt < 1) cnt = 1;
+
+		int idle = std::max(interval,60);
 
 		int tmpfd = fd();
 		int val = 1;
@@ -180,7 +182,7 @@ namespace lyramilk{namespace netio
 			return false;
 		}
 
-		if (setsockopt(tmpfd, IPPROTO_TCP, TCP_KEEPIDLE, &interval, sizeof(interval)) == -1){
+		if (setsockopt(tmpfd, IPPROTO_TCP, TCP_KEEPIDLE, &idle, sizeof(idle)) == -1){
 			return false;
 		}
 
@@ -202,6 +204,15 @@ namespace lyramilk{namespace netio
 		if (setsockopt(fd(), IPPROTO_TCP, TCP_NODELAY, &val, sizeof(val)) == -1){
 			return false;
 		}
+		return true;
+	}
+
+
+	bool socket::setnoblock(bool noblock)
+	{
+		if(fd() < 0) return false;
+		unsigned int argp = noblock?1:0;
+		ioctl(fd(),FIONBIO,&argp);
 		return true;
 	}
 

@@ -186,7 +186,8 @@ namespace lyramilk{namespace script{namespace js
 			const jschar* cstr = JS_GetStringCharsZAndLength(cx,jstr,&len);
 			lyramilk::data::string tstr;
 			jsstr2str(cstr,len,&tstr);
-			*retv = tstr;
+			retv->clear();
+			retv->assign(tstr);
 			return;
 		}else if(jv.isObject()){
 			JSObject *jo = jv.toObjectOrNull();
@@ -219,7 +220,7 @@ namespace lyramilk{namespace script{namespace js
 				uint8_t * p = JS_GetArrayBufferData(jo,cx);
 				uint32_t l = JS_GetArrayBufferByteLength(jo,cx);
 				lyramilk::data::chunk cb(p,l);
-				*retv = cb;
+				retv->assign(cb);
 				return;
 			}else if(JS_GetClass(jo) == Jsvalify(&nativeClass)){
 				js_obj_pack *ppack = (js_obj_pack *)JS_GetPrivate(jo);

@@ -137,7 +137,7 @@ namespace lyramilk{namespace netio
 
 
 		lyramilk::io::aiopoll_safe* pool = (lyramilk::io::aiopoll_safe*)this->pool;
-		if(pool->add(endpoint,EPOLLIN | flag_default,true)){
+		if(pool->add_to_thread(get_thread_idx(),endpoint,EPOLLIN | flag_default)){
 			return true;
 		}
 
@@ -303,8 +303,10 @@ namespace lyramilk{namespace netio
 			setnodelay(true);
 			setkeepalive(20,3);
 
+			endpoint->flag = EPOLLIN | flag_default;
+
 			lyramilk::io::aiopoll_safe* pool = (lyramilk::io::aiopoll_safe*)this->pool;
-			if(start_proxy() && pool->add(endpoint,EPOLLIN | flag_default,true)){
+			if(start_proxy() && pool->add_to_thread(get_thread_idx(),endpoint,-1)){
 				return true;
 			}
 			stop_proxy();
@@ -324,8 +326,10 @@ namespace lyramilk{namespace netio
 			setnodelay(true);
 			setkeepalive(20,3);
 
+			endpoint->flag = EPOLLIN | flag_default;
+
 			lyramilk::io::aiopoll_safe* pool = (lyramilk::io::aiopoll_safe*)this->pool;
-			if(start_proxy() && pool->add(endpoint,EPOLLIN | flag_default,true)){
+			if(start_proxy() && pool->add_to_thread(get_thread_idx(),endpoint,-1)){
 				return true;
 			}
 			stop_proxy();
@@ -343,8 +347,10 @@ namespace lyramilk{namespace netio
 		setnodelay(true);
 		setkeepalive(20,3);
 
+		endpoint->flag = EPOLLIN | flag_default;
+
 		lyramilk::io::aiopoll_safe* pool = (lyramilk::io::aiopoll_safe*)this->pool;
-		if(start_proxy() && pool->add(endpoint,EPOLLIN | flag_default,true)){
+		if(start_proxy() && pool->add_to_thread(get_thread_idx(),endpoint,-1)){
 			return true;
 		}
 		endpoint = nullptr;

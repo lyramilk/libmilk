@@ -269,7 +269,6 @@ namespace lyramilk{namespace netio
 
 	bool aiolistener::notify_in()
 	{
-
 		while(true){
 			sockaddr_in addr;
 			socklen_t addr_size = sizeof(addr);
@@ -390,6 +389,7 @@ namespace lyramilk{namespace netio
 
 	aiolistener::aiolistener() : sslctx(nullptr),use_ssl(false),ssl_self_adaptive(false)
 	{
+		flag = EPOLLIN;
 	}
 
 	aiolistener::~aiolistener()
@@ -658,6 +658,7 @@ namespace lyramilk{namespace netio
 
 	udplistener::udplistener()
 	{
+		flag = EPOLLIN | EPOLLPRI | EPOLLERR | EPOLLHUP | EPOLLRDHUP | EPOLLONESHOT;
 	}
 
 	udplistener::~udplistener()

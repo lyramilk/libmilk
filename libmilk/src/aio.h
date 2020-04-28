@@ -21,15 +21,18 @@ namespace lyramilk{namespace io
 	/**
 		@brief 异步容器的选择子
 	*/
-	class _lyramilk_api_ aiopoll;
+	class _lyramilk_api_ aiopoll_safe;
 	class _lyramilk_api_ aioselector
 	{
-		uint32 mask;
 	  protected:
+		uint32 mask;
+		uint32 flag;
+		lyramilk::data::int64 thread_idx;
+
 		friend class aiopoll;
 		friend class aiopoll_safe;
 		lyramilk::threading::mutex_spin mlock;
-		aiopoll* pool;
+		aiopoll_safe* pool;
 		virtual void ondestory() = 0;
 	  protected:
 		/**
@@ -55,13 +58,12 @@ namespace lyramilk{namespace io
 		/**
 			@brief 加入容器时发生该通知。
 		*/
-		virtual bool notify_attach(aiopoll* container);
+		virtual bool notify_attach(aiopoll_safe* container);
 		/**
 			@brief 从容器中移除时发生该通知。
 		*/
-		virtual bool notify_detach(aiopoll* container);
+		virtual void notify_detach(aiopoll_safe* container);
 
-		virtual native_filedescriptor_type getfd() = 0;
 	  public:
 		aioselector();
 		virtual ~aioselector();
@@ -73,19 +75,54 @@ namespace lyramilk{namespace io
 			@brief 恢复lock状态
 		*/
 		virtual bool unlock();
+		virtual lyramilk::data::int64 get_thread_idx();
+		virtual native_filedescriptor_type getfd() = 0;
+	};
+
+	//TODO 要改为每个线程一个epoll来做。记录业务工作时间，时间过长的时候创建新线程接管，同时标记旧线程。 
+	class _lyramilk_api_ aiopoll_safe : public lyramilk::threading::threads
+	{
+	  protected:
+		friend class aioselector;
+		lyramilk::threading::atomic<std::size_t> thread_idx;
+		lyramilk::data::int64 fdcount;
+		pthread_key_t seq_key;
+		struct epinfo
+		{
+			native_epool_type epfd;
+			lyramilk::data::uint64 payload;
+		};
+		std::vector<epinfo> epfds;
+		virtual bool active(std::size_t threadcount);
+	  protected:
+		virtual int svc();
+		virtual native_epool_type getfd(std::size_t thread_idx);
+		virtual native_epool_type getfd();
+	  public:
+		virtual bool add_to_thread(lyramilk::data::int64 idx,aioselector* r,lyramilk::data::int64 mask);
+	  public:
+		aiopoll_safe(std::size_t threadcount);
+		virtual ~aiopoll_safe();
+
+		virtual bool add(aioselector* r,lyramilk::data::int64 mask = -1);
+		virtual bool reset(aioselector* r,lyramilk::data::int64 mask);
+		virtual bool detach(aioselector* r);
+		virtual bool remove(aioselector* r);
+
+		virtual lyramilk::data::int64 get_thread_idx();
+		virtual lyramilk::data::int64 get_fd_count();
+		virtual void onevent(aioselector* r,lyramilk::data::int64 events);
+		virtual bool active();
 	};
 
 	/**
 		@brief 异步文件句柄容器
 	*/
-	class _lyramilk_api_ aiopoll : public lyramilk::threading::threads
+	class _lyramilk_api_ aiopoll : protected aiopoll_safe
 	{
 	  protected:
 		friend class aioselector;
-		native_epool_type epfd;
-		lyramilk::data::int64 fdcount;
 		virtual bool transmessage();
-		virtual native_epool_type getfd();
 	  public:
 		aiopoll();
 		virtual ~aiopoll();
@@ -104,40 +141,13 @@ namespace lyramilk{namespace io
 		/// 把r从池中移除，会导致r被释放。
 		virtual bool remove(aioselector* r);
 
-		virtual void onevent(aioselector* r,lyramilk::data::int64 events);
+		/// 把r从池中移除，不会导致r被释放。
+		virtual bool detach(aioselector* r);
 		virtual int svc();
-
-		virtual lyramilk::data::int64 get_fd_count();
-	};
-
-	//TODO 要改为每个线程一个epoll来做。记录业务工作时间，时间过长的时候创建新线程接管，同时标记旧线程。 
-	class _lyramilk_api_ aiopoll_safe : public lyramilk::io::aiopoll
-	{
-		lyramilk::threading::atomic<std::size_t> thread_idx;
-		pthread_key_t seq_key;
-		struct epinfo
-		{
-			native_epool_type epfd;
-			lyramilk::data::uint64 payload;
-		};
-
-		std::vector<epinfo> epfds;
 		virtual bool active(std::size_t threadcount);
-	  protected:
-		virtual int svc();
-		virtual native_epool_type getfd();
-	  public:
-		virtual bool add_to_thread(lyramilk::data::int64 idx,aioselector* r,lyramilk::data::int64 mask);
-		virtual bool remove_on_thread(lyramilk::data::int64 idx,aioselector* r);
-	  public:
-		aiopoll_safe(std::size_t threadcount);
-		virtual ~aiopoll_safe();
-
-		virtual bool add(aioselector* r,lyramilk::data::int64 mask = -1);
-		virtual bool add(aioselector* r,lyramilk::data::int64 mask,bool use_current_thread);
-
-		virtual lyramilk::data::int64 get_thread_idx();
 	};
+
+
 }}
 
 #endif

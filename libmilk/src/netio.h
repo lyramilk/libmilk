@@ -71,6 +71,8 @@ namespace lyramilk{namespace netio
 
 		// 设置 TCP_NODELAY
 		virtual bool setnodelay(bool enable_tcp_nodelay = true);
+		// 设置 FIONBIO
+		virtual bool setnoblock(bool noblock = true);
 
 		/// 取得本端ip
 		virtual netaddress source() const;

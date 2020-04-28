@@ -19,7 +19,6 @@ namespace lyramilk{namespace netio
 	class _lyramilk_api_ aiosession : public lyramilk::io::aioselector,public lyramilk::netio::socket
 	{
 	  protected:
-		int flag;
 		lyramilk::data::string peer_cert_info;
 		aiosession();
 		virtual ~aiosession();

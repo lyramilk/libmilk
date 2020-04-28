@@ -44,7 +44,7 @@ namespace lyramilk{namespace threading
 				++cc;
 			}
 		}
-		return true;
+		return cc > 0;
 	}
 
 	bool threads::active()
@@ -62,8 +62,7 @@ namespace lyramilk{namespace threading
 			t <<= 1;
 			t |= e;
 		}
-		active(t);
-		return true;
+		return active(t);
 	}
 
 	std::size_t threads::size()

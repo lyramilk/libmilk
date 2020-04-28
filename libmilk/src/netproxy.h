@@ -12,7 +12,9 @@
 
 namespace lyramilk{namespace netio
 {
-
+	/**
+		@desc 代理类型的会话必须使用 lyramilk::io::aiopoll_safe，不能使用lyramilk::io::aiopoll。因为lyramilk::io::aiopoll不保证关联的会话在同一线程中运行。
+	*/
 	class _lyramilk_api_ aioproxysession_speedy : public lyramilk::netio::aiosession
 	{
 		friend class aioproxysession;
@@ -75,9 +77,11 @@ namespace lyramilk{namespace netio
 		virtual bool combine(const lyramilk::data::string& host,lyramilk::data::uint16 port);
 		virtual bool combine(const sockaddr_in& saddr);
 		virtual bool combine(aioproxysession_speedy* dest);
-	  protected:
+
+
 		virtual bool start_proxy();
 		virtual bool stop_proxy();
+	  protected:
 
 		/**
 			@brief 连接时触发
