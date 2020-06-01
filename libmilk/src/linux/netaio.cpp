@@ -632,8 +632,7 @@ namespace lyramilk{namespace netio
 			r = sendto(fd(),out.c_str(),out.size(),0,(sockaddr*)&addr,addr_len);
 			//lyramilk::klog(lyramilk::log::debug,"lyramilk.netio.udplistener.notify_in") << lyramilk::kdict("向(%s:%d)发送数据%llu个字节",inet_ntoa(addr.sin_addr),addr.sin_port,r) << std::endl;
 		}
-
-		return true;
+		return pool->reset(this,flag);
 	}
 
 	bool udplistener::notify_out()

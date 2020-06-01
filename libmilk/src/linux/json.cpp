@@ -529,7 +529,11 @@ label_badchar:
 				if(z.next(token) && token.t == jsontoken::COLON){
 					lyramilk::data::var subvalue;
 					if(!zparse(token,z,subvalue,deep + 1)) return false;
-					v[key] = subvalue;
+					std::pair<lyramilk::data::map::iterator,bool> rit = v.insert(std::pair<lyramilk::data::string,lyramilk::data::var>(key,subvalue));
+					if(!rit.second){
+						//ERROR Duplicate key
+						return false;
+					}
 				}else{
 					return false;
 				}
