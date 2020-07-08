@@ -29,23 +29,35 @@ namespace lyramilk{namespace netio
 
 	class _lyramilk_api_ netaddress
 	{
-	  public:
 		///网络字节序
-		lyramilk::data::string host;
+		lyramilk::data::string _host;
 		///本地字节序
-		lyramilk::data::uint16 port;
-
+		lyramilk::data::uint16 _port;
+	  public:
 		netaddress(const lyramilk::data::string& host, lyramilk::data::uint16 port);
 		netaddress(lyramilk::data::uint32 ipv4, lyramilk::data::uint16 port);
 		netaddress(lyramilk::data::uint16 port);
 		netaddress(const lyramilk::data::string& hostandport);
 		netaddress();
+
+		void from(const lyramilk::data::string& host, lyramilk::data::uint16 port);
+		void from(lyramilk::data::uint32 ipv4, lyramilk::data::uint16 port);
+		void from(lyramilk::data::uint16 port);
+		void from(const lyramilk::data::string& hostandport);
+
+		void clear();
 		lyramilk::data::string ip_str() const;
+
+		lyramilk::data::string host() const;
+		lyramilk::data::uint16 port() const;
 	};
 
 	class _lyramilk_api_ socket
 	{
 		native_socket_type sock;
+		mutable netaddress _src;
+		mutable netaddress _dst;
+		mutable native_socket_type _lastfd;
 	  protected:
 		friend class socket_ostream_buf;
 		friend class socket_istream_buf;
@@ -237,6 +249,7 @@ namespace lyramilk{namespace netio
 
 		virtual bool open(const netaddress& addr);
 		virtual bool open(const lyramilk::data::string& host,lyramilk::data::uint16 port);
+		virtual bool open(const lyramilk::data::string& host,lyramilk::data::uint16 port,lyramilk::data::uint32 msec);
 
 		virtual bool ssl();
 		virtual void ssl(bool use_ssl);

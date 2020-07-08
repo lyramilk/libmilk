@@ -259,6 +259,9 @@ namespace lyramilk{namespace netio
 		pfd.revents = 0;
 		int ret = ::poll(&pfd,1,delay);
 		if(ret > 0){
+			if(pfd.revents & (POLLHUP | POLLRDHUP | POLLERR)){
+				return false;
+			}
 			if(pfd.revents & POLLIN){
 				return true;
 			}
@@ -389,7 +392,7 @@ namespace lyramilk{namespace netio
 
 	aiolistener::aiolistener() : sslctx(nullptr),use_ssl(false),ssl_self_adaptive(false)
 	{
-		flag = EPOLLIN;
+		flag = EPOLLIN | EPOLLET;
 	}
 
 	aiolistener::~aiolistener()

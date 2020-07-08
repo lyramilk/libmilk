@@ -177,19 +177,19 @@ namespace lyramilk{namespace data
 
 
 #ifdef USEMILKALLOC
-	std::string inline str(const lyramilk::data::string& str)
+	std::string inline str(const lyramilk::data::string& argstr)
 	{
-		return std::string(str.c_str(),str.size());
+		return std::string(argstr.c_str(),argstr.size());
 	}
 
-	lyramilk::data::string inline str(const std::string& str)
+	lyramilk::data::string inline str(const std::string& argstr)
 	{
-		return lyramilk::data::string(str.c_str(),str.size());
+		return lyramilk::data::string(argstr.c_str(),argstr.size());
 	}
 #else
-	std::string inline str(const lyramilk::data::string& str)
+	inline const std::string& str(const lyramilk::data::string& argstr)
 	{
-		return str;
+		return argstr;
 	}
 #endif
 	lyramilk::data::string inline str(unsigned long long i)

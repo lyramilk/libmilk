@@ -86,6 +86,7 @@ namespace lyramilk{namespace io
 		friend class aioselector;
 		lyramilk::threading::atomic<std::size_t> thread_idx;
 		lyramilk::data::int64 fdcount;
+		lyramilk::data::int64 busy_thread_count;
 		pthread_key_t seq_key;
 		struct epinfo
 		{

@@ -74,6 +74,7 @@ namespace lyramilk{namespace io
 	//	aiopoll_safe
 	aiopoll_safe::aiopoll_safe(std::size_t threadcount)
 	{
+		busy_thread_count = 0;
 		pthread_key_create(&seq_key,nullptr);
 		thread_idx = 0;
 
@@ -148,6 +149,7 @@ namespace lyramilk{namespace io
 
 		r->notify_detach(this);
 		__sync_sub_and_fetch(&fdcount,1);
+		__sync_sub_and_fetch(&epi.payload,1);
 		r->mask = 0;
 		return true;
 	}
@@ -168,7 +170,6 @@ namespace lyramilk{namespace io
 		}
 
 		epinfo& epi = epfds[supper_idx];
-		epi.payload += 1000000;
 
 		assert(r);
 		if(!r->mlock.test()){
@@ -191,6 +192,7 @@ namespace lyramilk{namespace io
 			return false;
 		}
 		__sync_add_and_fetch(&fdcount,1);
+		__sync_add_and_fetch(&epi.payload,1);
 		return true;
 	}
 
@@ -201,7 +203,7 @@ namespace lyramilk{namespace io
 
 	native_epool_type aiopoll_safe::getfd(std::size_t thread_idx)
 	{
-		if(thread_idx < 0 || thread_idx >= (lyramilk::data::int64)epfds.size()){
+		if(thread_idx < 0 || thread_idx >= epfds.size()){
 			return -1;
 		}
 		return epfds[thread_idx].epfd;
@@ -278,32 +280,16 @@ namespace lyramilk{namespace io
 		lyramilk::debug::nsecdiff nd;
 		while(running){
 			epoll_event ee;
-			int ee_count = epoll_wait(epi.epfd, &ee,1, 100);
+			int ee_count = epoll_wait(epi.epfd, &ee,1, 2000);
 
 			for(int i=0;i<ee_count;++i){
 				aioselector* selector = (aioselector*)ee.data.ptr;
+				__sync_add_and_fetch(&busy_thread_count,1);
+				if(busy_thread_count == (lyramilk::data::int64)lyramilk::threading::threads::size()){
+					lyramilk::klog(lyramilk::log::warning,"lyramilk.aio.aiopoll_safe.svc") << lyramilk::kdict("epoll中可用线程过低 %d/%d",busy_thread_count,lyramilk::threading::threads::size()) << std::endl;
+				}
 				onevent(selector,ee.events);
-				/*
-				if(selector){
-					nd.mark();
-					onevent(selector,ee.events);
-					epi.payload += nd.diff();
-
-
-					if(epi.payload > 0x7fffffff){
-						std::size_t min_val = epfds[0].payload;
-						for(std::size_t idx = 1;idx < epfds.size();++idx){
-							if(epfds[idx].payload < min_val){
-								min_val = epfds[idx].payload;
-							}
-						}
-
-						for(std::size_t idx = 0;idx < epfds.size();++idx){
-							__sync_fetch_and_sub(&epfds[idx].payload,min_val);
-						}
-					}
-
-				}*/
+				__sync_sub_and_fetch(&busy_thread_count,1);
 			}
 		}
 		return 0;
@@ -314,14 +300,19 @@ namespace lyramilk{namespace io
 	// aiopoll
 	bool aiopoll::transmessage()
 	{
-		const int ee_max = 32;
+		const int ee_max = 1;
 		epoll_event ees[ee_max];
 		int ee_count = epoll_wait(epfds[0].epfd, ees, ee_max,2000);
 		for(int i=0;i<ee_count;++i){
 			epoll_event &ee = ees[i];
 			aioselector* selector = (aioselector*)ee.data.ptr;
 			if(selector){
+				__sync_add_and_fetch(&busy_thread_count,1);
 				onevent(selector,ee.events);
+				if(busy_thread_count == (lyramilk::data::int64)lyramilk::threading::threads::size()){
+					lyramilk::klog(lyramilk::log::warning,"lyramilk.aio.aiopoll.transmessage") << lyramilk::kdict("epoll[%d]中可用线程过低 %d/%d",epfds[0].epfd,busy_thread_count,lyramilk::threading::threads::size()) << std::endl;
+				}
+				__sync_sub_and_fetch(&busy_thread_count,1);
 			}
 		}
 		return true;
@@ -338,7 +329,7 @@ namespace lyramilk{namespace io
 
 	bool aiopoll::add(aioselector* r,lyramilk::data::int64 mask)
 	{
-		if(mask == -1) mask = EPOLLIN;
+		if(mask == -1) mask = r->flag;
 		assert(r);
 		if(!r->mlock.test()){
 			lyramilk::klog(lyramilk::log::error,"lyramilk.aio.epoll.add") << lyramilk::kdict("向epoll[%d]中添加套接字%d时发生错误%s",epfds[0].epfd,r->getfd(),"事件己上锁") << std::endl;

@@ -78,46 +78,76 @@ namespace lyramilk{namespace netio
 	/* netaddress */
 	netaddress::netaddress(const lyramilk::data::string& host, lyramilk::data::uint16 port)
 	{
-		this->host = host;
-		this->port = port;
+		this->_host = host;
+		this->_port = port;
 
 	}
 
 	netaddress::netaddress(lyramilk::data::uint32 ipv4, lyramilk::data::uint16 port)
 	{
-		in_addr in;
-		in.s_addr = ipv4;
-		host = inet_ntoa(in);
-		this->port = port;
+		from(ipv4,port);
 	}
 
 	netaddress::netaddress(lyramilk::data::uint16 port)
 	{
-		this->port = port;
+		from(port);
 	}
 
 	netaddress::netaddress(const lyramilk::data::string& hostandport)
 	{
-		std::size_t sz = hostandport.find(':');
-		if(sz == hostandport.npos){
-			host = hostandport;
-			port = 0;
-		}else{
-			host = hostandport.substr(0,sz);
-			lyramilk::data::var vport = hostandport.substr(sz+1);
-			port = vport;
-		}
-
+		from(hostandport);
 	}
 
 	netaddress::netaddress()
 	{
-		this->port = 0;
+		this->_port = -1;
+	}
+
+	void netaddress::from(lyramilk::data::uint32 ipv4, lyramilk::data::uint16 port)
+	{
+		in_addr in;
+		in.s_addr = ipv4;
+		_host = inet_ntoa(in);
+		this->_port = port;
+	}
+
+	void netaddress::from(lyramilk::data::uint16 port)
+	{
+		this->_port = port;
+	}
+
+	void netaddress::from(const lyramilk::data::string& hostandport)
+	{
+		std::size_t sz = hostandport.find(':');
+		if(sz == hostandport.npos){
+			_host = hostandport;
+			_port = -1;
+		}else{
+			_host = hostandport.substr(0,sz);
+			lyramilk::data::var vport = hostandport.substr(sz+1);
+			_port = vport;
+		}
+	}
+
+	void netaddress::clear()
+	{
+		_port = - 1;
+		_host.clear();
 	}
 
 	lyramilk::data::string netaddress::ip_str() const
 	{
-		return this->host;
+		return this->_host;
+	}
+
+	lyramilk::data::string netaddress::host() const
+	{
+		return this->_host;
+	}
+
+	lyramilk::data::uint16 netaddress::port() const
+	{
+		return this->_port;
 	}
 
 	/* socket */
@@ -126,6 +156,7 @@ namespace lyramilk{namespace netio
 		sslobj = nullptr;
 		sslenable = false;
 		sock = -1;
+		_lastfd = -2;
 	}
 
 	socket::~socket()
@@ -228,29 +259,44 @@ namespace lyramilk{namespace netio
 
 	netaddress socket::source() const
 	{
-		sockaddr_in addr;
-		socklen_t size = sizeof addr;
-		if(getsockname(fd(),(sockaddr*)&addr,&size) !=0 ) return netaddress();
-		return netaddress(addr.sin_addr.s_addr,ntohs(addr.sin_port));
+		if(_lastfd != fd()){
+			_lastfd = fd();
+			{
+				sockaddr_in addr;
+				socklen_t size = sizeof addr;
+				if(getsockname(fd(),(sockaddr*)&addr,&size) !=0 ){
+					_src.clear();
+				}else{
+					_src.from(addr.sin_addr.s_addr,ntohs(addr.sin_port));
+				}
+			}
+			{
+				sockaddr_in addr;
+				socklen_t size = sizeof addr;
+				if(getpeername(fd(),(sockaddr*)&addr,&size) !=0 ){
+					_dst.clear();
+
+					/*
+					#ifndef SO_ORIGINAL_DST
+						#define SO_ORIGINAL_DST 80
+					#endif
+					*/
+					/*
+					if(getsockopt(fd(), SOL_IP, SO_ORIGINAL_DST, &addr, &size) != 0){
+						return netaddress();
+					}*/
+				}else{
+					_dst.from(addr.sin_addr.s_addr,ntohs(addr.sin_port));
+				}
+			}
+		}
+		return _src;
 	}
-/*
-#ifndef SO_ORIGINAL_DST
-	#define SO_ORIGINAL_DST 80
-#endif
-*/
 
 	netaddress socket::dest() const
 	{
-		sockaddr_in addr;
-		socklen_t size = sizeof addr;
-		if(getpeername(fd(),(sockaddr*)&addr,&size) !=0 ){
-			return netaddress();
-			/*
-			if(getsockopt(fd(), SOL_IP, SO_ORIGINAL_DST, &addr, &size) != 0){
-				return netaddress();
-			}*/
-		}
-		return netaddress(addr.sin_addr.s_addr,ntohs(addr.sin_port));
+		source();
+		return _dst;
 	}
 
 	native_socket_type socket::fd() const
@@ -300,7 +346,7 @@ namespace lyramilk{namespace netio
 #endif
 		if(rt < 0){
 			if(errno != EAGAIN){
-				lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.socket.peek") << lyramilk::kdict("从套接字%d中预览数据时发生错误:%s",fd(),strerror(errno)) << std::endl;
+				lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.socket.peek") << lyramilk::kdict("从套接字%d(%s:%u)中预览数据时发生错误:%s",fd(),_dst.host().c_str(),_dst.port(),strerror(errno)) << std::endl;
 			}
 		}else if(rt == 0){
 			//lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.socket.peek") << lyramilk::kdict("从套接字%d中预览数据时发生错误:%s",fd(),"套接字己关闭") << std::endl;
@@ -324,7 +370,7 @@ namespace lyramilk{namespace netio
 
 		if(rt < 0){
 			if(errno != EAGAIN){
-				lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.socket.write") << lyramilk::kdict("向套接字%d中写入数据时发生错误:%s",fd(),strerror(errno)) << std::endl;
+				lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.socket.write") << lyramilk::kdict("向套接字%d(%s:%u)中写入数据时发生错误:%s",fd(),_dst.host().c_str(),_dst.port(),strerror(errno)) << std::endl;
 			}
 		}else if(rt == 0){
 			//lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.socket.write") << lyramilk::kdict("向套接字%d中写入数据时发生错误:%s",fd(),"套接字己关闭") << std::endl;
@@ -341,6 +387,9 @@ namespace lyramilk{namespace netio
 		pfd.revents = 0;
 		int ret = ::poll(&pfd,1,msec);
 		if(ret > 0){
+			if(pfd.revents & (POLLHUP | POLLRDHUP | POLLERR)){
+				return false;
+			}
 			if(pfd.revents & POLLIN){
 				return true;
 			}
@@ -356,6 +405,9 @@ namespace lyramilk{namespace netio
 		pfd.revents = 0;
 		int ret = ::poll(&pfd,1,msec);
 		if(ret > 0){
+			if(pfd.revents & (POLLHUP | POLLRDHUP | POLLERR)){
+				return false;
+			}
 			if(pfd.revents & POLLOUT){
 				return true;
 			}
@@ -371,7 +423,7 @@ namespace lyramilk{namespace netio
 		pfd.revents = 0;
 		int ret = ::poll(&pfd,1,0);
 		if(ret > 0){
-			if(pfd.revents){
+			if(pfd.revents & (POLLHUP | POLLRDHUP | POLLERR)){
 				return true;
 			}
 		}
@@ -386,6 +438,9 @@ namespace lyramilk{namespace netio
 		pfd.revents = 0;
 		int ret = ::poll(&pfd,1,msec);
 		if(ret > 0){
+			if(pfd.revents & (POLLHUP | POLLRDHUP | POLLERR)){
+				return false;
+			}
 			if(pfd.revents & POLLIN){
 				return true;
 			}
@@ -401,6 +456,9 @@ namespace lyramilk{namespace netio
 		pfd.revents = 0;
 		int ret = ::poll(&pfd,1,msec);
 		if(ret > 0){
+			if(pfd.revents & (POLLHUP | POLLRDHUP | POLLERR)){
+				return false;
+			}
 			if(pfd.revents & POLLOUT){
 				return true;
 			}
@@ -416,7 +474,7 @@ namespace lyramilk{namespace netio
 		pfd.revents = 0;
 		int ret = ::poll(&pfd,1,0);
 		if(ret > 0){
-			if(pfd.revents){
+			if(pfd.revents & (POLLHUP | POLLRDHUP | POLLERR)){
 				return true;
 			}
 		}
@@ -723,7 +781,7 @@ namespace lyramilk{namespace netio
 
 	bool client::open(const netaddress& addr)
 	{
-		return open(addr.ip_str(),addr.port);
+		return open(addr.ip_str(),addr.port());
 	}
 
 	bool client::open(const lyramilk::data::string& host,lyramilk::data::uint16 port)
@@ -783,6 +841,81 @@ namespace lyramilk{namespace netio
 			this->fd(tmpsock);
 			return true;
 		}
+		lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字(%s:%u)失败：%s",host.c_str(),port,strerror(errno)) << std::endl;
+		::close(tmpsock);
+		return false;
+	}
+
+	bool client::open(const lyramilk::data::string& host,lyramilk::data::uint16 port,lyramilk::data::uint32 msec)
+	{
+		if(fd() >= 0){
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字(%s:%u)失败：%s",host.c_str(),port,"套接字己经打开。") << std::endl;
+			return false;
+		}
+		hostent* h = gethostbyname(host.c_str());
+		if(h == nullptr){
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字(%s:%u)失败：%s",host.c_str(),port,strerror(errno)) << std::endl;
+			return false;
+		}
+
+		in_addr* inaddr = (in_addr*)h->h_addr;
+		if(inaddr == nullptr){
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字(%s:%u)失败：%s",host.c_str(),port,strerror(errno)) << std::endl;
+			return false;
+		}
+
+		native_socket_type tmpsock = ::socket(AF_INET,SOCK_STREAM, IPPROTO_IP);
+		if(tmpsock < 0){
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字(%s:%u)失败：%s",host.c_str(),port,strerror(errno)) << std::endl;
+			return false;
+		}
+
+		/*
+		struct timeval tv;
+		tv.tv_sec  = msec / 1000;
+		tv.tv_usec = (msec % 1000) * 1000;
+		setsockopt(tmpsock, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+		*/
+
+		sockaddr_in addr = {0};
+		addr.sin_addr.s_addr = inaddr->s_addr;
+		addr.sin_family = AF_INET;
+		addr.sin_port = htons(port);
+
+
+		unsigned int argp = 1;
+			//ioctlsocket(tmpsock,FIONBIO,&argp);
+		ioctl(tmpsock,FIONBIO,&argp);
+
+
+		int r = ::connect(tmpsock,(const sockaddr*)&addr,sizeof(addr));
+		if((-1 == r && errno==EINPROGRESS && check_write(tmpsock,msec)) || r == 0){
+#ifdef OPENSSL_FOUND
+			if(use_ssl && sslctx){
+				SSL* sslptr = SSL_new((SSL_CTX*)sslctx);
+				if(SSL_set_fd(sslptr,tmpsock) != 1) {
+					sslptr = nullptr;
+					lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.client.ssl.onevent") << lyramilk::kdict("绑定套接字(%s:%u)失败:%s",host.c_str(),port,_ssl.err().c_str()) << std::endl;
+					::close(tmpsock);
+					return false;
+				}
+
+				SSL_set_connect_state(sslptr);
+				if(SSL_do_handshake(sslptr) != 1) {
+					lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.client.ssl.onevent") << lyramilk::kdict("握手(%s:%u)失败:%s",host.c_str(),port,_ssl.err().c_str()) << std::endl;
+					::close(tmpsock);
+					return false;
+				}
+				this->sslobj = sslptr;
+			}
+#endif
+			unsigned int argp = 0;
+			//ioctlsocket(tmpsock,FIONBIO,&argp);
+			ioctl(tmpsock,FIONBIO,&argp);
+			this->fd(tmpsock);
+			return true;
+		}
+
 		lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字(%s:%u)失败：%s",host.c_str(),port,strerror(errno)) << std::endl;
 		::close(tmpsock);
 		return false;
