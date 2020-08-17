@@ -1319,7 +1319,46 @@ lyramilk::data::var::operator int64 () const throw(lyramilk::data::type_invalid)
 
 lyramilk::data::var::operator uint64 () const throw(lyramilk::data::type_invalid)
 {
-	return (uint64)(int64)*this;
+	switch(t){
+	  case t_int:{
+			return u.i8;
+		}break;
+	  case t_uint:{
+			return u.u8;
+		}break;
+	  case t_bin:{
+			const lyramilk::data::chunk* bp = reinterpret_cast<const lyramilk::data::chunk*>(&u.bp);
+			if(sizeof(int64) > bp->size()) throw lyramilk::data::type_invalid(lyramilk::kdict("%s：错误的子类型%s","lyramilk::data::var::operator int64()",type_name(t).c_str()));
+			uint64 u8;
+			memcpy(&u8,bp->c_str(),sizeof(u8));
+			return u8;
+		}break;
+	  case t_str:{
+			const string* bs = reinterpret_cast<const string*>(&u.bs);
+			char* p;
+			return strtoull(bs->c_str(),&p,10);
+		}break;
+	  case t_wstr:{
+			const wstring* bw = reinterpret_cast<const wstring*>(&u.bw);
+			wchar_t* p;
+			return wcstoull(bw->c_str(),&p,10);
+		}break;
+	  case t_bool:{
+			return u.b;
+		}break;
+	  case t_double:{
+			return (int64)u.f8;
+		}break;
+	  case t_user:{
+			return u.pu->get_int();
+		}break;
+	  case t_array:
+	  case t_map:
+	  case t_invalid:{
+			throw lyramilk::data::type_invalid(lyramilk::kdict("%s：错误的子类型%s","lyramilk::data::var::operator int64()",type_name(t).c_str()));
+		}break;
+	}
+	throw lyramilk::data::type_invalid(lyramilk::kdict("%s：错误的子类型%s","lyramilk::data::var::operator int64()",type_name(t).c_str()));
 }
 
 
