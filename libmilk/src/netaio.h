@@ -142,6 +142,13 @@ namespace lyramilk{namespace netio
 		virtual ~aiolistener();
 
 		/**
+			@brief 打开一个unixdomainsocket并监听。
+			@param pathfilename 文件全路径。
+			@return 如果打开成功返回true。
+		*/
+		virtual bool open_unixsocket(const lyramilk::data::string& pathfilename);
+
+		/**
 			@brief 打开一个端口并监听。
 			@param port 被打开的端口。
 			@return 如果打开成功返回true。
@@ -229,6 +236,13 @@ namespace lyramilk{namespace netio
 	public:
 		udplistener();
 		virtual ~udplistener();
+
+		/**
+			@brief 打开一个unixdomainsocket并监听。
+			@param pathfilename 文件全路径。
+			@return 如果打开成功返回true。
+		*/
+		virtual bool open_unixsocket(const lyramilk::data::string& pathfilename);
 
 		/**
 			@brief 打开一个端口并监听。
