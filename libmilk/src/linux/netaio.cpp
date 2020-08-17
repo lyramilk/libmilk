@@ -4,6 +4,8 @@
 
 #include <sys/epoll.h>
 #include <sys/poll.h>
+#include <sys/stat.h>
+#include <sys/un.h>
 
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -405,6 +407,49 @@ namespace lyramilk{namespace netio
 #endif
 	}
 
+	bool aiolistener::open_unixsocket(const lyramilk::data::string& pathfilename)
+	{
+		if(fd() >= 0){
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiolistener.open_unixsocket") << lyramilk::kdict("打开监听套件字失败，因为该套接字己打开。") << std::endl;
+			return false;
+		}
+
+		native_socket_type tmpsock = ::socket(AF_UNIX, SOCK_STREAM, IPPROTO_IP);
+		if(tmpsock < 0){
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiolistener.open_unixsocket") << lyramilk::kdict("监听时发生错误：%s",strerror(errno)) << std::endl;
+			return false;
+		}
+
+		struct sockaddr_un unaddr = {0};
+		unaddr.sun_family = AF_UNIX;
+		unlink(pathfilename.c_str());
+		strcpy(unaddr.sun_path,pathfilename.c_str());
+
+		if(::bind(tmpsock,(const sockaddr*)&unaddr,sizeof(unaddr))){
+			::close(tmpsock);
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiolistener.open_unixsocket") << lyramilk::kdict("绑定地址(unixsocket:%s)时发生错误：%s",pathfilename.c_str(),strerror(errno)) << std::endl;
+			return false;
+		}
+		chmod(pathfilename.c_str(),ACCESSPERMS);
+
+		unsigned int argp = 1;
+		ioctl(tmpsock,FIONBIO,&argp);
+
+		int ret = listen(tmpsock,1024);
+		if(ret == 0){
+			int flags = fcntl(tmpsock, F_GETFD);
+			flags |= FD_CLOEXEC;
+			fcntl(tmpsock, F_SETFD, flags);
+
+			lyramilk::klog(lyramilk::log::debug,"lyramilk.netio.aiolistener.open_unixsocket") << lyramilk::kdict("监听：unixsocket:%s",pathfilename.c_str()) << std::endl;
+			//signal(SIGPIPE, SIG_IGN);
+			fd(tmpsock);
+			return true;
+		}
+		::close(tmpsock);
+		return false;
+	}
+
 	bool aiolistener::open(lyramilk::data::uint16 port)
 	{
 		if(fd() >= 0){
@@ -433,7 +478,7 @@ namespace lyramilk{namespace netio
 		ioctl(tmpsock,FIONBIO,&argp);
 
 
-		int ret = listen(tmpsock,64);
+		int ret = listen(tmpsock,1024);
 		if(ret == 0){
 			int flags = fcntl(tmpsock, F_GETFD);
 			flags |= FD_CLOEXEC;
@@ -457,26 +502,24 @@ namespace lyramilk{namespace netio
 
 		hostent* h = gethostbyname(host.c_str());
 		if(h == nullptr){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("获取IP地址失败：%s",strerror(errno)) << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiolistener.open") << lyramilk::kdict("获取IP地址失败：%s",strerror(errno)) << std::endl;
 			return false;
 		}
-
 		in_addr* inaddr = (in_addr*)h->h_addr;
 		if(inaddr == nullptr){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("获取IP地址失败：%s",strerror(errno)) << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiolistener.open") << lyramilk::kdict("获取IP地址失败：%s",strerror(errno)) << std::endl;
 			return false;
 		}
+		sockaddr_in addr = {0};
+		addr.sin_addr.s_addr = inaddr->s_addr;
+		addr.sin_family = AF_INET;
+		addr.sin_port = htons(port);
 
 		native_socket_type tmpsock = ::socket(PF_INET,SOCK_STREAM, IPPROTO_IP);
 		if(tmpsock < 0){
 			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiolistener.open") << lyramilk::kdict("监听时发生错误：%s",strerror(errno)) << std::endl;
 			return false;
 		}
-
-		sockaddr_in addr = {0};
-		addr.sin_addr.s_addr = inaddr->s_addr;
-		addr.sin_family = AF_INET;
-		addr.sin_port = htons(port);
 		int opt = 1;
 		setsockopt(tmpsock,SOL_SOCKET,SO_REUSEADDR,&opt,sizeof(opt));
 		if(::bind(tmpsock,(const sockaddr*)&addr,sizeof(addr))){
@@ -488,7 +531,7 @@ namespace lyramilk{namespace netio
 		ioctl(tmpsock,FIONBIO,&argp);
 
 
-		int ret = listen(tmpsock,64);
+		int ret = listen(tmpsock,1024);
 		if(ret == 0){
 			int flags = fcntl(tmpsock, F_GETFD);
 			flags |= FD_CLOEXEC;
@@ -668,6 +711,44 @@ namespace lyramilk{namespace netio
 		close();
 	}
 
+
+	bool udplistener::open_unixsocket(const lyramilk::data::string& pathfilename)
+	{
+		if(fd() >= 0){
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.udplistener.open_unixsocket") << lyramilk::kdict("打开监听套件字失败，因为该套接字己打开。") << std::endl;
+			return false;
+		}
+
+		native_socket_type tmpsock = ::socket(AF_UNIX,SOCK_DGRAM, 0);
+		if(tmpsock < 0){
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.udplistener.open_unixsocket") << lyramilk::kdict("监听时发生错误：%s",strerror(errno)) << std::endl;
+			return false;
+		}
+
+		struct sockaddr_un unaddr = {0};
+		unaddr.sun_family = AF_UNIX;
+		unlink(pathfilename.c_str());
+		strcpy(unaddr.sun_path,pathfilename.c_str());
+		if(::bind(tmpsock,(const sockaddr*)&unaddr,sizeof(unaddr))){
+			::close(tmpsock);
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.udplistener.open_unixsocket") << lyramilk::kdict("绑定地址(unixsocket:%s)时发生错误：%s",pathfilename.c_str(),strerror(errno)) << std::endl;
+			return false;
+		}
+		chmod(pathfilename.c_str(),ACCESSPERMS);
+
+		int flags = fcntl(tmpsock, F_GETFD);
+		flags |= FD_CLOEXEC;
+		fcntl(tmpsock, F_SETFD, flags);
+
+		flags = fcntl(tmpsock, F_GETFL);
+		flags |= O_NONBLOCK;
+		fcntl(tmpsock, F_GETFL, flags);
+
+		lyramilk::klog(lyramilk::log::debug,"lyramilk.netio.udplistener.open_unixsocket") << lyramilk::kdict("监听：unixsocket:%s",pathfilename.c_str()) << std::endl;
+		fd(tmpsock);
+		return true;
+	}
+
 	bool udplistener::open(lyramilk::data::uint16 port)
 	{
 		if(fd() >= 0){
@@ -715,15 +796,19 @@ namespace lyramilk{namespace netio
 
 		hostent* h = gethostbyname(host.c_str());
 		if(h == nullptr){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("获取IP地址失败：%s",strerror(errno)) << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.udplistener.open") << lyramilk::kdict("获取IP地址失败：%s",strerror(errno)) << std::endl;
 			return false;
 		}
-
 		in_addr* inaddr = (in_addr*)h->h_addr;
 		if(inaddr == nullptr){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("获取IP地址失败：%s",strerror(errno)) << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.udplistener.open") << lyramilk::kdict("获取IP地址失败：%s",strerror(errno)) << std::endl;
 			return false;
 		}
+		sockaddr_in addr = {0};
+		addr.sin_addr.s_addr = inaddr->s_addr;
+		addr.sin_family = AF_INET;
+		addr.sin_port = htons(port);
+
 
 		native_socket_type tmpsock = ::socket(PF_INET,SOCK_DGRAM, 0);
 		if(tmpsock < 0){
@@ -731,10 +816,6 @@ namespace lyramilk{namespace netio
 			return false;
 		}
 
-		sockaddr_in addr = {0};
-		addr.sin_addr.s_addr = inaddr->s_addr;
-		addr.sin_family = AF_INET;
-		addr.sin_port = htons(port);
 		int opt = 1;
 		setsockopt(tmpsock,SOL_SOCKET,SO_REUSEADDR,&opt,sizeof(opt));
 		if(::bind(tmpsock,(const sockaddr*)&addr,sizeof(addr))){

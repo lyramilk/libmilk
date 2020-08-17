@@ -795,24 +795,21 @@ namespace lyramilk{namespace netio
 			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字(%s:%u)失败：%s",host.c_str(),port,strerror(errno)) << std::endl;
 			return false;
 		}
-
 		in_addr* inaddr = (in_addr*)h->h_addr;
 		if(inaddr == nullptr){
 			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字(%s:%u)失败：%s",host.c_str(),port,strerror(errno)) << std::endl;
 			return false;
 		}
+		sockaddr_in addr = {0};
+		addr.sin_addr.s_addr = inaddr->s_addr;
+		addr.sin_family = AF_INET;
+		addr.sin_port = htons(port);
 
 		native_socket_type tmpsock = ::socket(AF_INET,SOCK_STREAM, IPPROTO_IP);
 		if(tmpsock < 0){
 			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字(%s:%u)失败：%s",host.c_str(),port,strerror(errno)) << std::endl;
 			return false;
 		}
-
-		sockaddr_in addr = {0};
-		addr.sin_addr.s_addr = inaddr->s_addr;
-		addr.sin_family = AF_INET;
-		addr.sin_port = htons(port);
-
 
 		if(0 == ::connect(tmpsock,(const sockaddr*)&addr,sizeof(addr))){
 #ifdef OPENSSL_FOUND
@@ -857,12 +854,16 @@ namespace lyramilk{namespace netio
 			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字(%s:%u)失败：%s",host.c_str(),port,strerror(errno)) << std::endl;
 			return false;
 		}
-
 		in_addr* inaddr = (in_addr*)h->h_addr;
 		if(inaddr == nullptr){
 			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字(%s:%u)失败：%s",host.c_str(),port,strerror(errno)) << std::endl;
 			return false;
 		}
+		sockaddr_in addr = {0};
+		addr.sin_addr.s_addr = inaddr->s_addr;
+		addr.sin_family = AF_INET;
+		addr.sin_port = htons(port);
+
 
 		native_socket_type tmpsock = ::socket(AF_INET,SOCK_STREAM, IPPROTO_IP);
 		if(tmpsock < 0){
@@ -877,14 +878,8 @@ namespace lyramilk{namespace netio
 		setsockopt(tmpsock, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 		*/
 
-		sockaddr_in addr = {0};
-		addr.sin_addr.s_addr = inaddr->s_addr;
-		addr.sin_family = AF_INET;
-		addr.sin_port = htons(port);
-
-
 		unsigned int argp = 1;
-			//ioctlsocket(tmpsock,FIONBIO,&argp);
+		//ioctlsocket(tmpsock,FIONBIO,&argp);
 		ioctl(tmpsock,FIONBIO,&argp);
 
 
