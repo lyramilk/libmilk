@@ -308,23 +308,20 @@ logss2::~logss2()
 }
 
 
+logb* nullplb = nullptr;
 
-
-logss::logss()
+logss::logss():p(nullplb)
 {
-	p = nullptr;
 }
 
-logss::logss(const lyramilk::data::string& m)
+logss::logss(const lyramilk::data::string& m):p(nullplb)
 {
 	prefix = m;
-	p = nullptr;
 }
 
-logss::logss(const logss& qlog,const lyramilk::data::string& m)
+logss::logss(const logss& qlog,const lyramilk::data::string& m):p(qlog.p)
 {
 	prefix = m;
-	p = qlog.p;
 }
 
 logss::~logss()

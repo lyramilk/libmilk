@@ -140,7 +140,7 @@ namespace lyramilk { namespace log
 	*/
 	class _lyramilk_api_ logss
 	{
-		logb* p;
+		logb*& p;
 		lyramilk::data::string prefix;
 	  public:
 		/**
