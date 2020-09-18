@@ -621,7 +621,7 @@ label_badchar:
 		}
 	}
 
-	json::json(lyramilk::data::var& o) : v(o)
+	json::json(lyramilk::data::var* o) : v(*o)
 	{
 	}
 

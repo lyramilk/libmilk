@@ -41,7 +41,8 @@ namespace lyramilk{namespace data{
 		lyramilk::data::var v;
 		{
 			std::ifstream ifs(filename.c_str(),std::ifstream::binary|std::ifstream::in);
-			lyramilk::data::json j(v);
+			if(!ifs.is_open()) return false;
+			lyramilk::data::json j(&v);
 			ifs >> j;
 			ifs.close();
 		}

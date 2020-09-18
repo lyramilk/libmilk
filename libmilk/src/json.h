@@ -14,7 +14,7 @@ namespace lyramilk{ namespace data
 	{
 		lyramilk::data::var& v;
 	  public:
-		json(lyramilk::data::var& o);
+		json(lyramilk::data::var* o);
 		virtual ~json();
 		json& operator =(const lyramilk::data::var& o);
 
