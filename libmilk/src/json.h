@@ -34,4 +34,7 @@ namespace lyramilk{ namespace data
 
 _lyramilk_api_ std::ostream& operator << (std::ostream& os, const lyramilk::data::json& t);
 _lyramilk_api_ std::istream& operator >> (std::istream& is, lyramilk::data::json& t);
+
+_lyramilk_api_ const lyramilk::data::json& operator >> (const lyramilk::data::json& t,std::ostream& os);
+_lyramilk_api_ lyramilk::data::json& operator << (lyramilk::data::json& t,std::istream& is);
 #endif

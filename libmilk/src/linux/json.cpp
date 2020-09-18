@@ -757,3 +757,22 @@ std::istream& operator >> (std::istream& is, lyramilk::data::json& t)
 	t.str(c);
 	return is;
 }
+
+
+const lyramilk::data::json& operator >> (const lyramilk::data::json& t,std::ostream& os)
+{
+	os << t.str();
+	return t;
+}
+
+lyramilk::data::json& operator << (lyramilk::data::json& t,std::istream& is)
+{
+	lyramilk::data::string c;
+	while(is){
+		char buff[4096];
+		is.read(buff,sizeof(buff));
+		c.append(buff,is.gcount());
+	}
+	t.str(c);
+	return t;
+}
