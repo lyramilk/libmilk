@@ -19,6 +19,10 @@ namespace lyramilk{namespace data
 
 		lyramilk::data::map::const_iterator it_body = m.find("xml.body");
 		if(it_body == m.end()) return true;
+		if(it_body->second.type() == lyramilk::data::var::t_str){
+			x->LinkEndChild(doc->NewText(it_body->second.str().c_str()));
+			return true;
+		}
 		if(it_body->second.type() != lyramilk::data::var::t_array) throw lyramilk::exception(D("%s应该是%s,但它是%s","xml.body","t_array",it_body->second.type_name().c_str()));
 
 		const lyramilk::data::array& ar = it_body->second;

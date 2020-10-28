@@ -284,12 +284,15 @@ namespace lyramilk{namespace io
 
 			for(int i=0;i<ee_count;++i){
 				aioselector* selector = (aioselector*)ee.data.ptr;
+				/*
 				__sync_add_and_fetch(&busy_thread_count,1);
 				if(busy_thread_count == (lyramilk::data::int64)lyramilk::threading::threads::size()){
 					lyramilk::klog(lyramilk::log::warning,"lyramilk.aio.aiopoll_safe.svc") << lyramilk::kdict("epoll中可用线程过低 %d/%d",busy_thread_count,lyramilk::threading::threads::size()) << std::endl;
-				}
+				}*/
 				onevent(selector,ee.events);
+				/*
 				__sync_sub_and_fetch(&busy_thread_count,1);
+				*/
 			}
 		}
 		return 0;
@@ -307,12 +310,14 @@ namespace lyramilk{namespace io
 			epoll_event &ee = ees[i];
 			aioselector* selector = (aioselector*)ee.data.ptr;
 			if(selector){
-				__sync_add_and_fetch(&busy_thread_count,1);
+				//__sync_add_and_fetch(&busy_thread_count,1);
 				onevent(selector,ee.events);
+				/*
 				if(busy_thread_count == (lyramilk::data::int64)lyramilk::threading::threads::size()){
 					lyramilk::klog(lyramilk::log::warning,"lyramilk.aio.aiopoll.transmessage") << lyramilk::kdict("epoll[%d]中可用线程过低 %d/%d",epfds[0].epfd,busy_thread_count,lyramilk::threading::threads::size()) << std::endl;
 				}
 				__sync_sub_and_fetch(&busy_thread_count,1);
+				*/
 			}
 		}
 		return true;

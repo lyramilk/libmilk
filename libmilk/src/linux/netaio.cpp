@@ -502,12 +502,12 @@ namespace lyramilk{namespace netio
 
 		hostent* h = gethostbyname(host.c_str());
 		if(h == nullptr){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiolistener.open") << lyramilk::kdict("获取IP地址失败：%s",strerror(errno)) << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiolistener.open") << lyramilk::kdict("获取%s的IP地址失败：%s",host.c_str(),strerror(errno)) << std::endl;
 			return false;
 		}
 		in_addr* inaddr = (in_addr*)h->h_addr;
 		if(inaddr == nullptr){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiolistener.open") << lyramilk::kdict("获取IP地址失败：%s",strerror(errno)) << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiolistener.open") << lyramilk::kdict("获取%s的IP地址失败：%s",host.c_str(),strerror(errno)) << std::endl;
 			return false;
 		}
 		sockaddr_in addr = {0};
@@ -796,12 +796,12 @@ namespace lyramilk{namespace netio
 
 		hostent* h = gethostbyname(host.c_str());
 		if(h == nullptr){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.udplistener.open") << lyramilk::kdict("获取IP地址失败：%s",strerror(errno)) << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.udplistener.open") << lyramilk::kdict("获取%s的IP地址失败：%s",host.c_str(),strerror(errno)) << std::endl;
 			return false;
 		}
 		in_addr* inaddr = (in_addr*)h->h_addr;
 		if(inaddr == nullptr){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.udplistener.open") << lyramilk::kdict("获取IP地址失败：%s",strerror(errno)) << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.udplistener.open") << lyramilk::kdict("获取%s的IP地址失败：%s",host.c_str(),strerror(errno)) << std::endl;
 			return false;
 		}
 		sockaddr_in addr = {0};
