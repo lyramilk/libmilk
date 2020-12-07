@@ -29,6 +29,8 @@ namespace lyramilk{ namespace data
 
 		lyramilk::data::string static escape(const lyramilk::data::string& s);
 		lyramilk::data::string static unescape(const lyramilk::data::string& s);
+
+		bool static format_ns(const lyramilk::data::map& m,lyramilk::data::map* o);
 	};
 }}
 

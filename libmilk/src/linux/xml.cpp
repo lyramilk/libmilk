@@ -5,7 +5,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <tinyxml.h>
-#include <libmilk/dict.h>
+#include "dict.h"
 
 namespace lyramilk{namespace data
 {

@@ -2329,3 +2329,14 @@ std::istream& operator >> (std::istream& is, lyramilk::data::var& t)
 
 	return is;
 }
+
+
+std::ostream& operator << (std::ostream& os, const lyramilk::data::map& t)
+{
+	return os << lyramilk::data::var(t);
+}
+
+std::ostream& operator << (std::ostream& os, const lyramilk::data::array& t)
+{
+	return os << lyramilk::data::var(t);
+}

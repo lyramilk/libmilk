@@ -259,6 +259,79 @@ namespace lyramilk{namespace data
 		return ret;
 	}
 
+	bool static _format_ns(const lyramilk::data::stringdict& _nsmap,const lyramilk::data::string& _defaultns,const lyramilk::data::map& m,lyramilk::data::map* o)
+	{
+		lyramilk::data::stringdict nsmap = _nsmap;
+		lyramilk::data::string defaultns = _defaultns;
+		lyramilk::data::map::const_iterator it = m.begin();
+		for(;it!=m.end();++it){
+			if(it->first.compare(0,6,"xmlns:") == 0){
+				nsmap[it->first.substr(6)] = it->second.str();
+			}else if(it->first == "xmlns"){
+				defaultns = it->second.str();
+			}
+		}
+
+		for(it = m.begin();it!=m.end();++it){
+			if(it->first.compare(0,6,"xmlns:") == 0){
+				continue;
+			}else if(it->first == "xml.tag"){
+				lyramilk::data::string s = it->second.str();
+				std::size_t pos = s.find(":");
+				if(pos != s.npos){
+					lyramilk::data::string prefix = s.substr(0,pos);
+
+					lyramilk::data::stringdict::iterator nsit = nsmap.find(prefix);
+					if(nsit != nsmap.end()){
+						o->operator[]("xml.tag") = s.substr(pos+1);
+						o->operator[]("xml.ns") = nsit->second;
+					}else{
+						o->operator[]("xml.tag") = it->first;
+						o->operator[]("xml.ns") = prefix;
+					}
+				}else{
+					o->operator[]("xml.tag") = it->second;
+					o->operator[]("xml.ns") = _defaultns;
+				}
+
+			}else if(it->first == "xml.body" && it->second.type() == lyramilk::data::var::t_array){
+				o->operator[]("xml.body").type(lyramilk::data::var::t_array);
+				lyramilk::data::array& oar = o->operator[]("xml.body");
+				const lyramilk::data::array& ar = it->second;
+				oar.resize(ar.size());
+				for(std::size_t idx = 0;idx < ar.size();++idx){
+					if(ar[idx].type() == lyramilk::data::var::t_map){
+						oar[idx].type(lyramilk::data::var::t_map);
+						lyramilk::data::map& so = oar[idx];
+						const lyramilk::data::map& sm = ar[idx];
+						_format_ns(nsmap,defaultns,sm,&so);
+					}else{
+						oar[idx] = ar[idx];
+					}
+				}
+			}else{
+				o->operator[](it->first) = it->second;
+			}
+		}
+
+		if(o->find("xml.ns") == o->end() && !defaultns.empty()){
+			o->operator[]("xml.ns") = defaultns;
+		}
+		return true;
+	}
+
+
+
+	bool xml::format_ns(const lyramilk::data::map& m,lyramilk::data::map* o)
+	{
+		if(o == nullptr) return false;
+
+
+		lyramilk::data::stringdict nsmap;
+
+		return _format_ns(nsmap,"",m,o);
+	}
+
 }}
 
 std::ostream& operator << (std::ostream& os, const lyramilk::data::xml& t)

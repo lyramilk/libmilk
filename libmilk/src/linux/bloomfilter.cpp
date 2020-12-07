@@ -78,7 +78,7 @@ namespace lyramilk{ namespace data
 		}
 	}
 
-	bool bloomfilter::test(const char* key,unsigned int len)
+	bool bloomfilter::test(const char* key,unsigned int len) const
 	{
 		unsigned int h = lyramilk::cryptology::hash32::murmur2(key,len);
 		unsigned int x = ((h >> 17) | (h << 15));

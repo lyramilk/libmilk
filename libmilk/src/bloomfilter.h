@@ -27,7 +27,7 @@ namespace lyramilk{ namespace data
 		virtual ~bloomfilter();
 
 		virtual void put(const char* key,unsigned int len);
-		virtual bool test(const char* key,unsigned int len);
+		virtual bool test(const char* key,unsigned int len) const;
 		/*
 			@brief 误判率
 			@param fast	为true时是用公式计算，为false时会扫描布隆过滤器的实际状态然后计算

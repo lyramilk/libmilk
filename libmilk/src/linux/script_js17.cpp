@@ -18,8 +18,8 @@ namespace lyramilk{namespace script{namespace js
 	static JSBool jsctr(JSContext *cx, unsigned argc, Value *vp);
 	static void jsdtr(js::FreeOp *fop, JSObject *obj);
 	static JSBool jsinstanceof(JSContext *cx, JSHandleObject obj, const Value *v, JSBool *bp);
-	static void j2v(JSContext* cx,Value jv,lyramilk::data::var* retv);
-	static bool j2s(JSContext* cx,Value jv,lyramilk::data::string* retv);
+	static void j2v(JSContext* cx,const Value& jv,lyramilk::data::var* retv);
+	static bool j2s(JSContext* cx,const Value&,lyramilk::data::string* retv);
 	static bool v2j(JSContext* cx,const lyramilk::data::var& v,Value *ret);
 
 	static JSBool jget(JSContext *cx, JSHandleObject obj, JSHandleId id, JSMutableHandleValue vp);
@@ -149,8 +149,153 @@ namespace lyramilk{namespace script{namespace js
 		}
 	}
 
-	void j2v(JSContext* cx,Value jv,lyramilk::data::var* retv)
+	class jsvar_datawrapper:public lyramilk::data::datawrapper
 	{
+		const ::js::Value& jv;
+		JSContext* cx;
+	  public:	
+		jsvar_datawrapper(JSContext* cx,const ::js::Value& v):jv(v)
+		{
+			this->cx = cx;
+		}
+
+	  	virtual ~jsvar_datawrapper()
+		{
+		}
+
+		virtual lyramilk::data::string name() const
+		{
+			return "a445";
+		}
+
+		virtual lyramilk::data::datawrapper* clone() const
+		{
+			return new jsvar_datawrapper(cx,jv);
+		}
+
+		virtual void destory()
+		{
+			delete this;
+		}
+
+
+		virtual bool type_like(lyramilk::data::var::vt nt) const
+		{
+
+			if(nt == lyramilk::data::var::t_str){
+				if(jv.isString()) return true;
+			}else if(nt == lyramilk::data::var::t_bool){
+				if(jv.isBoolean()) return true;
+			}else if(nt == lyramilk::data::var::t_int){
+				if(jv.isNumber()) return true;
+			}else if(nt == lyramilk::data::var::t_map){
+				if(jv.isObject()){
+					JSObject *jo = jv.toObjectOrNull();
+					if(JS_IsArrayObject(cx,jo)){
+						return false;
+					}else if(JS_ObjectIsCallable(cx,jo)){
+						return false;
+					}else if(JS_ObjectIsDate(cx,jo)){
+						return false;
+					}else if(JS_IsArrayBufferObject(jo,cx)){
+						return false;
+					}else if(JS_GetClass(jo) == Jsvalify(&nativeClass)){
+						return false;
+					}else{
+						return true;
+					}
+				}
+			}else if(nt == lyramilk::data::var::t_array){
+				if(jv.isObject()){
+					JSObject *jo = jv.toObjectOrNull();
+					if(JS_IsArrayObject(cx,jo)){
+						return true;
+					}
+				}
+			}
+
+COUT << lyramilk::data::var::type_name(nt) << std::endl;
+			TODO();
+		}
+
+		virtual lyramilk::data::string get_str()
+		{
+			JSString* jstr = jv.toString();
+			if(jstr == nullptr){
+				return "";
+			}
+			size_t len = 0;
+			const jschar* cstr = JS_GetStringCharsZAndLength(cx,jstr,&len);
+			lyramilk::data::string tstr;
+			jsstr2str(cstr,len,&tstr);
+			return tstr;
+		}
+
+		virtual lyramilk::data::datawrapper& at(lyramilk::data::uint64 index)
+		{
+			TODO();
+		}
+
+		virtual lyramilk::data::datawrapper& at(const lyramilk::data::string& index)
+		{
+			TODO();
+		}
+
+		virtual lyramilk::data::chunk get_bytes()
+		{
+			JSString* jstr = jv.toString();
+			if(jstr == nullptr){
+				return lyramilk::data::chunk();
+			}
+			size_t len = 0;
+			const jschar* cstr = JS_GetStringCharsZAndLength(cx,jstr,&len);
+			lyramilk::data::string tstr;
+			jsstr2str(cstr,len,&tstr);
+			return lyramilk::data::chunk((const unsigned char*)tstr.c_str(),tstr.size());
+		}
+
+		virtual lyramilk::data::wstring get_wstr()
+		{
+			JSString* jstr = jv.toString();
+			if(jstr == nullptr){
+				return lyramilk::data::wstring();
+			}
+			size_t len = 0;
+			const jschar* cstr = JS_GetStringCharsZAndLength(cx,jstr,&len);
+			lyramilk::data::string tstr;
+			jsstr2str(cstr,len,&tstr);
+			return lyramilk::data::var(tstr);
+		}
+
+		virtual bool get_bool()
+		{
+			return jv.toBoolean();
+		}
+
+		virtual lyramilk::data::int64 get_int()
+		{
+			return jv.toInt32();
+		}
+
+		virtual double get_double()
+		{
+			TODO();
+		}
+
+		virtual lyramilk::data::datawrapper& at(const lyramilk::data::wstring& index)
+		{
+			TODO();
+		}
+
+	};
+
+
+
+
+	void j2v(JSContext* cx,const Value& jv,lyramilk::data::var* retv)
+	{
+#if 1
+
 		if(jv.isNullOrUndefined()){
 			*retv = lyramilk::data::var::nil;
 			return;
@@ -268,8 +413,12 @@ namespace lyramilk{namespace script{namespace js
 			COUT << tn << std::endl;
 			TODO();
 		}
+#else
+
+		retv->assign(jsvar_datawrapper(cx,jv));
+#endif
 	}
-	bool j2s(JSContext* cx,Value jv,lyramilk::data::string* retv)
+	bool j2s(JSContext* cx,const Value& jv,lyramilk::data::string* retv)
 	{
 		if(jv.isString()){
 			JSString* jstr = jv.toString();

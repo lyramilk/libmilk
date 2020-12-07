@@ -201,6 +201,7 @@ namespace lyramilk{namespace data
 		uint64 conv(long if_not_compat) const;
 		uint64 conv(unsigned long if_not_compat) const;
 		double conv(double if_not_compat) const;
+
 		lyramilk::data::var::array& conv(lyramilk::data::var::array& if_not_compat);
 		lyramilk::data::var::map& conv(lyramilk::data::var::map& if_not_compat);
 		const lyramilk::data::var::array& conv(const lyramilk::data::var::array& if_not_compat) const;
@@ -349,5 +350,8 @@ namespace lyramilk{namespace data
 
 _lyramilk_api_ std::ostream& operator << (std::ostream& os, const lyramilk::data::var& t);
 _lyramilk_api_ std::istream& operator >> (std::istream& is, lyramilk::data::var& t);
+
+_lyramilk_api_ std::ostream& operator << (std::ostream& os, const lyramilk::data::map& t);
+_lyramilk_api_ std::ostream& operator << (std::ostream& os, const lyramilk::data::array& t);
 
 #endif
