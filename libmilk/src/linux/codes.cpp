@@ -203,9 +203,7 @@ class coding_t:public lyramilk::data::coding
 	}
 };
 
-char c_gbk[] = "gbk";
-char c_gb2312[] = "gb2312";
-char c_GB2312[] = "GB2312";
+char c_gb18030[] = "gb18030";
 char c_big5[] = "big5";
 char c_utf16[] = "utf16le";
 char c_utf32[] = "utf32";
@@ -216,14 +214,14 @@ static bool ___init()
 #ifdef LZ4_FOUND
 	lyramilk::data::codes::instance()->define("lz4",coding_lz4::getter);
 #endif
-	lyramilk::data::codes::instance()->define(c_gbk,coding_t<c_gbk>::getter);
-	lyramilk::data::codes::instance()->define(c_gb2312,coding_t<c_GB2312>::getter);
-	lyramilk::data::codes::instance()->define(c_GB2312,coding_t<c_GB2312>::getter);
-	lyramilk::data::codes::instance()->define(c_big5,coding_t<c_big5>::getter);
-	lyramilk::data::codes::instance()->define(c_utf16,coding_t<c_utf16>::getter);
+	lyramilk::data::codes::instance()->define("gbk",coding_t<c_gb18030>::getter);
+	lyramilk::data::codes::instance()->define("gb2312",coding_t<c_gb18030>::getter);
+	lyramilk::data::codes::instance()->define("gb18030",coding_t<c_gb18030>::getter);
+	lyramilk::data::codes::instance()->define("big5",coding_t<c_big5>::getter);
+	lyramilk::data::codes::instance()->define("utf16le",coding_t<c_utf16>::getter);
 	lyramilk::data::codes::instance()->define("utf-16",coding_t<c_utf16>::getter);
 	lyramilk::data::codes::instance()->define("utf16",coding_t<c_utf16>::getter);
-	lyramilk::data::codes::instance()->define(c_utf32,coding_t<c_utf32>::getter);
+	lyramilk::data::codes::instance()->define("utf32",coding_t<c_utf32>::getter);
 	lyramilk::data::codes::instance()->define("utf-32",coding_t<c_utf32>::getter);
 	lyramilk::data::codes::instance()->define("wchar_t",coding_t<c_utf32>::getter);
 	lyramilk::data::codes::instance()->define("utf8",coding_utf8::getter);

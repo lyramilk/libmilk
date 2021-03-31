@@ -1,6 +1,6 @@
 ﻿#定义工程名及版本
 project(milk)
-set(version 1.1.105)
+set(version 1.1.106)
 set(soversion 1.1)
 
 cmake_minimum_required (VERSION 2.8.11) 
