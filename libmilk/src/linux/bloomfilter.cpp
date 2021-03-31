@@ -143,5 +143,27 @@ namespace lyramilk{ namespace data
 		return pow(real_f4,k);
 	}
 
+
+	bool bloomfilter::dump(std::string* arg)
+	{
+		if(arg){
+			unsigned int total_bytes = this->total_bits >> 3;
+			arg->assign((const char*)&data_count,sizeof(data_count));
+			arg->append((const char*)bfarray.data(),total_bytes);
+			return true;
+		}
+		return false;
+	}
+
+	bool bloomfilter::from(const std::string& arg)
+	{
+		unsigned int total_bytes = (this->total_bits >> 3) + sizeof(data_count);
+		if(total_bytes == arg.size()){
+			arg.copy((char*)&data_count,sizeof(data_count));
+			arg.copy((char*)bfarray.data(),total_bytes,sizeof(data_count));
+			return true;
+		}
+		return false;
+	}
 }}
 

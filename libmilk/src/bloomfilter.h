@@ -1,6 +1,7 @@
 #ifndef _lyramilk_bloomfilter_h_
 #define _lyramilk_bloomfilter_h_
 #include <vector>
+#include <string>
 
 /// namespace lyramilk::data
 namespace lyramilk{ namespace data
@@ -33,6 +34,10 @@ namespace lyramilk{ namespace data
 			@param fast	为true时是用公式计算，为false时会扫描布隆过滤器的实际状态然后计算
 		*/
 		double false_positives(bool fast = true);
+
+	  public:
+		bool dump(std::string* arg);
+		bool from(const std::string& arg);
 	};
 
 }}
