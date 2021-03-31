@@ -364,6 +364,7 @@ namespace lyramilk{namespace netio
 				unsigned int argp = 1;
 				ioctl(acceptfd,FIONBIO,&argp);
 				assert(pool);
+				s->setkeepalive();
 				pool->add(s,s->flag);
 			}else{
 				s->destory();
