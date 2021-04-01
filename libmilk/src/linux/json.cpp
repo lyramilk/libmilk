@@ -676,7 +676,7 @@ label_badchar:
 			}break;
 		  case lyramilk::data::var::t_array:{
 				lyramilk::data::string jsonstr;
-				jsonstr.reserve(4096);
+				jsonstr.reserve(2048);
 				str.push_back('[');
 				const lyramilk::data::array& ar = v;
 				for(lyramilk::data::array::const_iterator it=ar.begin();it!=ar.end();++it){
@@ -690,7 +690,7 @@ label_badchar:
 			}break;
 		  case lyramilk::data::var::t_map:{
 				lyramilk::data::string jsonstr;
-				jsonstr.reserve(4096);
+				jsonstr.reserve(2048);
 				str.push_back('{');
 				const lyramilk::data::map& m = v;
 				for(lyramilk::data::map::const_iterator it=m.begin();it!=m.end();++it){
