@@ -1,6 +1,6 @@
 ﻿#定义工程名及版本
 project(milk)
-set(version 1.1.108)
+set(version 1.1.109)
 set(soversion 1.1)
 
 cmake_minimum_required (VERSION 2.8.11) 
@@ -63,6 +63,8 @@ if(UNIX)
 	include_directories(src/linux)
 endif()
 
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
+
 ## 搜索可选的外部依赖
 if(NOT minimal)
 	pkg_check_modules(OPENSSL openssl)
@@ -70,7 +72,7 @@ if(NOT minimal)
 	pkg_check_modules(LUAJIT luajit)
 	pkg_check_modules(YAML yaml-0.1)
 	pkg_check_modules(JS52 mozjs-52)
-	if(NOT JS68_FOUND)
+	if(NOT JS52_FOUND)
 		pkg_check_modules(JS17 mozjs-17.0 REQUIRED)
 	endif()
 	#check_include_file_cxx(tinyxml.h		Z_HAVE_TINYXML)
@@ -194,11 +196,14 @@ foreach(v ${CONFIG_MACROS})
 endforeach()
 
 #修改配置文件
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/src/config.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/config.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pkg/libmilk.spec.in ${CMAKE_CURRENT_SOURCE_DIR}/pkg/libmilk.spec)
 
 #目标动态库
 string(COMPARE EQUAL ${share_type} "BOTH" PROJECT_LIBRARY_BOTH)
+
+#拷贝文件
+file(COPY ${src_hs} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/include/)
 
 #target_link_libraries(${PROJECT_NAME} -static-libgcc -static-libstdc++)
 if(PROJECT_LIBRARY_BOTH)
@@ -227,12 +232,10 @@ if(PROJECT_LIBRARY_BOTH)
 	target_link_libraries(${PROJECT_NAME}_static -lpthread -lrt -ldl ${CMAKE_LIBS_DEPENDS})
 endif()
 
-#单元测试，是否开启内存泄露测试
-if(MEMLEAKTEST)
-	set(unittest valgrind --tool=memcheck --leak-check=full)
-else()
-	set(unittest )
-endif()
+enable_testing()
+ADD_TEST(NAME test_add_2_3 COMMAND add 2 3)
+
+
 
 file(GLOB src_test RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} testsuite/*.cc)
 foreach(var ${src_test})
