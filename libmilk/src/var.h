@@ -292,8 +292,8 @@ namespace lyramilk{namespace data
 		bool serialize(ostream& os) const throw(type_invalid);
 
 		/**
-			@brief 序列化
-			@details 将该var对象序列化到os流中。
+			@brief 反序列化
+			@details 将is流中的数据还原成var。
 			@return 成功时返回true
 		*/
 		bool deserialize(istream& is);
