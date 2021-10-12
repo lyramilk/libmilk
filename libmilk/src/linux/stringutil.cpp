@@ -42,6 +42,22 @@ namespace lyramilk{namespace data
 		return lines;
 	}
 
+	lyramilk::data::string join(const lyramilk::data::strings& data,const lyramilk::data::string& sep)
+	{
+		lyramilk::data::string ret;
+		lyramilk::data::strings::const_iterator it = data.begin();
+
+		
+		for(int idx = 0;idx < data.size();++idx){
+			ret.append(data.at(idx));
+			if(idx + 1 < data.size()){
+				ret.append(sep);
+			}
+		}
+		return ret;
+	}
+
+
 	lyramilk::data::strings path_split(const lyramilk::data::string& path)
 	{
 		lyramilk::data::strings ret;

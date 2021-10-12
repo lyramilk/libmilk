@@ -28,6 +28,13 @@ namespace lyramilk{namespace data
 	lyramilk::data::strings split(const lyramilk::data::string& data,const lyramilk::data::string& sep);
 
 	/*
+		@brief 合并字符串
+		@param data 源串数组
+		@param sep 分割符
+	*/
+	lyramilk::data::string join(const lyramilk::data::strings& data,const lyramilk::data::string& sep);
+
+	/*
 		@brief 分割文件路径
 		@param data 源串
 		@param sep 分割符
