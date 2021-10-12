@@ -876,12 +876,12 @@ namespace lyramilk{namespace netio
 		tv.tv_sec  = msec / 1000;
 		tv.tv_usec = (msec % 1000) * 1000;
 		setsockopt(tmpsock, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+		这种方法并不能有效地为connect设置超时时间。
 		*/
 
 		unsigned int argp = 1;
 		//ioctlsocket(tmpsock,FIONBIO,&argp);
 		ioctl(tmpsock,FIONBIO,&argp);
-
 
 		int r = ::connect(tmpsock,(const sockaddr*)&addr,sizeof(addr));
 		if((-1 == r && errno==EINPROGRESS && check_write(tmpsock,msec)) || r == 0){

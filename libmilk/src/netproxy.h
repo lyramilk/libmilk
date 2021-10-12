@@ -16,16 +16,15 @@ namespace lyramilk{namespace netio
 		@brief 数据交互会话。
 		@desc 代理类型的会话必须使用 lyramilk::io::aiopoll_safe，不能使用lyramilk::io::aiopoll。因为lyramilk::io::aiopoll不保证关联的会话在同一线程中运行。
 	*/
-	class _lyramilk_api_ aioproxysession_speedy : public lyramilk::netio::aiosession
+	class _lyramilk_api_ aioproxysession_connector : public lyramilk::netio::aiosession
 	{
 		friend class aioproxysession;
 	  public:
-		aioproxysession_speedy* endpoint;
+		aioproxysession_connector* endpoint;
 	  public:
-		aioproxysession_speedy();
-	  	virtual ~aioproxysession_speedy();
+		aioproxysession_connector();
+	  	virtual ~aioproxysession_connector();
 		virtual bool init();
-		virtual bool combine(aioproxysession_speedy* endpoint);
 
 		/**
 			@brief 连接上游服务
@@ -39,6 +38,8 @@ namespace lyramilk{namespace netio
 			@return true成功 false失败。
 		*/
 		virtual bool open(const sockaddr_in& saddr,int timeout_msec);
+
+		virtual bool start_async_redirect(bool sw);
 
 		virtual bool ssl();
 		virtual void ssl(bool use_ssl);
@@ -59,17 +60,14 @@ namespace lyramilk{namespace netio
 		@details 代理类型的会话必须使用 lyramilk::io::aiopoll_safe，不能使用lyramilk::io::aiopoll。因为lyramilk::io::aiopoll不保证关联的会话在同一线程中运行。
 	*/
 
-	class _lyramilk_api_ aioproxysession_speedy_async : public aioproxysession_speedy
+	class _lyramilk_api_ aioproxysession_speedy_async : public aioproxysession_connector
 	{
 		int connect_status;
 	  public:
 		aioproxysession_speedy_async();
 	  	virtual ~aioproxysession_speedy_async();
-		virtual bool open(const lyramilk::data::string& host,lyramilk::data::uint16 port);
-		virtual bool open(const sockaddr_in& saddr);
-
-		virtual bool start_proxy();
-		virtual bool stop_proxy();
+		virtual bool async_open(const lyramilk::data::string& host,lyramilk::data::uint16 port);
+		virtual bool async_open(const sockaddr_in& saddr);
 	  protected:
 		socket_ostream aos;
 		virtual void ondestory();
@@ -95,13 +93,14 @@ namespace lyramilk{namespace netio
 			@return 返回false会导致服务器主动断开链接。
 		*/
 		virtual bool onrequest(const char* cache, int size, int* sizeused, lyramilk::data::ostream& os);
+		virtual bool enable_async_redirect(bool sw);
 	};
 
 	/**
 		@brief 同步套接字会话
 		@details onrequest中向os写数据的时候，以阻塞的方式写出去。
 	*/
-	class _lyramilk_api_ aioproxysession : public aioproxysession_speedy
+	class _lyramilk_api_ aioproxysession : public aioproxysession_connector
 	{
 	  protected:
 		bool directmode;
@@ -114,17 +113,16 @@ namespace lyramilk{namespace netio
 
 		virtual bool init();
 
-		virtual bool combine(const lyramilk::data::string& host,lyramilk::data::uint16 port);
-		virtual bool combine(const sockaddr_in& saddr);
-		virtual bool combine(aioproxysession_speedy* dest);
+		virtual bool async_redirect_to(const lyramilk::data::string& host,lyramilk::data::uint16 port);
+		virtual bool async_redirect_to(const sockaddr_in& saddr);
+		virtual bool async_redirect_to(aioproxysession_connector* dest);
 		/*
 			@details 与combine系列方法不同的时它不会自动调用start_proxy。可以关联后做一些处理再调用start_proxy开始自动转发。
 		*/
-		virtual bool tie(aioproxysession_speedy* dest);
+		virtual bool async_redirect_connect(aioproxysession_connector* dest);
 
 
-		virtual bool start_proxy();
-		virtual bool stop_proxy();
+		virtual bool start_async_redirect(bool sw);
 	  protected:
 		/**
 			@brief 连接时触发

@@ -33,48 +33,48 @@ namespace lyramilk{namespace netio
 	}
 
 
-	// aioproxysession_speedy
+	// aioproxysession_connector
 
 	const unsigned int flag_default = EPOLLERR | EPOLLHUP | EPOLLRDHUP | EPOLLONESHOT;
 	//const unsigned int flag_default = EPOLLERR | EPOLLHUP | EPOLLRDHUP | EPOLLET;
 	
 
-	bool aioproxysession_speedy::ssl()
+	bool aioproxysession_connector::ssl()
 	{
 		return false;
 	}
 
-	void aioproxysession_speedy::ssl(bool use_ssl)
+	void aioproxysession_connector::ssl(bool use_ssl)
 	{
 	}
 
-	bool aioproxysession_speedy::init_ssl(const lyramilk::data::string& certfilename, const lyramilk::data::string& keyfilename)
+	bool aioproxysession_connector::init_ssl(const lyramilk::data::string& certfilename, const lyramilk::data::string& keyfilename)
 	{
-		lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_speedy.ssl.init_ssl") << lyramilk::kdict("不支持SSL") << std::endl;
+		lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_connector.ssl.init_ssl") << lyramilk::kdict("不支持SSL") << std::endl;
 		return false;
 	}
 
-	ssl_ctx_type aioproxysession_speedy::get_ssl_ctx()
+	ssl_ctx_type aioproxysession_connector::get_ssl_ctx()
 	{
 		return nullptr;
 	}
 
-	bool aioproxysession_speedy::open(const lyramilk::data::string& host,lyramilk::data::uint16 port,int timeout_msec)
+	bool aioproxysession_connector::open(const lyramilk::data::string& host,lyramilk::data::uint16 port,int timeout_msec)
 	{
 		errno = 0;
 		if(fd() >= 0){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_speedy.open") << lyramilk::kdict("打开套接字失败：%s","套接字己经打开。") << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_connector.open") << lyramilk::kdict("打开套接字失败：%s","套接字己经打开。") << std::endl;
 			return false;
 		}
 		hostent* h = gethostbyname(host.c_str());
 		if(h == nullptr){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_speedy.open") << lyramilk::kdict("获取%s的IP地址失败：%p,%s",host.c_str(),h,strerror(errno)) << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_connector.open") << lyramilk::kdict("获取%s的IP地址失败：%p,%s",host.c_str(),h,strerror(errno)) << std::endl;
 			return false;
 		}
 
 		in_addr* inaddr = (in_addr*)h->h_addr;
 		if(inaddr == nullptr){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_speedy.open") << lyramilk::kdict("获取%s的IP地址失败：%p,%s",host.c_str(),inaddr,strerror(errno)) << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_connector.open") << lyramilk::kdict("获取%s的IP地址失败：%p,%s",host.c_str(),inaddr,strerror(errno)) << std::endl;
 			return false;
 		}
 
@@ -86,11 +86,11 @@ namespace lyramilk{namespace netio
 		return open(addr,timeout_msec);
 	}
 
-	bool aioproxysession_speedy::open(const sockaddr_in& saddr,int timeout_msec)
+	bool aioproxysession_connector::open(const sockaddr_in& saddr,int timeout_msec)
 	{
 		native_socket_type tmpsock = ::socket(AF_INET,SOCK_STREAM, IPPROTO_IP);
 		if(tmpsock < 0){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_speedy.open") << lyramilk::kdict("打开套接字%d失败：%s",tmpsock,strerror(errno)) << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_connector.open") << lyramilk::kdict("打开套接字%d失败：%s",tmpsock,strerror(errno)) << std::endl;
 			return false;
 		}
 
@@ -106,29 +106,30 @@ namespace lyramilk{namespace netio
 			return true;
 		}
 
-		lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_speedy.open") << lyramilk::kdict("打开套接字%d失败：%s",tmpsock,strerror(errno)) << std::endl;
+		lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_connector.open") << lyramilk::kdict("打开套接字%d失败：%s",tmpsock,strerror(errno)) << std::endl;
 		::close(tmpsock);
 		return false;
 	}
 
-	aioproxysession_speedy::aioproxysession_speedy()
+	aioproxysession_connector::aioproxysession_connector()
 	{
 		endpoint = nullptr;
 		flag = EPOLLIN | flag_default;
 	}
-	aioproxysession_speedy::~aioproxysession_speedy()
+	aioproxysession_connector::~aioproxysession_connector()
 	{
 		if(endpoint){
 			endpoint->endpoint = nullptr;
 			pool->remove(endpoint);
 		}
 	}
-	bool aioproxysession_speedy::init()
+	bool aioproxysession_connector::init()
 	{
 		return true;
 	}
 
-	bool aioproxysession_speedy::combine(aioproxysession_speedy* endpoint)
+/*
+	bool aioproxysession_connector::combine(aioproxysession_connector* endpoint)
 	{
 		if(endpoint == nullptr) return false;
 
@@ -144,9 +145,14 @@ namespace lyramilk{namespace netio
 		this->endpoint = nullptr;
 		endpoint->endpoint = nullptr;
 		return false;
+	}*/
+
+	bool aioproxysession_connector::start_async_redirect(bool sw)
+	{
+		return false;
 	}
 
-	bool aioproxysession_speedy::notify_in()
+	bool aioproxysession_connector::notify_in()
 	{
 		if(endpoint == nullptr) return false;
 		// 发生读事件时，由对端的写事件驱动。
@@ -154,7 +160,7 @@ namespace lyramilk{namespace netio
 	}
 
 
-	bool aioproxysession_speedy::notify_out()
+	bool aioproxysession_connector::notify_out()
 	{
 		if(endpoint == nullptr) return false;
 		char buff[4096];
@@ -185,20 +191,20 @@ namespace lyramilk{namespace netio
 		return pool->reset(endpoint,EPOLLIN | flag_default) && pool->reset(this,EPOLLIN | flag_default);
 	}
 
-	bool aioproxysession_speedy::notify_hup()
+	bool aioproxysession_connector::notify_hup()
 	{
 		return false;
 	}
 
-	bool aioproxysession_speedy::notify_err()
+	bool aioproxysession_connector::notify_err()
 	{
-		lyramilk::klog(lyramilk::log::debug,"lyramilk.netio.aioproxysession_speedy.notify_err") << lyramilk::kdict("发生了ERR事件") << std::endl;
+		lyramilk::klog(lyramilk::log::debug,"lyramilk.netio.aioproxysession_connector.notify_err") << lyramilk::kdict("发生了ERR事件") << std::endl;
 		return false;
 	}
 
-	bool aioproxysession_speedy::notify_pri()
+	bool aioproxysession_connector::notify_pri()
 	{
-		lyramilk::klog(lyramilk::log::debug,"lyramilk.netio.aioproxysession_speedy.notify_pri") << lyramilk::kdict("发生了PRI事件") << std::endl;
+		lyramilk::klog(lyramilk::log::debug,"lyramilk.netio.aioproxysession_connector.notify_pri") << lyramilk::kdict("发生了PRI事件") << std::endl;
 		return false;
 	}
 
@@ -214,22 +220,22 @@ namespace lyramilk{namespace netio
 	{
 	}
 
-	bool aioproxysession_speedy_async::open(const lyramilk::data::string& host,lyramilk::data::uint16 port)
+	bool aioproxysession_speedy_async::async_open(const lyramilk::data::string& host,lyramilk::data::uint16 port)
 	{
 		errno = 0;
 		if(fd() >= 0){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_speedy.open") << lyramilk::kdict("打开套接字失败：%s","套接字己经打开。") << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_connector.open") << lyramilk::kdict("打开套接字失败：%s","套接字己经打开。") << std::endl;
 			return false;
 		}
 		hostent* h = gethostbyname(host.c_str());
 		if(h == nullptr){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_speedy.open") << lyramilk::kdict("获取%s的IP地址失败：%p,%s",host.c_str(),h,strerror(errno)) << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_connector.open") << lyramilk::kdict("获取%s的IP地址失败：%p,%s",host.c_str(),h,strerror(errno)) << std::endl;
 			return false;
 		}
 
 		in_addr* inaddr = (in_addr*)h->h_addr;
 		if(inaddr == nullptr){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_speedy.open") << lyramilk::kdict("获取%s的IP地址失败：%p,%s",host.c_str(),inaddr,strerror(errno)) << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_connector.open") << lyramilk::kdict("获取%s的IP地址失败：%p,%s",host.c_str(),inaddr,strerror(errno)) << std::endl;
 			return false;
 		}
 
@@ -238,14 +244,14 @@ namespace lyramilk{namespace netio
 		addr.sin_family = AF_INET;
 		addr.sin_port = htons(port);
 
-		return open(addr);
+		return async_open(addr);
 	}
 
-	bool aioproxysession_speedy_async::open(const sockaddr_in& saddr)
+	bool aioproxysession_speedy_async::async_open(const sockaddr_in& saddr)
 	{
 		native_socket_type tmpsock = ::socket(AF_INET,SOCK_STREAM, IPPROTO_IP);
 		if(tmpsock < 0){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_speedy.open") << lyramilk::kdict("打开套接字%d失败：%s",tmpsock,strerror(errno)) << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_connector.open") << lyramilk::kdict("打开套接字%d失败：%s",tmpsock,strerror(errno)) << std::endl;
 			return false;
 		}
 
@@ -262,7 +268,7 @@ namespace lyramilk{namespace netio
 			return true;
 		}
 
-		lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_speedy.open") << lyramilk::kdict("打开套接字%d失败：%s",tmpsock,strerror(errno)) << std::endl;
+		lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_connector.open") << lyramilk::kdict("打开套接字%d失败：%s",tmpsock,strerror(errno)) << std::endl;
 		::close(tmpsock);
 		return false;
 	}
@@ -284,7 +290,7 @@ namespace lyramilk{namespace netio
 
 	bool aioproxysession_speedy_async::notify_in()
 	{
-		if(connect_status == 3) return aioproxysession_speedy::notify_in();
+		if(connect_status == 3) return aioproxysession_connector::notify_in();
 		char buff[4096];
 		int i = 0;
 		do{
@@ -316,7 +322,7 @@ namespace lyramilk{namespace netio
 
 	bool aioproxysession_speedy_async::notify_out()
 	{
-		if(connect_status == 3) return aioproxysession_speedy::notify_out();
+		if(connect_status == 3) return aioproxysession_connector::notify_out();
 		if(connect_status == 1){
 			connect_status = 2;
 			aos.init(this);
@@ -331,24 +337,18 @@ namespace lyramilk{namespace netio
 		return false;
 	}
 
-	bool aioproxysession_speedy_async::start_proxy()
+	bool aioproxysession_speedy_async::enable_async_redirect(bool sw)
 	{
-		connect_status = 3;
-		return true;
+		if(sw){
+			connect_status = 3;
+			endpoint->start_async_redirect(sw);
+			return true;
+		}else{
+			connect_status = 3;
+			endpoint->start_async_redirect(sw);
+			return true;
+		}
 	}
-
-	bool aioproxysession_speedy_async::stop_proxy()
-	{
-		connect_status = 2;
-		return true;
-	}
-
-/*
-	bool aioproxysession_speedy_async::init()
-	{
-		aos.init(this);
-		return oninit(aos);
-	}*/
 
 	void aioproxysession_speedy_async::ondestory()
 	{
@@ -364,12 +364,12 @@ namespace lyramilk{namespace netio
 
 	aioproxysession::~aioproxysession()
 	{
-		stop_proxy();
+		start_async_redirect(false);
 	}
 
 	bool aioproxysession::notify_in()
 	{
-		if(directmode) return aioproxysession_speedy::notify_in();
+		if(directmode) return aioproxysession_connector::notify_in();
 		char buff[4096];
 		int i = 0;
 		do{
@@ -420,10 +420,10 @@ namespace lyramilk{namespace netio
 	{
 	}
 
-	bool aioproxysession::combine(const lyramilk::data::string& host,lyramilk::data::uint16 port)
+	bool aioproxysession::async_redirect_to(const lyramilk::data::string& host,lyramilk::data::uint16 port)
 	{
 		if(endpoint) return false;
-		endpoint = lyramilk::netio::aiosession::__tbuilder<aioproxysession_speedy>();
+		endpoint = lyramilk::netio::aiosession::__tbuilder<aioproxysession_connector>();
 
 		if(endpoint->open(host,port,200)){
 			endpoint->endpoint = this;
@@ -433,20 +433,20 @@ namespace lyramilk{namespace netio
 			endpoint->flag = EPOLLIN | flag_default;
 
 			lyramilk::io::aiopoll_safe* pool = (lyramilk::io::aiopoll_safe*)this->pool;
-			if(start_proxy() && pool->add_to_thread(get_thread_idx(),endpoint,-1)){
+			if(start_async_redirect(true) && pool->add_to_thread(get_thread_idx(),endpoint,-1)){
 				return true;
 			}
-			stop_proxy();
+			start_async_redirect(false);
 		}
 		endpoint->destory();
 		endpoint = nullptr;
 		return false;
 	}
 
-	bool aioproxysession::combine(const sockaddr_in& saddr)
+	bool aioproxysession::async_redirect_to(const sockaddr_in& saddr)
 	{
 		if(endpoint) return false;
-		endpoint = lyramilk::netio::aiosession::__tbuilder<aioproxysession_speedy>();
+		endpoint = lyramilk::netio::aiosession::__tbuilder<aioproxysession_connector>();
 
 		if(endpoint->open(saddr,200)){
 			endpoint->endpoint = this;
@@ -456,17 +456,17 @@ namespace lyramilk{namespace netio
 			endpoint->flag = EPOLLIN | flag_default;
 
 			lyramilk::io::aiopoll_safe* pool = (lyramilk::io::aiopoll_safe*)this->pool;
-			if(start_proxy() && pool->add_to_thread(get_thread_idx(),endpoint,-1)){
+			if(start_async_redirect(true) && pool->add_to_thread(get_thread_idx(),endpoint,-1)){
 				return true;
 			}
-			stop_proxy();
+			start_async_redirect(false);
 		}
 		endpoint->destory();
 		endpoint = nullptr;
 		return false;
 	}
 
-	bool aioproxysession::combine(aioproxysession_speedy* dest)
+	bool aioproxysession::async_redirect_to(aioproxysession_connector* dest)
 	{
 		if(endpoint) return false;
 		endpoint = dest;
@@ -477,15 +477,17 @@ namespace lyramilk{namespace netio
 		endpoint->flag = EPOLLIN | flag_default;
 
 		lyramilk::io::aiopoll_safe* pool = (lyramilk::io::aiopoll_safe*)this->pool;
-		if(start_proxy() && pool->add_to_thread(get_thread_idx(),endpoint,-1)){
+		if(start_async_redirect(true) && pool->add_to_thread(get_thread_idx(),endpoint,-1)){
 			return true;
 		}
+		start_async_redirect(false);
+
 		endpoint = nullptr;
 		dest->endpoint = nullptr;
 		return false;
 	}
 
-	bool aioproxysession::tie(aioproxysession_speedy* dest)
+	bool aioproxysession::async_redirect_connect(aioproxysession_connector* dest)
 	{
 		if(endpoint) return false;
 		endpoint = dest;
@@ -502,17 +504,12 @@ namespace lyramilk{namespace netio
 		return false;
 	}
 
-	bool aioproxysession::start_proxy()
+
+	bool aioproxysession::start_async_redirect(bool sw)
 	{
-		directmode = true;
+		directmode = sw;
+		flag = EPOLLIN | flag_default;
+		pool->reset(this,flag);
 		return true;
 	}
-
-	bool aioproxysession::stop_proxy()
-	{
-		directmode = false;
-		return true;
-	}
-
-
 }}
