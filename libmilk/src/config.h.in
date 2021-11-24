@@ -8,7 +8,9 @@
 			#endif
 		#endif
 	#else
-		#define _lyramilk_api_
+		#ifndef _lyramilk_api_
+			#define _lyramilk_api_ __attribute__((visibility ("default")))
+		#endif
 	#endif
 
 

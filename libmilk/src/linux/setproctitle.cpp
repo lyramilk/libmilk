@@ -10,6 +10,7 @@ namespace lyramilk
 	static lyramilk::data::strings argvs;
 	static lyramilk::data::strings environs;
 	static std::vector<const char*> environ_ptrs;
+	static std::vector<const char*> argv_ptrs;
 
 	static char* ptitle = nullptr;
 	static std::size_t ptitlelen = 0;
@@ -46,7 +47,12 @@ namespace lyramilk
 			argvs[i] = argv[i];
 		}
 
-		argv = (const char**)argvs.data();
+
+		for(int i=0;i<argc;++i){
+			argv_ptrs.push_back(argvs[i].c_str());
+		}
+
+		argv = (const char**)argv_ptrs.data();
 	}
 
 	bool setproctitle(const char *fmt, ...)

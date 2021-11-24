@@ -7,11 +7,6 @@
 #ifdef __linux__
 	#include <pthread.h>
 	#include <semaphore.h>
-#elif defined WIN32
-	#include <windows.h>
-	typedef HANDLE pthread_t;
-	typedef HANDLE pthread_mutex_t;
-	typedef SRWLOCK pthread_rwlock_t;
 #endif
 
 /**
@@ -26,9 +21,6 @@ namespace lyramilk{namespace threading
 		@brief 线程组
 		@details 线程组对象，激活后多线程执行svc函数。使用的时候继承这个对象然后覆盖svc函数就可以。
 	*/
-#ifdef WIN32
-	template class _lyramilk_api_ std::set < pthread_t>;
-#endif
 	class _lyramilk_api_ threads
 	{
 	  protected:
@@ -41,11 +33,7 @@ namespace lyramilk{namespace threading
 		typedef std::set<pthread_t> pool_type;
 
 		pool_type m;
-#ifdef WIN32
-		static int __stdcall thread_task(threads* p);
-#else
 		static int thread_task(threads* p);
-#endif
 	  public:
 		/**
 			@brief 线程组构造
@@ -127,11 +115,7 @@ namespace lyramilk{namespace threading
 	class _lyramilk_api_ mutex_spin:public mutex_super
 	{
 	  public:
-#ifdef __GNUC__
 		typedef bool native_handle_type;
-#elif defined _MSC_VER
-		typedef long native_handle_type;
-#endif
 	  protected:
 		native_handle_type locked;
 	  public:
