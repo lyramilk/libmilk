@@ -18,6 +18,9 @@ Prefix:		/usr
 	autoconf-2.13
 	mkdir -p build_OPT.OBJ
 	cd build_OPT.OBJ/
+	export MOZJS_MAJOR_VERSION=17
+	export MOZJS_MINOR_VERSION=0
+	export MOZILLA_VERSION=17.0
 	#../configure --enable-jemalloc --enable-strip --enable-release --enable-optimize=-O2 --disable-tests --enable-threadsafe --with-system-nspr --prefix=%{?_builddir}/%{?name}
 	../configure --enable-strip --enable-release --enable-optimize=-O2 --disable-tests --enable-threadsafe --with-system-nspr --prefix=%{?_builddir}/%{?name}
 	make
