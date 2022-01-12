@@ -162,10 +162,11 @@ bool logf::ok()
 						}
 					}
 
-					fd = open(newfilename.c_str(),O_WRONLY | O_CREAT | O_APPEND,0644);
+					fd = open(newfilename.c_str(),O_WRONLY | O_CREAT | O_APPEND | O_CLOEXEC,0644);
+					/*
 					int flags = fcntl(fd, F_GETFD);
 					flags |= FD_CLOEXEC;
-					fcntl(fd, F_SETFD, flags);
+					fcntl(fd, F_SETFD, flags);*/
 				}
 			}
 		}
@@ -203,10 +204,11 @@ void logf::log(time_t ti,type ty,const lyramilk::data::string& usr,const lyramil
 					}
 				}
 
-				fd = open(newfilename.c_str(),O_WRONLY | O_CREAT | O_APPEND,0644);
+				fd = open(newfilename.c_str(),O_WRONLY | O_CREAT | O_APPEND | O_CLOEXEC,0644);
+				/*
 				int flags = fcntl(fd, F_GETFD);
 				flags |= FD_CLOEXEC;
-				fcntl(fd, F_SETFD, flags);
+				fcntl(fd, F_SETFD, flags);*/
 			}
 		}
 	}
@@ -247,6 +249,199 @@ void logf::log(time_t ti,type ty,const lyramilk::data::string& usr,const lyramil
 }
 
 
+
+
+
+
+
+logfc::logfc(const lyramilk::data::string& filefmt)
+{
+	this->filefmt = filefmt;
+	fd = -1;
+}
+
+logfc::~logfc()
+{
+	if(fd != -1){
+		::close(fd);
+	}
+}
+
+
+bool logfc::ok()
+{
+	if(fd == -1){
+		char buff[32];
+		std::size_t r;
+		{
+			//输入日志时只用当前时间分页。
+			time_t t_now = time(nullptr);
+			tm __t;
+			tm *t = localtime_r(&t_now,&__t);
+
+			if(daytime.tm_year != __t.tm_year || daytime.tm_mon != __t.tm_mon || daytime.tm_mday != __t.tm_mday){
+				lyramilk::threading::mutex_sync _(lock);
+				if(daytime.tm_year != __t.tm_year || daytime.tm_mon != __t.tm_mon || daytime.tm_mday != __t.tm_mday){
+					daytime = __t;
+					lyramilk::data::string newfilename;
+
+					lyramilk::data::string::const_iterator it = filefmt.begin();
+					for(;it!=filefmt.end();++it){
+						if(*it == '?'){
+							r = ::strftime(buff,sizeof(buff),"%F",t);
+							newfilename.append(buff,r);
+						}else{
+							newfilename.push_back(*it);
+						}
+					}
+
+					fd = open(newfilename.c_str(),O_WRONLY | O_CREAT | O_APPEND | O_CLOEXEC,0644);
+					/*
+					int flags = fcntl(fd, F_GETFD);
+					flags |= FD_CLOEXEC;
+					fcntl(fd, F_SETFD, flags);*/
+				}
+			}
+		}
+	}
+
+	return fd != -1;
+}
+
+void logfc::log(time_t ti,type ty,const lyramilk::data::string& usr,const lyramilk::data::string& app,const lyramilk::data::string& module,const lyramilk::data::string& str) const
+{
+	char buff[32];
+	std::size_t r;
+	{
+		//输入日志时只用当前时间分页。
+		time_t t_now = time(nullptr);
+		tm __t;
+		tm *t = localtime_r(&t_now,&__t);
+
+		if(daytime.tm_year != __t.tm_year || daytime.tm_mon != __t.tm_mon || daytime.tm_mday != __t.tm_mday){
+			lyramilk::threading::mutex_sync _(lock);
+			if(daytime.tm_year != __t.tm_year || daytime.tm_mon != __t.tm_mon || daytime.tm_mday != __t.tm_mday){
+				if(fd != -1){
+					::close(fd);
+				}
+				daytime = __t;
+				lyramilk::data::string newfilename;
+
+				lyramilk::data::string::const_iterator it = filefmt.begin();
+				for(;it!=filefmt.end();++it){
+					if(*it == '?'){
+						r = ::strftime(buff,sizeof(buff),"%F",t);
+						newfilename.append(buff,r);
+					}else{
+						newfilename.push_back(*it);
+					}
+				}
+
+				fd = open(newfilename.c_str(),O_WRONLY | O_CREAT | O_APPEND | O_CLOEXEC,0644);
+				/*
+				int flags = fcntl(fd, F_GETFD);
+				flags |= FD_CLOEXEC;
+				fcntl(fd, F_SETFD, flags);*/
+			}
+		}
+	}
+
+	if(fd == -1){
+		//如果打开文件失败，则这一天不再输出日志。
+		return;
+	}
+
+	static const char* typeconst[4] = {" [debug]"," [trace]"," [warning]"," [error]"};
+
+	lyramilk::data::string cache;
+	cache.reserve(1024);
+
+	//写时间
+	char tmbuff[32];
+	tm __t;
+	tm *t = localtime_r(&ti,&__t);
+	r = ::strftime(tmbuff,sizeof(tmbuff),"%T",t);
+	cache.append(tmbuff,r);
+
+	//写pid
+	r = snprintf(buff,sizeof(buff)," %lu",(unsigned long)getpid());
+	cache.append(buff,r);
+
+	//写类型
+	cache.append(typeconst[ty]);
+
+	//写模块名
+	cache.push_back(' ');
+	cache.push_back('[');
+	cache.append(module);
+	cache.push_back(']');
+	cache.push_back(' ');
+
+	//写正文
+	cache.append(str);
+
+	write(fd,cache.c_str(),cache.size());
+
+	switch(ty){
+	  case debug:{
+		lyramilk::data::string cache;
+		cache.reserve(1024);
+		cache.append("\x1b[36m");
+		cache.append(tmbuff,r);
+		cache.append(" [");
+		cache.append(module);
+		cache.append("] ");
+		cache.append(str);
+		cache.append("\x1b[0m");
+		fwrite(cache.c_str(),cache.size(),1,stdout);
+	  }break;
+	  case trace:{
+		lyramilk::data::string cache;
+		cache.reserve(1024);
+		cache.append("\x1b[37m");
+		cache.append(tmbuff,r);
+		cache.append(" [");
+		cache.append(module);
+		cache.append("] ");
+		cache.append(str);
+		cache.append("\x1b[0m");
+		fwrite(cache.c_str(),cache.size(),1,stdout);
+	  }break;
+	  case warning:{
+		lyramilk::data::string cache;
+		cache.reserve(1024);
+		cache.append("\x1b[33m");
+		cache.append(tmbuff,r);
+		cache.append(" [");
+		cache.append(module);
+		cache.append("] ");
+		cache.append(str);
+		cache.append("\x1b[0m");
+		fwrite(cache.c_str(),cache.size(),1,stdout);
+	  }break;
+	  case error:{
+		lyramilk::data::string cache;
+		cache.reserve(1024);
+		cache.append("\x1b[31m");
+		cache.append(tmbuff,r);
+		cache.append(" [");
+		cache.append(module);
+		cache.append("] ");
+		cache.append(str);
+		cache.append("\x1b[0m");
+		fwrite(cache.c_str(),cache.size(),1,stderr);
+	  }break;
+	}
+}
+
+
+
+
+
+
+
+
+// logbuf
 logbuf::logbuf(logss2& pp):buf(2048),p(pp)
 {
 	setp(buf.data(),buf.data() + buf.size());

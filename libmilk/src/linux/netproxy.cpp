@@ -33,12 +33,12 @@ namespace lyramilk{namespace netio
 	}
 
 
-	// aioproxysession_connector
 
 	const unsigned int flag_default = EPOLLERR | EPOLLHUP | EPOLLRDHUP | EPOLLONESHOT;
 	//const unsigned int flag_default = EPOLLERR | EPOLLHUP | EPOLLRDHUP | EPOLLET;
 	
 
+	// aioproxysession_connector
 	bool aioproxysession_connector::ssl()
 	{
 		return false;
@@ -128,25 +128,6 @@ namespace lyramilk{namespace netio
 		return true;
 	}
 
-/*
-	bool aioproxysession_connector::combine(aioproxysession_connector* endpoint)
-	{
-		if(endpoint == nullptr) return false;
-
-		this->endpoint = endpoint;
-		endpoint->endpoint = this;
-
-
-		lyramilk::io::aiopoll_safe* pool = (lyramilk::io::aiopoll_safe*)this->pool;
-		if(pool->add_to_thread(get_thread_idx(),endpoint,EPOLLIN | flag_default)){
-			return true;
-		}
-
-		this->endpoint = nullptr;
-		endpoint->endpoint = nullptr;
-		return false;
-	}*/
-
 	bool aioproxysession_connector::start_async_redirect(bool sw)
 	{
 		return false;
@@ -174,6 +155,7 @@ namespace lyramilk{namespace netio
 				return false;
 			}
 			int r = write(buff,i);
+
 			if(r == -1){
 				if(errno == EAGAIN ) {
 					// 没写完，保持本端写事件（此时对端读事件是屏蔽状态）
@@ -209,7 +191,7 @@ namespace lyramilk{namespace netio
 	}
 
 
-
+	// aioproxysession_speedy_async
 	aioproxysession_speedy_async::aioproxysession_speedy_async()
 	{
 		connect_status = 0;
@@ -365,6 +347,7 @@ namespace lyramilk{namespace netio
 	aioproxysession::~aioproxysession()
 	{
 		start_async_redirect(false);
+		//directmode = false;
 	}
 
 	bool aioproxysession::notify_in()
@@ -383,6 +366,7 @@ namespace lyramilk{namespace netio
 			assert(i > 0);
 
 			int bytesused = i;
+
 			if(!onrequest(buff,i,&bytesused,aos)){
 				aos.flush();
 				return false;
@@ -432,6 +416,7 @@ namespace lyramilk{namespace netio
 
 			endpoint->flag = EPOLLIN | flag_default;
 
+			//不需要加 start_async_redirect(true),因为原生的 aioproxysession_connector 默认就是透传。
 			lyramilk::io::aiopoll_safe* pool = (lyramilk::io::aiopoll_safe*)this->pool;
 			if(start_async_redirect(true) && pool->add_to_thread(get_thread_idx(),endpoint,-1)){
 				return true;
@@ -455,6 +440,7 @@ namespace lyramilk{namespace netio
 
 			endpoint->flag = EPOLLIN | flag_default;
 
+			//不需要加 start_async_redirect(true),因为原生的 aioproxysession_connector 默认就是透传。
 			lyramilk::io::aiopoll_safe* pool = (lyramilk::io::aiopoll_safe*)this->pool;
 			if(start_async_redirect(true) && pool->add_to_thread(get_thread_idx(),endpoint,-1)){
 				return true;
@@ -476,8 +462,9 @@ namespace lyramilk{namespace netio
 
 		endpoint->flag = EPOLLIN | flag_default;
 
+		//因为 dest 有可能是被继承的,所以需要通过async_redirect_connect(true)切换到透传模式。
 		lyramilk::io::aiopoll_safe* pool = (lyramilk::io::aiopoll_safe*)this->pool;
-		if(start_async_redirect(true) && pool->add_to_thread(get_thread_idx(),endpoint,-1)){
+		if(start_async_redirect(true) && endpoint->start_async_redirect(true) && pool->add_to_thread(get_thread_idx(),endpoint,-1)){
 			return true;
 		}
 		start_async_redirect(false);
@@ -509,7 +496,6 @@ namespace lyramilk{namespace netio
 	{
 		directmode = sw;
 		flag = EPOLLIN | flag_default;
-		pool->reset(this,flag);
-		return true;
+		return pool->reset(this,flag);
 	}
 }}

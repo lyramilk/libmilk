@@ -86,6 +86,39 @@ namespace lyramilk { namespace log
 		virtual void log(time_t ti,lyramilk::log::type ty,const lyramilk::data::string& usr,const lyramilk::data::string& app,const lyramilk::data::string& module,const lyramilk::data::string& str) const;
 	};
 
+	/**
+		@brief 基本文件日志和控制台双输出
+		@details 提供基本日志功能。这个模块将日志输出到文件和控制台。
+	*/
+	class _lyramilk_api_ logfc:public logb
+	{
+	  protected:
+		lyramilk::data::string filefmt;
+		mutable int fd;
+		mutable lyramilk::threading::mutex_os lock;
+		mutable tm daytime;
+	  public:
+		/**
+			@brief 构造函数
+		*/
+		logfc(const lyramilk::data::string& filefmt);
+		virtual ~logfc();
+
+
+		virtual bool ok();
+		/**
+			@brief 记录日志。
+			@details 提供基本日志功能。这个模块将日志输出到控制台。
+			@param ti 时间，内部会调用strtime被格式化成字符串。
+			@param ty 类型，调试信息的类别，例如trace。
+			@param usr 当前用户。
+			@param app 当前进程名。
+			@param module 模块名。
+			@param str 日志消息。
+		*/
+		virtual void log(time_t ti,lyramilk::log::type ty,const lyramilk::data::string& usr,const lyramilk::data::string& app,const lyramilk::data::string& module,const lyramilk::data::string& str) const;
+	};
+
 	class _lyramilk_api_ logss2;
 #ifdef WIN32
 	template class _lyramilk_api_ lyramilk::data::vector<char, lyramilk::data::allocator<char> >;
