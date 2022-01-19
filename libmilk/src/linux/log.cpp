@@ -360,12 +360,12 @@ void logfc::log(time_t ti,type ty,const lyramilk::data::string& usr,const lyrami
 	char tmbuff[32];
 	tm __t;
 	tm *t = localtime_r(&ti,&__t);
-	r = ::strftime(tmbuff,sizeof(tmbuff),"%T",t);
-	cache.append(tmbuff,r);
+	std::size_t rt_time = ::strftime(tmbuff,sizeof(tmbuff),"%T",t);
+	cache.append(tmbuff,rt_time);
 
 	//写pid
-	r = snprintf(buff,sizeof(buff)," %lu",(unsigned long)getpid());
-	cache.append(buff,r);
+	std::size_t rt_pid = snprintf(buff,sizeof(buff)," %lu",(unsigned long)getpid());
+	cache.append(buff,rt_pid);
 
 	//写类型
 	cache.append(typeconst[ty]);
@@ -387,7 +387,7 @@ void logfc::log(time_t ti,type ty,const lyramilk::data::string& usr,const lyrami
 		lyramilk::data::string cache;
 		cache.reserve(1024);
 		cache.append("\x1b[36m");
-		cache.append(tmbuff,r);
+		cache.append(tmbuff,rt_time);
 		cache.append(" [");
 		cache.append(module);
 		cache.append("] ");
@@ -399,7 +399,7 @@ void logfc::log(time_t ti,type ty,const lyramilk::data::string& usr,const lyrami
 		lyramilk::data::string cache;
 		cache.reserve(1024);
 		cache.append("\x1b[37m");
-		cache.append(tmbuff,r);
+		cache.append(tmbuff,rt_time);
 		cache.append(" [");
 		cache.append(module);
 		cache.append("] ");
@@ -411,7 +411,7 @@ void logfc::log(time_t ti,type ty,const lyramilk::data::string& usr,const lyrami
 		lyramilk::data::string cache;
 		cache.reserve(1024);
 		cache.append("\x1b[33m");
-		cache.append(tmbuff,r);
+		cache.append(tmbuff,rt_time);
 		cache.append(" [");
 		cache.append(module);
 		cache.append("] ");
@@ -423,7 +423,7 @@ void logfc::log(time_t ti,type ty,const lyramilk::data::string& usr,const lyrami
 		lyramilk::data::string cache;
 		cache.reserve(1024);
 		cache.append("\x1b[31m");
-		cache.append(tmbuff,r);
+		cache.append(tmbuff,rt_time);
 		cache.append(" [");
 		cache.append(module);
 		cache.append("] ");
