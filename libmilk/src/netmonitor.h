@@ -13,6 +13,7 @@ namespace lyramilk{namespace netio
 	{
 	  protected:
 		std::set<int> fds;
+		lyramilk::threading::mutex_rw lock;
 	  public:
 		aiomonitor();
 	  	virtual ~aiomonitor();
