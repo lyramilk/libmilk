@@ -73,7 +73,10 @@ namespace lyramilk{namespace data
 	*/
 	lyramilk::data::string upper_case(const lyramilk::data::string& src);
 
-
+	/*
+		@brief 替换字符串
+	*/
+	lyramilk::data::string replace(const lyramilk::data::string& str,const lyramilk::data::string& src,const lyramilk::data::string& dest);
 
 }}
 
