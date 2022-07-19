@@ -92,7 +92,7 @@ namespace lyramilk{ namespace data
 		return it->second();
 	}
 
-	lyramilk::data::string lyramilk::data::codes::encode(const lyramilk::data::string& codingname,const lyramilk::data::string& src) throw (lyramilk::exception)
+	lyramilk::data::string lyramilk::data::codes::encode(const lyramilk::data::string& codingname,const lyramilk::data::string& src)
 	{
 		lyramilk::data::string str(codingname.size(),0);
 		transform(codingname.begin(), codingname.end(), str.begin(), tolower);
@@ -102,7 +102,7 @@ namespace lyramilk{ namespace data
 		}
 		return it->second()->encode(src);
 	}
-	lyramilk::data::string lyramilk::data::codes::decode(const lyramilk::data::string& codingname,const lyramilk::data::string& src) throw (lyramilk::exception)
+	lyramilk::data::string lyramilk::data::codes::decode(const lyramilk::data::string& codingname,const lyramilk::data::string& src)
 	{
 		lyramilk::data::string str(codingname.size(),0);
 		transform(codingname.begin(), codingname.end(), str.begin(), tolower);
