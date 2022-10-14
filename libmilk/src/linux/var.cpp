@@ -388,7 +388,7 @@ lyramilk::data::var::var(const lyramilk::data::datawrapper& v)
 	assign(v);
 }
 
-bool lyramilk::data::var::operator ==(const lyramilk::data::var& v) const throw(lyramilk::data::type_invalid)
+bool lyramilk::data::var::operator ==(const lyramilk::data::var& v) const
 {
 	switch(t){
 	  case t_bin:{
@@ -459,12 +459,12 @@ bool lyramilk::data::var::operator ==(const lyramilk::data::var& v) const throw(
 	throw lyramilk::data::type_invalid(lyramilk::kdict("%s：错误的子类型%s","lyramilk::data::var::operator ==()",type_name(t).c_str()));
 }
 
-bool lyramilk::data::var::operator !=(const lyramilk::data::var& v) const throw(lyramilk::data::type_invalid)
+bool lyramilk::data::var::operator !=(const lyramilk::data::var& v) const
 {
 	return !(*this == v);
 }
 
-bool lyramilk::data::var::operator <(const lyramilk::data::var& v) const throw(lyramilk::data::type_invalid)
+bool lyramilk::data::var::operator <(const lyramilk::data::var& v) const
 {
 	switch(t){
 	  case t_bin:{
@@ -526,7 +526,7 @@ lyramilk::data::var& lyramilk::data::var::operator =(const lyramilk::data::var& 
 	return assign(v);
 }
 
-lyramilk::data::var& lyramilk::data::var::at(lyramilk::data::uint64 index) throw(lyramilk::data::type_invalid)
+lyramilk::data::var& lyramilk::data::var::at(lyramilk::data::uint64 index)
 {
 	if(t == t_array){
 		array* ba = reinterpret_cast<array*>(&u.ba);
@@ -535,7 +535,7 @@ lyramilk::data::var& lyramilk::data::var::at(lyramilk::data::uint64 index) throw
 	throw lyramilk::data::type_invalid(lyramilk::kdict("%s：错误的索引类型%s[%s]","lyramilk::data::var::at()",type_name(t).c_str(),"t_uint"));
 }
 
-lyramilk::data::var& lyramilk::data::var::at(const lyramilk::data::string& index) throw(lyramilk::data::type_invalid)
+lyramilk::data::var& lyramilk::data::var::at(const lyramilk::data::string& index)
 {
 	if(t == t_map){
 		map* bm = reinterpret_cast<map*>(&u.bm);
@@ -544,7 +544,7 @@ lyramilk::data::var& lyramilk::data::var::at(const lyramilk::data::string& index
 	throw lyramilk::data::type_invalid(lyramilk::kdict("%s：错误的索引类型%s[%s]","lyramilk::data::var::at()",type_name(t).c_str(),"t_str"));
 }
 
-lyramilk::data::var& lyramilk::data::var::at(const wstring& index) throw(lyramilk::data::type_invalid)
+lyramilk::data::var& lyramilk::data::var::at(const wstring& index)
 {
 	if(t == t_map){
 		lyramilk::data::var str = index;
@@ -554,7 +554,7 @@ lyramilk::data::var& lyramilk::data::var::at(const wstring& index) throw(lyramil
 	throw lyramilk::data::type_invalid(lyramilk::kdict("%s：错误的索引类型%s[%s]","lyramilk::data::var::at()",type_name(t).c_str(),"t_wstr"));
 }
 
-const lyramilk::data::var& lyramilk::data::var::at(lyramilk::data::uint64 index) const throw(lyramilk::data::type_invalid)
+const lyramilk::data::var& lyramilk::data::var::at(lyramilk::data::uint64 index) const
 {
 	if(t == t_array){
 		const lyramilk::data::array* ba = reinterpret_cast<const lyramilk::data::array*>(&u.ba);
@@ -563,7 +563,7 @@ const lyramilk::data::var& lyramilk::data::var::at(lyramilk::data::uint64 index)
 	throw lyramilk::data::type_invalid(lyramilk::kdict("%s：错误的索引类型%s[%s]","lyramilk::data::var::at()",type_name(t).c_str(),"t_uint"));
 }
 
-const lyramilk::data::var& lyramilk::data::var::at(const lyramilk::data::string& index) const throw(lyramilk::data::type_invalid)
+const lyramilk::data::var& lyramilk::data::var::at(const lyramilk::data::string& index) const
 {
 	if(t == t_map){
 		const lyramilk::data::map* bm = reinterpret_cast<const lyramilk::data::map*>(&u.bm);
@@ -576,7 +576,7 @@ const lyramilk::data::var& lyramilk::data::var::at(const lyramilk::data::string&
 	throw lyramilk::data::type_invalid(lyramilk::kdict("%s：错误的索引类型%s[%s]","lyramilk::data::var::at()",type_name(t).c_str(),"t_str"));
 }
 
-const lyramilk::data::var& lyramilk::data::var::at(const wstring& index) const throw(lyramilk::data::type_invalid)
+const lyramilk::data::var& lyramilk::data::var::at(const wstring& index) const
 {
 	if(t == t_map){
 		lyramilk::data::var str = index;
@@ -889,13 +889,13 @@ lyramilk::data::var& lyramilk::data::var::assign(const lyramilk::data::datawrapp
 	return *this;
 }
 
-/*lyramilk::data::var::operator lyramilk::data::chunk& () throw(lyramilk::data::type_invalid)
+/*lyramilk::data::var::operator lyramilk::data::chunk& ()
 {
 	if(t != t_bin) throw lyramilk::data::type_invalid(lyramilk::kdict("%s：错误的子类型%s","lyramilk::data::var::operator lyramilk::data::chunk&()",type_name(t).c_str()));
 	return *u.p;
 }*/
 
-lyramilk::data::var::operator lyramilk::data::chunk() const throw(lyramilk::data::type_invalid)
+lyramilk::data::var::operator lyramilk::data::chunk() const
 {
 	switch(t){
 	  case t_bin:{
@@ -936,13 +936,13 @@ lyramilk::data::var::operator lyramilk::data::chunk() const throw(lyramilk::data
 	throw lyramilk::data::type_invalid(lyramilk::kdict("%s：错误的子类型%s","lyramilk::data::var::operator lyramilk::data::chunk()",type_name(t).c_str()));
 }
 
-/*lyramilk::data::var::operator string& () throw(lyramilk::data::type_invalid)
+/*lyramilk::data::var::operator string& ()
 {
 	if(t != t_str) throw lyramilk::data::type_invalid(lyramilk::kdict("%s：错误的子类型%s","lyramilk::data::var::operator string&()",type_name(t).c_str()));
 	return *u.s;
 }*/
 
-lyramilk::data::var::operator string () const throw(lyramilk::data::type_invalid)
+lyramilk::data::var::operator string () const
 {
 	switch(t){
 	  case t_bin:{
@@ -1023,13 +1023,13 @@ lyramilk::data::var::operator string () const throw(lyramilk::data::type_invalid
 	throw lyramilk::data::type_invalid(lyramilk::kdict("%s：错误的子类型%s","lyramilk::data::var::operator string()",type_name(t).c_str()));
 }
 
-/*lyramilk::data::var::operator wstring& () throw(lyramilk::data::type_invalid)
+/*lyramilk::data::var::operator wstring& ()
 {
 	if(t != t_wstr) throw lyramilk::data::type_invalid(lyramilk::kdict("%s：错误的子类型%s","lyramilk::data::var::operator wstring&()",type_name(t).c_str()));
 	return *u.w;
 }*/
 
-lyramilk::data::var::operator wstring () const throw(lyramilk::data::type_invalid)
+lyramilk::data::var::operator wstring () const
 {
 	switch(t){
 	  case t_bin:{
@@ -1101,7 +1101,7 @@ lyramilk::data::var::operator wstring () const throw(lyramilk::data::type_invali
 	throw lyramilk::data::type_invalid(lyramilk::kdict("%s：错误的子类型%s","lyramilk::data::var::operator wstring()",type_name(t).c_str()));
  }
 
-lyramilk::data::var::operator bool () const throw(lyramilk::data::type_invalid)
+lyramilk::data::var::operator bool () const
 {
 	switch(t){
 	  case t_bin:{
@@ -1148,7 +1148,7 @@ lyramilk::data::var::operator bool () const throw(lyramilk::data::type_invalid)
 	throw lyramilk::data::type_invalid(lyramilk::kdict("%s：错误的子类型%s","lyramilk::data::var::operator bool()",type_name(t).c_str()));
 }
 
-lyramilk::data::var::operator int8 () const throw(lyramilk::data::type_invalid)
+lyramilk::data::var::operator int8 () const
 {
 	switch(t){
 	  case t_bin:
@@ -1170,7 +1170,7 @@ lyramilk::data::var::operator int8 () const throw(lyramilk::data::type_invalid)
 	throw lyramilk::data::type_invalid(lyramilk::kdict("%s：错误的子类型%s","lyramilk::data::var::operator int8()",type_name(t).c_str()));
 }
 
-lyramilk::data::var::operator uint8 () const throw(lyramilk::data::type_invalid)
+lyramilk::data::var::operator uint8 () const
 {
 	switch(t){
 	  case t_bin:
@@ -1192,7 +1192,7 @@ lyramilk::data::var::operator uint8 () const throw(lyramilk::data::type_invalid)
 	throw lyramilk::data::type_invalid(lyramilk::kdict("%s：错误的子类型%s","lyramilk::data::var::operator uint8()",type_name(t).c_str()));
 }
 
-lyramilk::data::var::operator int16 () const throw(lyramilk::data::type_invalid)
+lyramilk::data::var::operator int16 () const
 {
 	switch(t){
 	  case t_bin:
@@ -1214,7 +1214,7 @@ lyramilk::data::var::operator int16 () const throw(lyramilk::data::type_invalid)
 	throw lyramilk::data::type_invalid(lyramilk::kdict("%s：错误的子类型%s","lyramilk::data::var::operator int16()",type_name(t).c_str()));
 }
 
-lyramilk::data::var::operator uint16 () const throw(lyramilk::data::type_invalid)
+lyramilk::data::var::operator uint16 () const
 {
 	switch(t){
 	  case t_bin:
@@ -1236,7 +1236,7 @@ lyramilk::data::var::operator uint16 () const throw(lyramilk::data::type_invalid
 	throw lyramilk::data::type_invalid(lyramilk::kdict("%s：错误的子类型%s","lyramilk::data::var::operator uint16()",type_name(t).c_str()));
 }
 
-lyramilk::data::var::operator int32 () const throw(lyramilk::data::type_invalid)
+lyramilk::data::var::operator int32 () const
 {
 	switch(t){
 	  case t_bin:
@@ -1258,22 +1258,22 @@ lyramilk::data::var::operator int32 () const throw(lyramilk::data::type_invalid)
 	throw lyramilk::data::type_invalid(lyramilk::kdict("%s：错误的子类型%s","lyramilk::data::var::operator int32()",type_name(t).c_str()));
 }
 
-lyramilk::data::var::operator uint32 () const throw(lyramilk::data::type_invalid)
+lyramilk::data::var::operator uint32 () const
 {
 	return (uint32)(int32)*this;
 }
 
-lyramilk::data::var::operator long () const throw(lyramilk::data::type_invalid)
+lyramilk::data::var::operator long () const
 {
 	return (lyramilk::data::intc<sizeof(long)>::t)*this;
 }
 
-lyramilk::data::var::operator unsigned long () const throw(lyramilk::data::type_invalid)
+lyramilk::data::var::operator unsigned long () const
 {
 	return (lyramilk::data::intc<sizeof(unsigned long)>::ut)*this;
 }
 
-lyramilk::data::var::operator int64 () const throw(lyramilk::data::type_invalid)
+lyramilk::data::var::operator int64 () const
 {
 	switch(t){
 	  case t_int:{
@@ -1317,7 +1317,7 @@ lyramilk::data::var::operator int64 () const throw(lyramilk::data::type_invalid)
 	throw lyramilk::data::type_invalid(lyramilk::kdict("%s：错误的子类型%s","lyramilk::data::var::operator int64()",type_name(t).c_str()));
 }
 
-lyramilk::data::var::operator uint64 () const throw(lyramilk::data::type_invalid)
+lyramilk::data::var::operator uint64 () const
 {
 	switch(t){
 	  case t_int:{
@@ -1362,7 +1362,7 @@ lyramilk::data::var::operator uint64 () const throw(lyramilk::data::type_invalid
 }
 
 
-lyramilk::data::var::operator double () const throw(lyramilk::data::type_invalid)
+lyramilk::data::var::operator double () const
 {
 	switch(t){
 	  case t_bin:{
@@ -1406,33 +1406,33 @@ lyramilk::data::var::operator double () const throw(lyramilk::data::type_invalid
 	throw lyramilk::data::type_invalid(lyramilk::kdict("%s：错误的子类型%s","lyramilk::data::var::operator double()",type_name(t).c_str()));
 }
 
-lyramilk::data::var::operator float () const throw(lyramilk::data::type_invalid)
+lyramilk::data::var::operator float () const
 {
 	return (float)(double)*this;
 }
 
-lyramilk::data::var::operator lyramilk::data::var::array& () throw(lyramilk::data::type_invalid)
+lyramilk::data::var::operator lyramilk::data::var::array& ()
 {
 	array* ba = reinterpret_cast<array*>(&u.ba);
 	if(t == t_array) return *ba;
 	throw lyramilk::data::type_invalid(lyramilk::kdict("%s：%s类型无法转换为%s类型","lyramilk::data::var::operator lyramilk::data::var::array()",type_name(t).c_str(),type_name(t_array).c_str()));
 }
 
-lyramilk::data::var::operator const lyramilk::data::var::array& () const throw(lyramilk::data::type_invalid)
+lyramilk::data::var::operator const lyramilk::data::var::array& () const
 {
 	const array* ba = reinterpret_cast<const array*>(&u.ba);
 	if(t == t_array) return *ba;
 	throw lyramilk::data::type_invalid(lyramilk::kdict("%s：%s类型无法转换为%s类型","lyramilk::data::var::operator lyramilk::data::var::array()",type_name(t).c_str(),type_name(t_array).c_str()));
 }
 
-lyramilk::data::var::operator lyramilk::data::var::map& ()  throw(lyramilk::data::type_invalid)
+lyramilk::data::var::operator lyramilk::data::var::map& () 
 {
 	map* bm = reinterpret_cast<map*>(&u.bm);
 	if(t == t_map) return *bm;
 	throw lyramilk::data::type_invalid(lyramilk::kdict("%s：%s类型无法转换为%s类型","lyramilk::data::var::operator lyramilk::data::var::map()",type_name(t).c_str(),type_name(t_map).c_str()));
 }
 
-lyramilk::data::var::operator const lyramilk::data::map& () const throw(lyramilk::data::type_invalid)
+lyramilk::data::var::operator const lyramilk::data::map& () const
 {
 	const map* bm = reinterpret_cast<const map*>(&u.bm);
 	if(t == t_map) return *bm;
@@ -1591,62 +1591,62 @@ lyramilk::data::datawrapper* lyramilk::data::var::userdata() const
 	return u.pu;
 }
 
-lyramilk::data::var& lyramilk::data::var::operator[](const char* index) throw(lyramilk::data::type_invalid)
+lyramilk::data::var& lyramilk::data::var::operator[](const char* index)
 {
 	return at(index);
 }
 
-lyramilk::data::var& lyramilk::data::var::operator[](const wchar_t* index) throw(lyramilk::data::type_invalid)
+lyramilk::data::var& lyramilk::data::var::operator[](const wchar_t* index)
 {
 	return at(index);
 }
 
-lyramilk::data::var& lyramilk::data::var::operator[](const lyramilk::data::string& index) throw(lyramilk::data::type_invalid)
+lyramilk::data::var& lyramilk::data::var::operator[](const lyramilk::data::string& index)
 {
 	return at(index);
 }
 
-lyramilk::data::var& lyramilk::data::var::operator[](const lyramilk::data::wstring& index) throw(lyramilk::data::type_invalid)
+lyramilk::data::var& lyramilk::data::var::operator[](const lyramilk::data::wstring& index)
 {
 	return at(index);
 }
 
-lyramilk::data::var& lyramilk::data::var::operator[](lyramilk::data::uint64 index) throw(lyramilk::data::type_invalid)
+lyramilk::data::var& lyramilk::data::var::operator[](lyramilk::data::uint64 index)
 {
 	return at(index);
 }
 
-lyramilk::data::var& lyramilk::data::var::operator[](int index) throw(lyramilk::data::type_invalid)
+lyramilk::data::var& lyramilk::data::var::operator[](int index)
 {
 	return at((lyramilk::data::uint64)index);
 }
 
-const lyramilk::data::var& lyramilk::data::var::operator[](const char* index) const throw(lyramilk::data::type_invalid)
+const lyramilk::data::var& lyramilk::data::var::operator[](const char* index) const
 {
 	return at(index);
 }
 
-const lyramilk::data::var& lyramilk::data::var::operator[](const wchar_t* index) const throw(lyramilk::data::type_invalid)
+const lyramilk::data::var& lyramilk::data::var::operator[](const wchar_t* index) const
 {
 	return at(index);
 }
 
-const lyramilk::data::var& lyramilk::data::var::operator[](const lyramilk::data::string& index) const throw(lyramilk::data::type_invalid)
+const lyramilk::data::var& lyramilk::data::var::operator[](const lyramilk::data::string& index) const
 {
 	return at(index);
 }
 
-const lyramilk::data::var& lyramilk::data::var::operator[](const lyramilk::data::wstring& index) const throw(lyramilk::data::type_invalid)
+const lyramilk::data::var& lyramilk::data::var::operator[](const lyramilk::data::wstring& index) const
 {
 	return at(index);
 }
 
-const lyramilk::data::var& lyramilk::data::var::operator[](lyramilk::data::uint64 index) const throw(lyramilk::data::type_invalid)
+const lyramilk::data::var& lyramilk::data::var::operator[](lyramilk::data::uint64 index) const
 {
 	return at(index);
 }
 
-const lyramilk::data::var& lyramilk::data::var::operator[](int index) const throw(lyramilk::data::type_invalid)
+const lyramilk::data::var& lyramilk::data::var::operator[](int index) const
 {
 	return at((lyramilk::data::uint64)index);
 }
@@ -1694,7 +1694,7 @@ lyramilk::data::string lyramilk::data::var::type_name() const
 	return type_name(t);
 }
 
-lyramilk::data::var& lyramilk::data::var::type(lyramilk::data::var::vt nt) throw(lyramilk::data::type_invalid)
+lyramilk::data::var& lyramilk::data::var::type(lyramilk::data::var::vt nt)
 {
 	if(t == nt) return *this;
 	switch(nt){
@@ -1786,7 +1786,7 @@ bool lyramilk::data::var::type_like(lyramilk::data::var::vt nt) const
 	return false;
 }
 
-lyramilk::data::var::array::size_type lyramilk::data::var::size() const throw(lyramilk::data::type_invalid)
+lyramilk::data::var::array::size_type lyramilk::data::var::size() const
 {
 	if(t == t_array){
 		const lyramilk::data::array* ba = reinterpret_cast<const lyramilk::data::array*>(&u.ba);
@@ -1886,7 +1886,7 @@ bool read(lyramilk::data::istream& is,T& t)
 	return is.gcount() == sizeof(T);
 }
 
-bool lyramilk::data::var::_serialize(ostream& os) const throw(lyramilk::data::type_invalid)
+bool lyramilk::data::var::_serialize(ostream& os) const
 {
 	if((t&0x7f) != t) throw lyramilk::data::type_invalid(lyramilk::kdict("%s：不支持的类型%d","lyramilk::data::var::serialize()",(t&0x7f)));
 	unsigned char m;
@@ -2075,14 +2075,14 @@ bool lyramilk::data::var::_deserialize(istream& is)
 	return false;
 }
 
-bool lyramilk::data::var::serialize(ostream& os) const throw(lyramilk::data::type_invalid)
+bool lyramilk::data::var::serialize(ostream& os) const
 {
-	ostream::streamoff bpos = os.tellp();
+	std::size_t bpos = os.tellp();
 	int32 size = 0;
 	write(os,size);
 	bool ret = _serialize(os);
 	if(ret){
-		ostream::streamoff epos = os.tellp();
+		std::size_t epos = os.tellp();
 		os.seekp(bpos,ostream::beg);
 		size = (int32)(epos - bpos - sizeof(size));
 		if(size > 0){
@@ -2099,9 +2099,9 @@ bool lyramilk::data::var::serialize(ostream& os) const throw(lyramilk::data::typ
 
 bool lyramilk::data::var::deserialize(istream& is)
 {
-	istream::streamoff bpos = is.tellg();
+	std::size_t bpos = is.tellg();
 	is.seekg(0,istream::end);
-	istream::streamoff epos = is.tellg();
+	std::size_t epos = is.tellg();
 	is.seekg(bpos,istream::beg);
 
 	int32 objsize = 0;
@@ -2144,7 +2144,7 @@ lyramilk::data::strings inline split(const lyramilk::data::string& data,const ly
 	return lines;
 }
 
-lyramilk::data::strings inline pathof(const lyramilk::data::string& varpath) throw(lyramilk::data::type_invalid)
+lyramilk::data::strings inline pathof(const lyramilk::data::string& varpath)
 {
 	lyramilk::data::strings ret;
 	lyramilk::data::strings v = split(varpath,"/");
@@ -2170,7 +2170,7 @@ lyramilk::data::strings inline pathof(const lyramilk::data::string& varpath) thr
 }
 
 
-lyramilk::data::var& lyramilk::data::var::path(const lyramilk::data::string& varpath) throw(lyramilk::data::type_invalid)
+lyramilk::data::var& lyramilk::data::var::path(const lyramilk::data::string& varpath)
 {
 	lyramilk::data::strings fields = pathof(varpath);
 
@@ -2236,7 +2236,7 @@ lyramilk::data::var& lyramilk::data::var::path(const lyramilk::data::string& var
 	return *p;
 }
 
-const lyramilk::data::var& lyramilk::data::var::path(const lyramilk::data::string& varpath) const throw(lyramilk::data::type_invalid)
+const lyramilk::data::var& lyramilk::data::var::path(const lyramilk::data::string& varpath) const
 {
 	lyramilk::data::strings fields = pathof(varpath);
 
@@ -2287,7 +2287,7 @@ const lyramilk::data::var& lyramilk::data::var::path(const lyramilk::data::strin
 }
 
 template < >
-lyramilk::data::chunk& lyramilk::data::var::as<lyramilk::data::chunk&>() throw(lyramilk::data::type_invalid)
+lyramilk::data::chunk& lyramilk::data::var::as<lyramilk::data::chunk&>()
 {
 	if(t != t_bin) throw lyramilk::data::type_invalid(lyramilk::kdict("as取引用时无法转换类型"));
 	lyramilk::data::chunk* bp = reinterpret_cast<lyramilk::data::chunk*>(&u.bp);
@@ -2295,7 +2295,7 @@ lyramilk::data::chunk& lyramilk::data::var::as<lyramilk::data::chunk&>() throw(l
 }
 
 template < >
-lyramilk::data::string& lyramilk::data::var::as<lyramilk::data::string&>() throw(lyramilk::data::type_invalid)
+lyramilk::data::string& lyramilk::data::var::as<lyramilk::data::string&>()
 {
 	if(t != t_str) throw lyramilk::data::type_invalid(lyramilk::kdict("as取引用时无法转换类型"));
 	lyramilk::data::string* bs = reinterpret_cast<lyramilk::data::string*>(&u.bs);
@@ -2303,7 +2303,7 @@ lyramilk::data::string& lyramilk::data::var::as<lyramilk::data::string&>() throw
 }
 
 template < >
-lyramilk::data::wstring& lyramilk::data::var::as<lyramilk::data::wstring&>() throw(lyramilk::data::type_invalid)
+lyramilk::data::wstring& lyramilk::data::var::as<lyramilk::data::wstring&>()
 {
 	if(t != t_wstr) throw lyramilk::data::type_invalid(lyramilk::kdict("as取引用时无法转换类型"));
 	lyramilk::data::wstring* bw = reinterpret_cast<lyramilk::data::wstring*>(&u.bw);

@@ -88,7 +88,7 @@ namespace lyramilk{ namespace data
 			@param codingname 用该名称代表的编码对src进行转换。
 			@return 编码后的新数据。
 		*/
-		lyramilk::data::string encode(const lyramilk::data::string& codingname,const lyramilk::data::string& src) throw(lyramilk::exception);
+		lyramilk::data::string encode(const lyramilk::data::string& codingname,const lyramilk::data::string& src);
 
 		/**
 			@brief 将字符串转换为原编码。
@@ -96,7 +96,7 @@ namespace lyramilk{ namespace data
 			@param codingname 编码名称。
 			@return 解码后的原编码。
 		*/
-		lyramilk::data::string decode(const lyramilk::data::string& codingname,const lyramilk::data::string& src) throw(lyramilk::exception);
+		lyramilk::data::string decode(const lyramilk::data::string& codingname,const lyramilk::data::string& src);
 
 		/**
 			@brief 以字符串数组形式返回所有支持的编码。

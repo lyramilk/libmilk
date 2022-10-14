@@ -90,9 +90,9 @@ namespace lyramilk{namespace data
 		var(const lyramilk::data::datawrapper& v);
 		var(const lyramilk::data::var& v);
 
-		bool operator ==(const lyramilk::data::var& v) const throw(type_invalid);
-		bool operator !=(const lyramilk::data::var& v) const throw(type_invalid);
-		bool operator <(const lyramilk::data::var& v) const throw(type_invalid);
+		bool operator ==(const lyramilk::data::var& v) const;
+		bool operator !=(const lyramilk::data::var& v) const;
+		bool operator <(const lyramilk::data::var& v) const;
 
 /*
 		template <typename T>
@@ -104,13 +104,13 @@ namespace lyramilk{namespace data
 
 		lyramilk::data::var& operator =(const lyramilk::data::var& v);
 
-		lyramilk::data::var& at(lyramilk::data::uint64 index) throw(type_invalid);
-		lyramilk::data::var& at(const lyramilk::data::string& index) throw(type_invalid);
-		lyramilk::data::var& at(const lyramilk::data::wstring& index) throw(type_invalid);
+		lyramilk::data::var& at(lyramilk::data::uint64 index);
+		lyramilk::data::var& at(const lyramilk::data::string& index);
+		lyramilk::data::var& at(const lyramilk::data::wstring& index);
 
-		const lyramilk::data::var& at(lyramilk::data::uint64 index) const throw(type_invalid);
-		const lyramilk::data::var& at(const lyramilk::data::string& index) const throw(type_invalid);
-		const lyramilk::data::var& at(const lyramilk::data::wstring& index) const throw(type_invalid);
+		const lyramilk::data::var& at(lyramilk::data::uint64 index) const;
+		const lyramilk::data::var& at(const lyramilk::data::string& index) const;
+		const lyramilk::data::var& at(const lyramilk::data::wstring& index) const;
 		/**
 			@brief 为var赋值
 			@details 用另外一个var赋值这个var。
@@ -151,26 +151,26 @@ namespace lyramilk{namespace data
 		*/
 		lyramilk::data::var& assign(const datawrapper& v);
 
-		operator lyramilk::data::chunk () const throw(type_invalid);
-		operator lyramilk::data::string () const throw(type_invalid);
-		operator lyramilk::data::wstring () const throw(type_invalid);
-		operator bool () const throw(type_invalid);
-		operator int8 () const throw(type_invalid);
-		operator uint8 () const throw(type_invalid);
-		operator int16 () const throw(type_invalid);
-		operator uint16 () const throw(type_invalid);
-		operator int32 () const throw(type_invalid);
-		operator uint32 () const throw(type_invalid);
-		operator long () const throw(type_invalid);
-		operator unsigned long () const throw(type_invalid);
-		operator int64 () const throw(type_invalid);
-		operator uint64 () const throw(type_invalid);
-		operator double () const throw(type_invalid);
-		operator float () const throw(type_invalid);
-		operator lyramilk::data::var::array& () throw(type_invalid);
-		operator const lyramilk::data::var::array& () const throw(type_invalid);
-		operator lyramilk::data::var::map& () throw(type_invalid);
-		operator const lyramilk::data::var::map& () const throw(type_invalid);
+		operator lyramilk::data::chunk () const;
+		operator lyramilk::data::string () const;
+		operator lyramilk::data::wstring () const;
+		operator bool () const;
+		operator int8 () const;
+		operator uint8 () const;
+		operator int16 () const;
+		operator uint16 () const;
+		operator int32 () const;
+		operator uint32 () const;
+		operator long () const;
+		operator unsigned long () const;
+		operator int64 () const;
+		operator uint64 () const;
+		operator double () const;
+		operator float () const;
+		operator lyramilk::data::var::array& ();
+		operator const lyramilk::data::var::array& () const;
+		operator lyramilk::data::var::map& ();
+		operator const lyramilk::data::var::map& () const;
 
 		/**
 			@brief 安全类型转换
@@ -231,7 +231,7 @@ namespace lyramilk{namespace data
 			@param nt 新的var类型。
 			@return 返回var自身。
 		*/
-		lyramilk::data::var& type(vt nt) throw(type_invalid);
+		lyramilk::data::var& type(vt nt);
 		/**
 			@brief 判断var是否可以转换成指定的var类型。
 			@param nt 目标var类型。
@@ -239,26 +239,26 @@ namespace lyramilk{namespace data
 		*/
 		bool type_like(vt nt) const;
 
-		lyramilk::data::var& operator[](const char* index) throw(type_invalid);
-		lyramilk::data::var& operator[](const wchar_t* index) throw(type_invalid);
-		lyramilk::data::var& operator[](const lyramilk::data::string& index) throw(type_invalid);
-		lyramilk::data::var& operator[](const lyramilk::data::wstring& index) throw(type_invalid);
-		lyramilk::data::var& operator[](uint64 index) throw(type_invalid);
-		lyramilk::data::var& operator[](int index) throw(type_invalid);
+		lyramilk::data::var& operator[](const char* index);
+		lyramilk::data::var& operator[](const wchar_t* index);
+		lyramilk::data::var& operator[](const lyramilk::data::string& index);
+		lyramilk::data::var& operator[](const lyramilk::data::wstring& index);
+		lyramilk::data::var& operator[](uint64 index);
+		lyramilk::data::var& operator[](int index);
 
-		const lyramilk::data::var& operator[](const char* index) const throw(type_invalid);
-		const lyramilk::data::var& operator[](const wchar_t* index) const throw(type_invalid);
-		const lyramilk::data::var& operator[](const lyramilk::data::string& index) const throw(type_invalid);
-		const lyramilk::data::var& operator[](const lyramilk::data::wstring& index) const throw(type_invalid);
-		const lyramilk::data::var& operator[](uint64 index) const throw(type_invalid);
-		const lyramilk::data::var& operator[](int index) const throw(type_invalid);
+		const lyramilk::data::var& operator[](const char* index) const;
+		const lyramilk::data::var& operator[](const wchar_t* index) const;
+		const lyramilk::data::var& operator[](const lyramilk::data::string& index) const;
+		const lyramilk::data::var& operator[](const lyramilk::data::wstring& index) const;
+		const lyramilk::data::var& operator[](uint64 index) const;
+		const lyramilk::data::var& operator[](int index) const;
 
 		/**
 			@brief 以字符串返回
 			@details 强制将该var以字符串形式输出。
 			@return 返回字符串形式的var。
 		*/
-		lyramilk::data::var::array::size_type size() const throw(type_invalid);
+		lyramilk::data::var::array::size_type size() const;
 
 		/**
 			@brief 类型转换
@@ -266,7 +266,7 @@ namespace lyramilk{namespace data
 			@return 将该var转换成T类型的结果。
 		*/
 		template <typename T>
-		T as() throw(type_invalid)
+		T as()
 		{
 			return *this;
 		}
@@ -289,7 +289,7 @@ namespace lyramilk{namespace data
 			@details 将该var对象序列化到os流中。
 			@return 成功时返回true
 		*/
-		bool serialize(ostream& os) const throw(type_invalid);
+		bool serialize(ostream& os) const;
 
 		/**
 			@brief 反序列化
@@ -311,8 +311,8 @@ namespace lyramilk{namespace data
 			@param varpath 该var对象内部的路径表达式
 			@return 返回容器类型var内部的一个var。
 		*/
-		lyramilk::data::var& path(const lyramilk::data::string& varpath) throw(type_invalid);
-		const lyramilk::data::var& path(const lyramilk::data::string& varpath) const throw(type_invalid);
+		lyramilk::data::var& path(const lyramilk::data::string& varpath);
+		const lyramilk::data::var& path(const lyramilk::data::string& varpath) const;
 	  private:
 		vt t;
 
@@ -330,7 +330,7 @@ namespace lyramilk{namespace data
 			char ba[sizeof(std::vector<int>)];
 			char bm[sizeof(lyramilk::data::unordered_map<lyramilk::data::string,int,hash<lyramilk::data::string>, std::equal_to<lyramilk::data::string> ,lyramilk::data::allocator<std::pair<lyramilk::data::string,int> > >)];
 		}u;
-		bool _serialize(ostream& os) const throw(type_invalid);
+		bool _serialize(ostream& os) const;
 		bool _deserialize(istream& is);
 	};
 
@@ -339,13 +339,13 @@ namespace lyramilk{namespace data
 	typedef lyramilk::data::var::map map;
 
 	template < >
-	lyramilk::data::chunk& lyramilk::data::var::as<lyramilk::data::chunk&>() throw(type_invalid);
+	lyramilk::data::chunk& lyramilk::data::var::as<lyramilk::data::chunk&>();
 
 	template < >
-	lyramilk::data::string& lyramilk::data::var::as<lyramilk::data::string&>() throw(type_invalid);
+	lyramilk::data::string& lyramilk::data::var::as<lyramilk::data::string&>();
 
 	template < >
-	lyramilk::data::wstring& lyramilk::data::var::as<lyramilk::data::wstring&>() throw(type_invalid);
+	lyramilk::data::wstring& lyramilk::data::var::as<lyramilk::data::wstring&>();
 }}
 
 _lyramilk_api_ std::ostream& operator << (std::ostream& os, const lyramilk::data::var& t);
