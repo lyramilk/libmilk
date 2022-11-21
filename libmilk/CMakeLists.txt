@@ -1,6 +1,6 @@
 ﻿#定义工程名及版本
 project(milk)
-set(version 1.1.120)
+set(version 1.1.121)
 set(soversion 1.1)
 
 cmake_minimum_required (VERSION 2.8.11) 
@@ -41,8 +41,8 @@ if(NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.9)
 endif()
 
 #定义安装目录
-if(NOT install_dir)
-	set(install_dir ${CMAKE_CURRENT_SOURCE_DIR}/output)
+if(NOT prefix)
+	set(prefix ~/.local)
 endif()
 
 #定义输出目标的类型
@@ -222,13 +222,13 @@ else()
 endif()
 
 #定义安装目标
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/pkg/lib${PROJECT_NAME}.pc DESTINATION ${install_dir})
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/pkg/lib${PROJECT_NAME}_gdb.py DESTINATION ${install_dir})
-install(FILES ${src_hs} DESTINATION ${install_dir})
-install(TARGETS ${PROJECT_NAME} DESTINATION ${install_dir})
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/pkg/lib${PROJECT_NAME}.pc DESTINATION ${prefix}/lib/pkgconfig)
+#install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/pkg/lib${PROJECT_NAME}_gdb.py DESTINATION ${prefix}/lib/pkgconfig)
+install(FILES ${src_hs} DESTINATION ${prefix}/include/libmilk)
+install(TARGETS ${PROJECT_NAME} DESTINATION ${prefix}/lib64)
 
 if(PROJECT_LIBRARY_BOTH)
-	install(TARGETS ${PROJECT_NAME}_static DESTINATION ${install_dir})
+	install(TARGETS ${PROJECT_NAME}_static DESTINATION ${prefix})
 	target_link_libraries(${PROJECT_NAME}_static -lpthread -lrt -ldl ${CMAKE_LIBS_DEPENDS})
 endif()
 
