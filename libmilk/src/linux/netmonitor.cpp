@@ -60,6 +60,7 @@ namespace lyramilk{namespace netio
 
 	bool aiomonitor::empty()
 	{
+		lyramilk::threading::mutex_sync _(lock.r());
 		return fds.empty();
 	}
 

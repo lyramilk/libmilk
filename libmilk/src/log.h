@@ -26,6 +26,26 @@ namespace lyramilk { namespace log
 		error = 3
 	};
 
+
+	int _lyramilk_api_ open_with_mkdir(const char* path,int flags,mode_t mode);
+
+	class _lyramilk_api_ logfile
+	{
+		lyramilk::data::string filefmt;
+		mutable int fd;
+		mutable lyramilk::threading::mutex_os lock;
+		mutable unsigned long dt;
+		bool close_on_child;
+	  protected:
+		virtual bool access_logfile() const;
+	  public:
+		logfile();
+		virtual ~logfile();
+		virtual bool init(const lyramilk::data::string& filefmt,bool create_on_init,bool close_on_child);
+		virtual bool append(const char* p,lyramilk::data::uint64 s) const;
+		virtual bool ok() const;
+	};
+
 	/**
 		@brief 基本日志
 		@details 提供基本日志功能。这个模块将日志输出到控制台。
@@ -60,10 +80,7 @@ namespace lyramilk { namespace log
 	class _lyramilk_api_ logf:public logb
 	{
 	  protected:
-		lyramilk::data::string filefmt;
-		mutable int fd;
-		mutable lyramilk::threading::mutex_os lock;
-		mutable tm daytime;
+		logfile lf;
 	  public:
 		/**
 			@brief 构造函数
@@ -72,7 +89,7 @@ namespace lyramilk { namespace log
 		virtual ~logf();
 
 
-		virtual bool ok();
+		virtual bool ok() const;
 		/**
 			@brief 记录日志。
 			@details 提供基本日志功能。这个模块将日志输出到控制台。
@@ -93,10 +110,7 @@ namespace lyramilk { namespace log
 	class _lyramilk_api_ logfc:public logb
 	{
 	  protected:
-		lyramilk::data::string filefmt;
-		mutable int fd;
-		mutable lyramilk::threading::mutex_os lock;
-		mutable tm daytime;
+		logfile lf;
 	  public:
 		/**
 			@brief 构造函数
@@ -105,7 +119,7 @@ namespace lyramilk { namespace log
 		virtual ~logfc();
 
 
-		virtual bool ok();
+		virtual bool ok() const;
 		/**
 			@brief 记录日志。
 			@details 提供基本日志功能。这个模块将日志输出到控制台。
@@ -173,6 +187,7 @@ namespace lyramilk { namespace log
 	*/
 	class _lyramilk_api_ logss
 	{
+		logb* n;
 		logb*& p;
 		lyramilk::data::string prefix;
 	  public:
@@ -236,22 +251,6 @@ namespace lyramilk { namespace log
 	};
 
 
-
-
-	class _lyramilk_api_ logfile
-	{
-		lyramilk::data::string filefmt;
-		int fd;
-		lyramilk::threading::mutex_os lock;
-		tm daytime;
-	  protected:
-		virtual void check_split();
-	  public:
-		logfile();
-		virtual ~logfile();
-		virtual bool init(const lyramilk::data::string& filefmt,bool create_on_init);
-		virtual bool append(const char* p,lyramilk::data::uint64 s);
-	};
 
 
 

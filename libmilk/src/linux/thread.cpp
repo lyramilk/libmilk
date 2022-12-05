@@ -277,9 +277,11 @@ namespace lyramilk{namespace threading
 
 	void thread_cleanup_push(void (*routine)(void*),void* arg)
 	{
-		pthread_key_t key;
+		pthread_key_t key = -1;
 		pthread_key_create(&key,routine);
-		pthread_setspecific(key,arg);
+		if(key != -1){
+			pthread_setspecific(key,arg);
+		}
 	}
 
 

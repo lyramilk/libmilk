@@ -75,6 +75,7 @@ namespace lyramilk{namespace io
 	aiopoll_safe::aiopoll_safe(std::size_t threadcount)
 	{
 		busy_thread_count = 0;
+		seq_key = -1;
 		pthread_key_create(&seq_key,nullptr);
 		thread_idx = 0;
 
@@ -94,7 +95,9 @@ namespace lyramilk{namespace io
 		for(std::size_t idx = 0;idx < epfds.size();++idx){
 			::close(epfds[idx].epfd);
 		}
-		pthread_key_delete(seq_key);
+		if(seq_key != -1){
+			pthread_key_delete(seq_key);
+		}
 	}
 
 	bool aiopoll_safe::add(aioselector* r,lyramilk::data::int64 mask)

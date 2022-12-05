@@ -4,6 +4,9 @@
 #include <time.h>
 #include <iomanip>
 #include <sys/file.h>
+#include <string.h>
+#include <stack>
+#include <sys/stat.h>
 
 #ifdef __linux__
 #include <unistd.h>
@@ -14,6 +17,133 @@
 using namespace lyramilk::log;
 
 logss lyramilk::klog;
+
+lyramilk::data::strings inline split(const lyramilk::data::string& data,const lyramilk::data::string& sep)
+{
+	lyramilk::data::strings lines;
+	lines.reserve(10);
+	std::size_t posb = 0;
+	do{
+		std::size_t poscrlf = data.find(sep,posb);
+		if(poscrlf == data.npos){
+			lines.push_back(data.substr(posb));
+			posb = poscrlf;
+		}else{
+			lines.push_back(data.substr(posb,poscrlf - posb));
+			posb = poscrlf + sep.size();
+		}
+	}while(posb != data.npos);
+	return lines;
+}
+
+int lyramilk::log::open_with_mkdir(const char* path,int flags,mode_t mode)
+{
+	int fd = open(path,flags,mode);
+	if(fd == -1 && errno == ENOENT){
+		lyramilk::data::string spath = path;
+		lyramilk::data::strings patharray = split(spath,"/");
+
+		lyramilk::data::string tmpq;
+		for(lyramilk::data::strings::const_iterator it = patharray.begin();it!=patharray.end() - 1;++it){
+			tmpq.append(*it);
+			tmpq.push_back('/');
+			int q = access(tmpq.c_str(),0);
+
+			if(q == -1 && ENOENT == errno){
+				mkdir(tmpq.c_str(),S_IRWXU | S_IRWXG | S_IRWXO);
+			}
+		}
+		fd = open(path,flags,mode);
+	}
+
+
+	return fd;
+}
+
+logfile::logfile()
+{
+	fd = -1;
+	dt = 0;
+}
+
+logfile::~logfile()
+{
+	if(fd != -1){
+		::close(fd);
+	}
+}
+
+bool logfile::access_logfile() const
+{
+
+	//输入日志时只用当前时间分页。
+	time_t t_now = time(nullptr);
+	tm __t;
+	tm *t = localtime_r(&t_now,&__t);
+
+	unsigned long ndt = (__t.tm_year << 12) | (__t.tm_mon << 6) | (__t.tm_mday);
+
+	if(dt != ndt){
+		lyramilk::threading::mutex_sync _(lock);
+		if(dt != ndt){
+			if(fd != -1){
+				::close(fd);
+			}
+
+			dt = ndt;
+			lyramilk::data::string newfilename;
+
+			lyramilk::data::string::const_iterator it = filefmt.begin();
+			for(;it!=filefmt.end();++it){
+				if(*it == '?'){
+					char buff[128];
+					int r = ::strftime(buff,sizeof(buff),"%F",t);
+					newfilename.append(buff,r);
+				}else{
+					newfilename.push_back(*it);
+				}
+			}
+			fd = open_with_mkdir(newfilename.c_str(),O_WRONLY | O_CREAT | O_APPEND,0644);
+
+
+
+			if(close_on_child){
+				int flags = fcntl(fd, F_GETFD);
+				flags |= FD_CLOEXEC;
+				fcntl(fd, F_SETFD, flags);
+			}
+		}
+	}
+	return fd != -1;
+}
+
+bool logfile::ok() const
+{
+	if(fd == -1) return access_logfile();
+	return true;
+}
+
+bool logfile::init(const lyramilk::data::string& filefmt,bool create_on_init,bool close_on_child)
+{
+	this->filefmt = filefmt;
+	this->close_on_child = close_on_child;
+	if(create_on_init){
+		access_logfile();
+		return fd != -1;
+	}
+	return true;
+}
+
+bool logfile::append(const char* p,lyramilk::data::uint64 s) const
+{
+	if(access_logfile()){
+		return s == (lyramilk::data::uint64)::write(fd,p,s);
+	}
+	return false;
+}
+
+
+
 
 logb::logb():daytime()
 {
@@ -123,100 +253,24 @@ void logb::log(time_t ti,type ty,const lyramilk::data::string& usr,const lyramil
 
 logf::logf(const lyramilk::data::string& filefmt)
 {
-	this->filefmt = filefmt;
-	fd = -1;
+	lf.init(filefmt,false,false);
 }
 
 logf::~logf()
 {
-	if(fd != -1){
-		::close(fd);
-	}
 }
 
 
-bool logf::ok()
+bool logf::ok() const
 {
-	if(fd == -1){
-		char buff[32];
-		std::size_t r;
-		{
-			//输入日志时只用当前时间分页。
-			time_t t_now = time(nullptr);
-			tm __t;
-			tm *t = localtime_r(&t_now,&__t);
-
-			if(daytime.tm_year != __t.tm_year || daytime.tm_mon != __t.tm_mon || daytime.tm_mday != __t.tm_mday){
-				lyramilk::threading::mutex_sync _(lock);
-				if(daytime.tm_year != __t.tm_year || daytime.tm_mon != __t.tm_mon || daytime.tm_mday != __t.tm_mday){
-					daytime = __t;
-					lyramilk::data::string newfilename;
-
-					lyramilk::data::string::const_iterator it = filefmt.begin();
-					for(;it!=filefmt.end();++it){
-						if(*it == '?'){
-							r = ::strftime(buff,sizeof(buff),"%F",t);
-							newfilename.append(buff,r);
-						}else{
-							newfilename.push_back(*it);
-						}
-					}
-
-					fd = open(newfilename.c_str(),O_WRONLY | O_CREAT | O_APPEND | O_CLOEXEC,0644);
-					/*
-					int flags = fcntl(fd, F_GETFD);
-					flags |= FD_CLOEXEC;
-					fcntl(fd, F_SETFD, flags);*/
-				}
-			}
-		}
-	}
-
-	return fd != -1;
+	return lf.ok();
 }
 
 void logf::log(time_t ti,type ty,const lyramilk::data::string& usr,const lyramilk::data::string& app,const lyramilk::data::string& module,const lyramilk::data::string& str) const
 {
 	char buff[32];
 	std::size_t r;
-	{
-		//输入日志时只用当前时间分页。
-		time_t t_now = time(nullptr);
-		tm __t;
-		tm *t = localtime_r(&t_now,&__t);
-
-		if(daytime.tm_year != __t.tm_year || daytime.tm_mon != __t.tm_mon || daytime.tm_mday != __t.tm_mday){
-			lyramilk::threading::mutex_sync _(lock);
-			if(daytime.tm_year != __t.tm_year || daytime.tm_mon != __t.tm_mon || daytime.tm_mday != __t.tm_mday){
-				if(fd != -1){
-					::close(fd);
-				}
-				daytime = __t;
-				lyramilk::data::string newfilename;
-
-				lyramilk::data::string::const_iterator it = filefmt.begin();
-				for(;it!=filefmt.end();++it){
-					if(*it == '?'){
-						r = ::strftime(buff,sizeof(buff),"%F",t);
-						newfilename.append(buff,r);
-					}else{
-						newfilename.push_back(*it);
-					}
-				}
-
-				fd = open(newfilename.c_str(),O_WRONLY | O_CREAT | O_APPEND | O_CLOEXEC,0644);
-				/*
-				int flags = fcntl(fd, F_GETFD);
-				flags |= FD_CLOEXEC;
-				fcntl(fd, F_SETFD, flags);*/
-			}
-		}
-	}
-
-	if(fd == -1){
-		//如果打开文件失败，则这一天不再输出日志。
-		return;
-	}
+	if(!lf.ok()) return;
 
 	static const char* typeconst[4] = {" [debug] "," [trace] "," [warning] "," [error] "};
 
@@ -245,7 +299,7 @@ void logf::log(time_t ti,type ty,const lyramilk::data::string& usr,const lyramil
 	//写正文
 	cache.append(str);
 
-	write(fd,cache.c_str(),cache.size());
+	lf.append(cache.c_str(),cache.size());
 }
 
 
@@ -256,100 +310,25 @@ void logf::log(time_t ti,type ty,const lyramilk::data::string& usr,const lyramil
 
 logfc::logfc(const lyramilk::data::string& filefmt)
 {
-	this->filefmt = filefmt;
-	fd = -1;
+	lf.init(filefmt,false,false);
 }
 
 logfc::~logfc()
 {
-	if(fd != -1){
-		::close(fd);
-	}
 }
 
 
-bool logfc::ok()
+bool logfc::ok() const
 {
-	if(fd == -1){
-		char buff[32];
-		std::size_t r;
-		{
-			//输入日志时只用当前时间分页。
-			time_t t_now = time(nullptr);
-			tm __t;
-			tm *t = localtime_r(&t_now,&__t);
-
-			if(daytime.tm_year != __t.tm_year || daytime.tm_mon != __t.tm_mon || daytime.tm_mday != __t.tm_mday){
-				lyramilk::threading::mutex_sync _(lock);
-				if(daytime.tm_year != __t.tm_year || daytime.tm_mon != __t.tm_mon || daytime.tm_mday != __t.tm_mday){
-					daytime = __t;
-					lyramilk::data::string newfilename;
-
-					lyramilk::data::string::const_iterator it = filefmt.begin();
-					for(;it!=filefmt.end();++it){
-						if(*it == '?'){
-							r = ::strftime(buff,sizeof(buff),"%F",t);
-							newfilename.append(buff,r);
-						}else{
-							newfilename.push_back(*it);
-						}
-					}
-
-					fd = open(newfilename.c_str(),O_WRONLY | O_CREAT | O_APPEND | O_CLOEXEC,0644);
-					/*
-					int flags = fcntl(fd, F_GETFD);
-					flags |= FD_CLOEXEC;
-					fcntl(fd, F_SETFD, flags);*/
-				}
-			}
-		}
-	}
-
-	return fd != -1;
+	return lf.ok();
 }
 
 void logfc::log(time_t ti,type ty,const lyramilk::data::string& usr,const lyramilk::data::string& app,const lyramilk::data::string& module,const lyramilk::data::string& str) const
 {
 	char buff[32];
 	std::size_t r;
-	{
-		//输入日志时只用当前时间分页。
-		time_t t_now = time(nullptr);
-		tm __t;
-		tm *t = localtime_r(&t_now,&__t);
 
-		if(daytime.tm_year != __t.tm_year || daytime.tm_mon != __t.tm_mon || daytime.tm_mday != __t.tm_mday){
-			lyramilk::threading::mutex_sync _(lock);
-			if(daytime.tm_year != __t.tm_year || daytime.tm_mon != __t.tm_mon || daytime.tm_mday != __t.tm_mday){
-				if(fd != -1){
-					::close(fd);
-				}
-				daytime = __t;
-				lyramilk::data::string newfilename;
-
-				lyramilk::data::string::const_iterator it = filefmt.begin();
-				for(;it!=filefmt.end();++it){
-					if(*it == '?'){
-						r = ::strftime(buff,sizeof(buff),"%F",t);
-						newfilename.append(buff,r);
-					}else{
-						newfilename.push_back(*it);
-					}
-				}
-
-				fd = open(newfilename.c_str(),O_WRONLY | O_CREAT | O_APPEND | O_CLOEXEC,0644);
-				/*
-				int flags = fcntl(fd, F_GETFD);
-				flags |= FD_CLOEXEC;
-				fcntl(fd, F_SETFD, flags);*/
-			}
-		}
-	}
-
-	if(fd == -1){
-		//如果打开文件失败，则这一天不再输出日志。
-		return;
-	}
+	if(!lf.ok()) return;
 
 	static const char* typeconst[4] = {" [debug]"," [trace]"," [warning]"," [error]"};
 
@@ -380,7 +359,7 @@ void logfc::log(time_t ti,type ty,const lyramilk::data::string& usr,const lyrami
 	//写正文
 	cache.append(str);
 
-	write(fd,cache.c_str(),cache.size());
+	lf.append(cache.c_str(),cache.size());
 
 	switch(ty){
 	  case debug:{
@@ -502,14 +481,11 @@ logss2::~logss2()
 {
 }
 
-
-logb* nullplb = nullptr;
-
-logss::logss():p(nullplb)
+logss::logss():p(n),n(nullptr)
 {
 }
 
-logss::logss(const lyramilk::data::string& m):p(nullplb)
+logss::logss(const lyramilk::data::string& m):p(n),n(nullptr)
 {
 	prefix = m;
 }
@@ -528,15 +504,21 @@ void static logssclean(void* parg)
 	delete plogss2;
 }
 
-static pthread_key_t logss2_key;
+static pthread_key_t logss2_key = -1;
 
 static __attribute__ ((constructor)) void __init()
 {
-	pthread_key_create(&logss2_key,logssclean);
+	if(logss2_key == -1){
+		pthread_key_create((pthread_key_t*)&logss2_key,logssclean);
+	}
 }
 
 logss2& logss::operator()(type ty) const
 {
+	if(logss2_key == -1){
+		pthread_key_create((pthread_key_t*)&logss2_key,logssclean);
+	}
+
 	logss2* plogss2 = (logss2*)pthread_getspecific(logss2_key);
 	if(!plogss2){
 		plogss2 = new logss2;
@@ -550,6 +532,9 @@ logss2& logss::operator()(type ty) const
 
 logss2& logss::operator()(const lyramilk::data::string& m) const
 {
+	if(logss2_key == -1){
+		pthread_key_create((pthread_key_t*)&logss2_key,logssclean);
+	}
 	logss2* plogss2 = (logss2*)pthread_getspecific(logss2_key);
 	if(!plogss2){
 		plogss2 = new logss2;
@@ -566,11 +551,16 @@ logss2& logss::operator()(const lyramilk::data::string& m) const
 
 logss2& logss::operator()(type ty,const lyramilk::data::string& m) const
 {
+	if(logss2_key == -1){
+		pthread_key_create((pthread_key_t*)&logss2_key,logssclean);
+	}
 	logss2* plogss2 = (logss2*)pthread_getspecific(logss2_key);
 	if(!plogss2){
 		plogss2 = new logss2;
 		pthread_setspecific(logss2_key,plogss2);
 	}
+
+
 	plogss2->t = ty;
 	if(prefix.empty()){
 		plogss2->module = m;
@@ -594,77 +584,3 @@ lyramilk::log::logb* logss::rebase(lyramilk::log::logb* ploger)
 	p = ploger;
 	return old;
 }
-//		lyramilk::threading::mutex lock;
-
-
-
-
-		lyramilk::data::string filefmt;
-		int fd;
-		lyramilk::threading::mutex_os lock;
-		tm daytime;
-
-
-
-logfile::logfile():daytime()
-{
-	fd = -1;
-}
-
-logfile::~logfile()
-{
-	if(fd != -1){
-		::close(fd);
-	}
-}
-
-void logfile::check_split()
-{
-	//输入日志时只用当前时间分页。
-	time_t t_now = time(nullptr);
-	tm __t;
-	tm *t = localtime_r(&t_now,&__t);
-
-	if(daytime.tm_year != __t.tm_year || daytime.tm_mon != __t.tm_mon || daytime.tm_mday != __t.tm_mday){
-		lyramilk::threading::mutex_sync _(lock);
-		if(daytime.tm_year != __t.tm_year || daytime.tm_mon != __t.tm_mon || daytime.tm_mday != __t.tm_mday){
-			daytime = __t;
-			lyramilk::data::string newfilename;
-
-			lyramilk::data::string::const_iterator it = filefmt.begin();
-			for(;it!=filefmt.end();++it){
-				if(*it == '?'){
-					char buff[128];
-					int r = ::strftime(buff,sizeof(buff),"%F",t);
-					newfilename.append(buff,r);
-				}else{
-					newfilename.push_back(*it);
-				}
-			}
-			if(fd != -1){
-				::close(fd);
-			}
-			fd = open(newfilename.c_str(),O_WRONLY | O_CREAT | O_APPEND,0644);
-			int flags = fcntl(fd, F_GETFD);
-			flags |= FD_CLOEXEC;
-			fcntl(fd, F_SETFD, flags);
-		}
-	}
-}
-
-bool logfile::init(const lyramilk::data::string& filefmt,bool create_on_init)
-{
-	this->filefmt = filefmt;
-	if(create_on_init){
-		check_split();
-		return fd != -1;
-	}
-	return true;
-}
-
-bool logfile::append(const char* p,lyramilk::data::uint64 s)
-{
-	check_split();
-	return s == (lyramilk::data::uint64)::write(fd,p,s);
-}
-
