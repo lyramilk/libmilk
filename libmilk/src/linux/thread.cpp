@@ -44,6 +44,7 @@ namespace lyramilk{namespace threading
 				++cc;
 			}
 		}
+		if(cur < cc)usleep(300);
 		return cc > 0;
 	}
 

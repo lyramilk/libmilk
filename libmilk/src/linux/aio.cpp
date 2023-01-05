@@ -300,7 +300,7 @@ namespace lyramilk{namespace io
 	{
 		const int ee_max = 1;
 		epoll_event ees[ee_max];
-		int ee_count = epoll_wait(epfds[0].epfd, ees, ee_max,2000);
+		int ee_count = epoll_wait(epfds[0].epfd, ees, ee_max,200);
 		for(int i=0;i<ee_count;++i){
 			epoll_event &ee = ees[i];
 			aioselector* selector = (aioselector*)ee.data.ptr;
