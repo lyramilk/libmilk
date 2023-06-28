@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stack>
 #include <sys/stat.h>
+#include <errno.h>
 
 #ifdef __linux__
 #include <unistd.h>
