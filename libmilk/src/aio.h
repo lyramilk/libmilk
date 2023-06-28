@@ -146,6 +146,7 @@ namespace lyramilk{namespace io
 		virtual bool detach(aioselector* r);
 		virtual int svc();
 		virtual bool active(std::size_t threadcount);
+		virtual lyramilk::data::int64 get_fd_count();
 	};
 
 

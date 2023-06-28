@@ -274,11 +274,16 @@ namespace lyramilk{namespace netio
 
 	bool aiolistener::notify_in()
 	{
-		while(true){
+		for(int i=0;i<1000;++i){
 			sockaddr_in addr;
 			socklen_t addr_size = sizeof(addr);
 			native_socket_type acceptfd = ::accept(fd(),(sockaddr*)&addr,&addr_size);
-			if(acceptfd < 0) return true;
+			if(acceptfd < 0){
+				if(i == 0){
+					lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiolistener.EPOLLIN") << lyramilk::kdict("%x接受链接时发生错误：%s",pthread_self(),strerror(errno)) << std::endl;
+				}
+				return true;
+			}
 #ifdef OPENSSL_FOUND
 			SSL* sslptr = nullptr;
 			if(use_ssl && sslctx){
@@ -501,16 +506,24 @@ namespace lyramilk{namespace netio
 			return false;
 		}
 
-		hostent* h = gethostbyname(host.c_str());
-		if(h == nullptr){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiolistener.open") << lyramilk::kdict("获取%s的IP地址失败：%s",host.c_str(),strerror(errno)) << std::endl;
-			return false;
+		hostent h;
+		in_addr* inaddr;
+		char __buff[8192];
+		{
+			hostent* phe = nullptr;
+			int herrno;
+			gethostbyname_r(host.c_str(),&h,__buff,sizeof(__buff),&phe,&herrno);
+			if(phe == nullptr){
+				lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiolistener.open") << lyramilk::kdict("打开套接字(%s:%u)失败2：%s",host.c_str(),port,strerror(herrno)) << std::endl;
+				return false;
+			}
+			inaddr = (in_addr*)h.h_addr;
+			if(inaddr == nullptr){
+				lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiolistener.open") << lyramilk::kdict("打开套接字(%s:%u)失败3：%s",host.c_str(),port,strerror(herrno)) << std::endl;
+				return false;
+			}
 		}
-		in_addr* inaddr = (in_addr*)h->h_addr;
-		if(inaddr == nullptr){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiolistener.open") << lyramilk::kdict("获取%s的IP地址失败：%s",host.c_str(),strerror(errno)) << std::endl;
-			return false;
-		}
+
 		sockaddr_in addr = {0};
 		addr.sin_addr.s_addr = inaddr->s_addr;
 		addr.sin_family = AF_INET;
@@ -795,15 +808,22 @@ namespace lyramilk{namespace netio
 			return false;
 		}
 
-		hostent* h = gethostbyname(host.c_str());
-		if(h == nullptr){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.udplistener.open") << lyramilk::kdict("获取%s的IP地址失败：%s",host.c_str(),strerror(errno)) << std::endl;
-			return false;
-		}
-		in_addr* inaddr = (in_addr*)h->h_addr;
-		if(inaddr == nullptr){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.udplistener.open") << lyramilk::kdict("获取%s的IP地址失败：%s",host.c_str(),strerror(errno)) << std::endl;
-			return false;
+		hostent h;
+		in_addr* inaddr;
+		char __buff[8192];
+		{
+			hostent* phe = nullptr;
+			int herrno;
+			gethostbyname_r(host.c_str(),&h,__buff,sizeof(__buff),&phe,&herrno);
+			if(phe == nullptr){
+				lyramilk::klog(lyramilk::log::error,"lyramilk.netio.udplistener.open") << lyramilk::kdict("打开套接字(%s:%u)失败2：%s",host.c_str(),port,strerror(herrno)) << std::endl;
+				return false;
+			}
+			inaddr = (in_addr*)h.h_addr;
+			if(inaddr == nullptr){
+				lyramilk::klog(lyramilk::log::error,"lyramilk.netio.udplistener.open") << lyramilk::kdict("打开套接字(%s:%u)失败3：%s",host.c_str(),port,strerror(herrno)) << std::endl;
+				return false;
+			}
 		}
 		sockaddr_in addr = {0};
 		addr.sin_addr.s_addr = inaddr->s_addr;

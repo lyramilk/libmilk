@@ -66,16 +66,23 @@ namespace lyramilk{namespace netio
 			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_connector.open") << lyramilk::kdict("打开套接字失败：%s","套接字己经打开。") << std::endl;
 			return false;
 		}
-		hostent* h = gethostbyname(host.c_str());
-		if(h == nullptr){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_connector.open") << lyramilk::kdict("获取%s的IP地址失败：%p,%s",host.c_str(),h,strerror(errno)) << std::endl;
-			return false;
-		}
 
-		in_addr* inaddr = (in_addr*)h->h_addr;
-		if(inaddr == nullptr){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_connector.open") << lyramilk::kdict("获取%s的IP地址失败：%p,%s",host.c_str(),inaddr,strerror(errno)) << std::endl;
-			return false;
+		hostent h;
+		in_addr* inaddr;
+		char __buff[8192];
+		{
+			hostent* phe = nullptr;
+			int herrno;
+			gethostbyname_r(host.c_str(),&h,__buff,sizeof(__buff),&phe,&herrno);
+			if(phe == nullptr){
+				lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_connector.open") << lyramilk::kdict("打开套接字(%s:%u)失败2：%s",host.c_str(),port,strerror(herrno)) << std::endl;
+				return false;
+			}
+			inaddr = (in_addr*)h.h_addr;
+			if(inaddr == nullptr){
+				lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_connector.open") << lyramilk::kdict("打开套接字(%s:%u)失败3：%s",host.c_str(),port,strerror(herrno)) << std::endl;
+				return false;
+			}
 		}
 
 		sockaddr_in addr = {0};
@@ -209,16 +216,22 @@ namespace lyramilk{namespace netio
 			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_connector.open") << lyramilk::kdict("打开套接字失败：%s","套接字己经打开。") << std::endl;
 			return false;
 		}
-		hostent* h = gethostbyname(host.c_str());
-		if(h == nullptr){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_connector.open") << lyramilk::kdict("获取%s的IP地址失败：%p,%s",host.c_str(),h,strerror(errno)) << std::endl;
-			return false;
-		}
-
-		in_addr* inaddr = (in_addr*)h->h_addr;
-		if(inaddr == nullptr){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_connector.open") << lyramilk::kdict("获取%s的IP地址失败：%p,%s",host.c_str(),inaddr,strerror(errno)) << std::endl;
-			return false;
+		hostent h;
+		in_addr* inaddr;
+		char __buff[8192];
+		{
+			hostent* phe = nullptr;
+			int herrno;
+			gethostbyname_r(host.c_str(),&h,__buff,sizeof(__buff),&phe,&herrno);
+			if(phe == nullptr){
+				lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_connector.open") << lyramilk::kdict("打开套接字(%s:%u)失败2：%s",host.c_str(),port,strerror(herrno)) << std::endl;
+				return false;
+			}
+			inaddr = (in_addr*)h.h_addr;
+			if(inaddr == nullptr){
+				lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aioproxysession_connector.open") << lyramilk::kdict("打开套接字(%s:%u)失败3：%s",host.c_str(),port,strerror(herrno)) << std::endl;
+				return false;
+			}
 		}
 
 		sockaddr_in addr = {0};

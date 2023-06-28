@@ -790,16 +790,25 @@ namespace lyramilk{namespace netio
 			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字(%s:%u)失败：%s",host.c_str(),port,"套接字己经打开。") << std::endl;
 			return false;
 		}
-		hostent* h = gethostbyname(host.c_str());
-		if(h == nullptr){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字(%s:%u)失败：%s",host.c_str(),port,strerror(errno)) << std::endl;
-			return false;
+
+		hostent h;
+		in_addr* inaddr;
+		char __buff[8192];
+		{
+			hostent* phe = nullptr;
+			int herrno;
+			gethostbyname_r(host.c_str(),&h,__buff,sizeof(__buff),&phe,&herrno);
+			if(phe == nullptr){
+				lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字(%s:%u)失败2：%s",host.c_str(),port,strerror(herrno)) << std::endl;
+				return false;
+			}
+			inaddr = (in_addr*)h.h_addr;
+			if(inaddr == nullptr){
+				lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字(%s:%u)失败3：%s",host.c_str(),port,strerror(herrno)) << std::endl;
+				return false;
+			}
 		}
-		in_addr* inaddr = (in_addr*)h->h_addr;
-		if(inaddr == nullptr){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字(%s:%u)失败：%s",host.c_str(),port,strerror(errno)) << std::endl;
-			return false;
-		}
+
 		sockaddr_in addr = {0};
 		addr.sin_addr.s_addr = inaddr->s_addr;
 		addr.sin_family = AF_INET;
@@ -849,16 +858,25 @@ namespace lyramilk{namespace netio
 			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字(%s:%u)失败：%s",host.c_str(),port,"套接字己经打开。") << std::endl;
 			return false;
 		}
-		hostent* h = gethostbyname(host.c_str());
-		if(h == nullptr){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字(%s:%u)失败：%s",host.c_str(),port,strerror(errno)) << std::endl;
-			return false;
+
+		hostent h;
+		in_addr* inaddr;
+		char __buff[8192];
+		{
+			hostent* phe = nullptr;
+			int herrno;
+			gethostbyname_r(host.c_str(),&h,__buff,sizeof(__buff),&phe,&herrno);
+			if(phe == nullptr){
+				lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字(%s:%u)失败2：%s",host.c_str(),port,strerror(herrno)) << std::endl;
+				return false;
+			}
+			inaddr = (in_addr*)h.h_addr;
+			if(inaddr == nullptr){
+				lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字(%s:%u)失败3：%s",host.c_str(),port,strerror(herrno)) << std::endl;
+				return false;
+			}
 		}
-		in_addr* inaddr = (in_addr*)h->h_addr;
-		if(inaddr == nullptr){
-			lyramilk::klog(lyramilk::log::error,"lyramilk.netio.client.open") << lyramilk::kdict("打开套接字(%s:%u)失败：%s",host.c_str(),port,strerror(errno)) << std::endl;
-			return false;
-		}
+
 		sockaddr_in addr = {0};
 		addr.sin_addr.s_addr = inaddr->s_addr;
 		addr.sin_family = AF_INET;

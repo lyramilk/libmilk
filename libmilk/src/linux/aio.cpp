@@ -11,7 +11,7 @@
 
 namespace lyramilk{namespace io
 {
-	const static int pool_max = 1000000;
+	const static int pool_max = 10000000;
 
 	// aioselector
 	aioselector::aioselector()
@@ -411,4 +411,11 @@ namespace lyramilk{namespace io
 		while(running && transmessage());
 		return 0;
 	}
+
+	lyramilk::data::int64 aiopoll::get_fd_count()
+	{
+		return fdcount;
+	}
+
+
 }}

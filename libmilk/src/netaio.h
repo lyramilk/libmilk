@@ -90,7 +90,6 @@ namespace lyramilk{namespace netio
 
 		/**
 			@brief 断开时触发
-			@return 返回false会导致服务器主动断开链接。
 		*/
 		virtual void onfinally(lyramilk::data::ostream& os);
 
