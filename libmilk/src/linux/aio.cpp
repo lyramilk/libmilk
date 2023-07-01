@@ -78,6 +78,7 @@ namespace lyramilk{namespace io
 		seq_key = -1;
 		pthread_key_create(&seq_key,nullptr);
 		thread_idx = 0;
+		fdcount = 0;
 
 		if(threadcount > 0){
 			epfds.resize(threadcount);
