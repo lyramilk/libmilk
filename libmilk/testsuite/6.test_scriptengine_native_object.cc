@@ -1,3 +1,5 @@
+#include "config.h"
+#ifdef JS17_FOUND
 #include <iostream>
 #include <fstream>
 #include "log.h"
@@ -6,6 +8,7 @@
 #include "ansi_3_64.h"
 #include "testing.h"
 #include <jsapi.h>
+
 #define D(x...) lyramilk::kdict(x)
 
 class os:public lyramilk::script::sclass
@@ -247,7 +250,9 @@ void test_script(lyramilk::data::string file,lyramilk::script::engine* eng)
 		//r.push_back(eng->createobject("test_number",r2));
 		r.push_back(10000000000000011);
 		r.push_back(10000000000000010);
-		std::cout << "调用script的test函数的结果：" << eng->call("mytest",r) << std::endl;
+
+		lyramilk::data::var vret = r;
+		std::cout << "调用script的test函数的结果：" << eng->call("mytest",&vret) << std::endl;
 
 		std::cout << (10000000000000011 + 10000000000000010) << std::endl;
 		eng->gc();
@@ -278,3 +283,9 @@ int main(int argc,const char* argv[])
 	}
 	return 0;
 }
+#else
+int main(int argc,const char* argv[])
+{
+	return 0;
+}
+#endif

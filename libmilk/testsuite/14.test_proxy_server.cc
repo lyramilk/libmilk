@@ -15,7 +15,7 @@ class myhttpproxy:public lyramilk::netio::aioproxysession
 	virtual bool onrequest(const char* cache, int size,int* bytesused, lyramilk::data::ostream& os)
 	{
 		*bytesused = 0;
-		return combine("127.0.0.1",80);
+		return async_redirect_to("127.0.0.1",80);
 	}
 };
 

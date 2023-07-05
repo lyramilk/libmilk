@@ -7,6 +7,7 @@
 #include "dict.h"
 #define D(x...) lyramilk::kdict(x)
 
+#include "scriptengine.h"
 #include "script_js.h"
 #include "script_lua.h"
 
@@ -119,6 +120,7 @@ class lua_engines:public lyramilk::script::engines
 };
 #endif
 
+#ifdef JS17_FOUND
 class js_engines:public lyramilk::script::engines
 {
 	virtual lyramilk::script::engine* underflow()
@@ -141,6 +143,7 @@ class js_engines:public lyramilk::script::engines
 		return p;
 	}
 };
+#endif
 
 
 
@@ -149,7 +152,10 @@ int main(int argc,const char* argv[])
 #ifdef LUAJIT_FOUND
 	lua_engines engs_lua;
 #endif
+
+#ifdef JS17_FOUND
 	js_engines engs_js;
+#endif
 
 #ifdef LUAJIT_FOUND
 	{
@@ -216,8 +222,11 @@ int main(int argc,const char* argv[])
 		lyramilk::script::engines::ptr eng1 = engs_lua.get();
 		lyramilk::script::engines::ptr eng2 = engs_lua.get();
 #endif
+
+#ifdef JS17_FOUND
 		lyramilk::script::engines::ptr eng3 = engs_js.get();
 		lyramilk::script::engines::ptr eng4 = engs_js.get();
+#endif
 
 #ifdef LUAJIT_FOUND
 		if(eng){
@@ -251,6 +260,7 @@ int main(int argc,const char* argv[])
 		}
 #endif
 
+#ifdef JS17_FOUND
 		if(eng3){
 			std::cout << "取得了eng3" << std::endl;
 
@@ -270,6 +280,7 @@ int main(int argc,const char* argv[])
 
 			std::cout << "调用script的test函数的结果：" << eng4->call("test",r) << std::endl;
 		}
+#endif
 	}
 
 	return 0;

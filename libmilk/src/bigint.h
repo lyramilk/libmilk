@@ -28,7 +28,7 @@ namespace lyramilk{ namespace data
 			bool operator~() const;
 			operator bool() const;
 		};
-		typedef class _lyramilk_api_ std::vector<unsigned int> bytes_type;
+		using bytes_type = std::vector<unsigned int>;
 		typedef std::size_t bindex_type;
 		bytes_type d;
 		bool minus() const;

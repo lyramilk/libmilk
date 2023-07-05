@@ -96,7 +96,7 @@ namespace lyramilk{namespace io
 		for(std::size_t idx = 0;idx < epfds.size();++idx){
 			::close(epfds[idx].epfd);
 		}
-		if(seq_key != -1){
+		if((int)seq_key != -1){
 			pthread_key_delete(seq_key);
 		}
 	}

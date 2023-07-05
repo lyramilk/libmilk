@@ -124,7 +124,7 @@ namespace lyramilk{namespace data
 	using std::allocator;
 #endif
 
-
+/*
 	typedef class _lyramilk_api_ std::basic_string<char, std::char_traits<char>, allocator<char> > string;
 	typedef class _lyramilk_api_ std::basic_string<unsigned char, std::char_traits<unsigned char>, allocator<unsigned char> > chunk;
 	typedef class _lyramilk_api_ std::basic_string<wchar_t, std::char_traits<wchar_t>, allocator<wchar_t> > wstring;
@@ -155,7 +155,39 @@ namespace lyramilk{namespace data
 
 
 	typedef class _lyramilk_api_ std::vector<lyramilk::data::string,allocator<lyramilk::data::string> > strings;
+*/
 
+	using string = std::basic_string<char, std::char_traits<char>, allocator<char> >;
+
+	using chunk =  std::basic_string<unsigned char, std::char_traits<unsigned char>, allocator<unsigned char> >;
+	using wstring = std::basic_string<wchar_t, std::char_traits<wchar_t>, allocator<wchar_t> >;
+
+	using stringstream = std::basic_stringstream<char, std::char_traits<char>, allocator<char> >;
+	using datastream = std::basic_stringstream<unsigned char, std::char_traits<unsigned char>, allocator<unsigned char> >;
+	using wstringstream = std::basic_stringstream<wchar_t, std::char_traits<wchar_t>, allocator<wchar_t> >;
+
+	using istringstream = std::basic_istringstream<char, std::char_traits<char>, allocator<char> >;
+	using idatastream = std::basic_istringstream<unsigned char, std::char_traits<unsigned char>, allocator<unsigned char> >;
+	using wistringstream = std::basic_istringstream<wchar_t, std::char_traits<wchar_t>, allocator<wchar_t> >;
+
+	using ostringstream = std::basic_ostringstream<char, std::char_traits<char>, allocator<char> >;
+	using odatastream = std::basic_ostringstream<unsigned char, std::char_traits<unsigned char>, allocator<unsigned char> >;
+	using wostringstream = std::basic_ostringstream<wchar_t, std::char_traits<wchar_t>, allocator<wchar_t> >;
+
+	using stream = std::basic_iostream<char>;
+	using bstream = std::basic_iostream<unsigned char>;
+	using wstream = std::basic_iostream<wchar_t>;
+
+	using istream = std::basic_istream<char>;
+	using bistream = std::basic_istream<unsigned char>;
+	using wistream = std::basic_istream<wchar_t>;
+
+	using ostream = std::basic_ostream<char>;
+	using bostream = std::basic_ostream<unsigned char>;
+	using wostream = std::basic_ostream<wchar_t>;
+
+
+	using strings = std::vector<lyramilk::data::string,allocator<lyramilk::data::string> >;
 
 	class case_insensitive_hash{
 	  public:

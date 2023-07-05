@@ -1,3 +1,5 @@
+#include "config.h"
+#ifdef YAML_FOUND
 #include <iostream>
 #include <fstream>
 #include <cassert>
@@ -38,3 +40,9 @@ int main(int argc,const char* argv[])
 	}
 	return 0;
 }
+#else
+int main(int argc,const char* argv[])
+{
+	return 0;
+}
+#endif

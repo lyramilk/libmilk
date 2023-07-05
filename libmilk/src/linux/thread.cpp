@@ -280,7 +280,7 @@ namespace lyramilk{namespace threading
 	{
 		pthread_key_t key = -1;
 		pthread_key_create(&key,routine);
-		if(key != -1){
+		if((int)key != -1){
 			pthread_setspecific(key,arg);
 		}
 	}

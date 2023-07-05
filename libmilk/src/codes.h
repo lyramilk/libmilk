@@ -103,7 +103,7 @@ namespace lyramilk{ namespace data
 		*/
 		lyramilk::data::array supports();
 	  protected:
-		typedef class _lyramilk_api_ std::map<lyramilk::data::string,getter> builder_type;
+		using builder_type = std::map<lyramilk::data::string,getter>;
 		builder_type builder;
 	};
 }}

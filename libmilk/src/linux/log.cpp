@@ -327,7 +327,6 @@ bool logfc::ok() const
 void logfc::log(time_t ti,type ty,const lyramilk::data::string& usr,const lyramilk::data::string& app,const lyramilk::data::string& module,const lyramilk::data::string& str) const
 {
 	char buff[32];
-	std::size_t r;
 
 	if(!lf.ok()) return;
 
@@ -482,11 +481,11 @@ logss2::~logss2()
 {
 }
 
-logss::logss():p(n),n(nullptr)
+logss::logss():n(nullptr),p(n)
 {
 }
 
-logss::logss(const lyramilk::data::string& m):p(n),n(nullptr)
+logss::logss(const lyramilk::data::string& m):n(nullptr),p(n)
 {
 	prefix = m;
 }
@@ -509,14 +508,14 @@ static pthread_key_t logss2_key = -1;
 
 static __attribute__ ((constructor)) void __init()
 {
-	if(logss2_key == -1){
+	if((int)logss2_key == -1){
 		pthread_key_create((pthread_key_t*)&logss2_key,logssclean);
 	}
 }
 
 logss2& logss::operator()(type ty) const
 {
-	if(logss2_key == -1){
+	if((int)logss2_key == -1){
 		pthread_key_create((pthread_key_t*)&logss2_key,logssclean);
 	}
 
@@ -533,7 +532,7 @@ logss2& logss::operator()(type ty) const
 
 logss2& logss::operator()(const lyramilk::data::string& m) const
 {
-	if(logss2_key == -1){
+	if((int)logss2_key == -1){
 		pthread_key_create((pthread_key_t*)&logss2_key,logssclean);
 	}
 	logss2* plogss2 = (logss2*)pthread_getspecific(logss2_key);
@@ -552,7 +551,7 @@ logss2& logss::operator()(const lyramilk::data::string& m) const
 
 logss2& logss::operator()(type ty,const lyramilk::data::string& m) const
 {
-	if(logss2_key == -1){
+	if((int)logss2_key == -1){
 		pthread_key_create((pthread_key_t*)&logss2_key,logssclean);
 	}
 	logss2* plogss2 = (logss2*)pthread_getspecific(logss2_key);
