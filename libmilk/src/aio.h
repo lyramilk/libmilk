@@ -110,6 +110,9 @@ namespace lyramilk{namespace io
 		virtual bool detach(aioselector* r);
 		virtual bool remove(aioselector* r);
 
+		/// 通过fd触发事件使fd绑定的会话安全销毁。
+		virtual bool destory_by_fd(int fd);
+
 		virtual lyramilk::data::int64 get_thread_idx();
 		virtual lyramilk::data::int64 get_fd_count();
 		virtual void onevent(aioselector* r,lyramilk::data::int64 events);
@@ -141,9 +144,6 @@ namespace lyramilk{namespace io
 
 		/// 把r从池中移除，会导致r被释放。
 		virtual bool remove(aioselector* r);
-
-		/// 通过fd触发事件使fd绑定的会话安全销毁。
-		virtual bool destory_by_fd(int fd);
 
 		/// 把r从池中移除，不会导致r被释放。
 		virtual bool detach(aioselector* r);

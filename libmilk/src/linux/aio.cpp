@@ -130,6 +130,15 @@ namespace lyramilk{namespace io
 		}
 		return false;
 	}
+
+
+	bool aiopoll_safe::destory_by_fd(int fd)
+	{
+		// 这个操作可以导致主线程的epoll拿到一个事件，但是处理该事件的时候会出错，从而使得该fd对应的会话在epollwait线程中被安全销毁。
+		::shutdown(fd,SHUT_WR);
+		return true;
+	}
+
 	bool aiopoll_safe::detach(aioselector* r)
 	{
 		if(r->thread_idx < 0 || r->thread_idx >= (lyramilk::data::int64)epfds.size()){
@@ -369,13 +378,6 @@ namespace lyramilk{namespace io
 			return true;
 		}
 		return false;
-	}
-
-	bool aiopoll::destory_by_fd(int fd)
-	{
-		// 这个操作可以导致主线程的epoll拿到一个事件，但是处理该事件的时候会出错，从而使得该fd对应的会话在epollwait线程中被安全销毁。
-		::shutdown(fd,SHUT_WR);
-		return true;
 	}
 
 	bool aiopoll::detach(aioselector* r)
