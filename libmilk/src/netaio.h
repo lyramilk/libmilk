@@ -75,6 +75,7 @@ namespace lyramilk{namespace netio
 		virtual bool notify_hup();
 		virtual bool notify_err();
 		virtual bool notify_pri();
+		virtual void ondestory();
 	  public:
 		aiosession_sync();
 		virtual ~aiosession_sync();

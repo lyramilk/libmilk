@@ -142,6 +142,9 @@ namespace lyramilk{namespace io
 		/// 把r从池中移除，会导致r被释放。
 		virtual bool remove(aioselector* r);
 
+		/// 通过fd触发事件使fd绑定的会话安全销毁。
+		virtual bool destory_by_fd(int fd);
+
 		/// 把r从池中移除，不会导致r被释放。
 		virtual bool detach(aioselector* r);
 		virtual int svc();

@@ -185,7 +185,7 @@ namespace lyramilk{namespace netio
 		if(fd() < 0) return false;
 		pollfd pfd;
 		pfd.fd = fd();
-		pfd.events = POLLOUT;
+		pfd.events = POLLOUT | POLLERR | POLLHUP | POLLRDHUP;
 		pfd.revents = 0;
 		int ret = ::poll(&pfd,1,0);
 		if(ret > 0){
@@ -383,7 +383,7 @@ namespace lyramilk{namespace netio
 	{
 		pollfd pfd;
 		pfd.fd = fd();
-		pfd.events = POLLIN;
+		pfd.events = POLLIN | POLLERR | POLLHUP | POLLRDHUP;
 		pfd.revents = 0;
 		int ret = ::poll(&pfd,1,msec);
 		if(ret > 0){
@@ -401,7 +401,7 @@ namespace lyramilk{namespace netio
 	{
 		pollfd pfd;
 		pfd.fd = fd();
-		pfd.events = POLLOUT;
+		pfd.events = POLLOUT | POLLERR | POLLHUP | POLLRDHUP;
 		pfd.revents = 0;
 		int ret = ::poll(&pfd,1,msec);
 		if(ret > 0){
@@ -419,7 +419,7 @@ namespace lyramilk{namespace netio
 	{
 		pollfd pfd;
 		pfd.fd = fd();
-		pfd.events = POLLHUP | POLLERR;
+		pfd.events = POLLHUP | POLLERR | POLLHUP | POLLRDHUP;
 		pfd.revents = 0;
 		int ret = ::poll(&pfd,1,0);
 		if(ret > 0){
@@ -434,7 +434,7 @@ namespace lyramilk{namespace netio
 	{
 		pollfd pfd;
 		pfd.fd = fd;
-		pfd.events = POLLIN;
+		pfd.events = POLLIN | POLLERR | POLLHUP | POLLRDHUP;
 		pfd.revents = 0;
 		int ret = ::poll(&pfd,1,msec);
 		if(ret > 0){
@@ -452,7 +452,7 @@ namespace lyramilk{namespace netio
 	{
 		pollfd pfd;
 		pfd.fd = fd;
-		pfd.events = POLLOUT;
+		pfd.events = POLLOUT | POLLERR | POLLHUP | POLLRDHUP;
 		pfd.revents = 0;
 		int ret = ::poll(&pfd,1,msec);
 		if(ret > 0){
@@ -470,7 +470,7 @@ namespace lyramilk{namespace netio
 	{
 		pollfd pfd;
 		pfd.fd = fd;
-		pfd.events = POLLHUP | POLLERR;
+		pfd.events = POLLHUP | POLLERR | POLLHUP | POLLRDHUP;
 		pfd.revents = 0;
 		int ret = ::poll(&pfd,1,0);
 		if(ret > 0){

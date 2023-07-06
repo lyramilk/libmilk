@@ -248,28 +248,27 @@ namespace lyramilk{namespace io
 		assert(r);
 		if(events & EPOLLPRI){
 			if(!r->notify_pri()){
-				remove(r);
+				if(remove(r)) r->ondestory();
 			}
 			return;
 		}else if(events & EPOLLIN){
 			if(!r->notify_in()){
-				remove(r);
+				if(remove(r)) r->ondestory();
 			}
 			return;
 		}else if(events & EPOLLOUT){
 			if(!r->notify_out()){
-				remove(r);
+				if(remove(r)) r->ondestory();
 			}
 			return;
 		}else if(events & (EPOLLHUP | EPOLLRDHUP)){
 			if(!r->notify_hup()){
-				remove(r);
+				if(remove(r)) r->ondestory();
 			}
 			return;
 		}else if(events & EPOLLERR){
-			if(!r->notify_err()){
-				remove(r);
-			}
+			r->notify_err();
+			if(remove(r)) r->ondestory();
 			return;
 		}
 	}
@@ -367,12 +366,17 @@ namespace lyramilk{namespace io
 	bool aiopoll::remove(aioselector* r)
 	{
 		if(detach(r)){
-			r->ondestory();
 			return true;
 		}
 		return false;
 	}
 
+	bool aiopoll::destory_by_fd(int fd)
+	{
+		// 这个操作可以导致主线程的epoll拿到一个事件，但是处理该事件的时候会出错，从而使得该fd对应的会话在epollwait线程中被安全销毁。
+		::shutdown(fd,SHUT_WR);
+		return true;
+	}
 
 	bool aiopoll::detach(aioselector* r)
 	{

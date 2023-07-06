@@ -130,9 +130,14 @@ namespace lyramilk{namespace netio
 		return oninit(aos);
 	}
 
-	void aiosession_sync::destory()
+	void aiosession_sync::ondestory()
 	{
 		onfinally(aos);
+		aiosession::ondestory();
+	}
+
+	void aiosession_sync::destory()
+	{
 		aiosession::destory();
 	}
 	
