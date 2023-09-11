@@ -341,5 +341,43 @@ namespace lyramilk{namespace threading
 		return sigval < max_signal;
 	}
 
+
+	condvar::condvar()
+	{
+		pthread_mutexattr_t attr;
+		pthread_mutexattr_init(&attr);
+		pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+		pthread_mutex_init(&mutex,&attr);
+
+		pthread_cond_init(&cond, NULL);
+	}
+
+	condvar::~condvar()
+	{
+		pthread_cond_destroy(&cond);
+		pthread_mutex_destroy(&mutex);
+	}
+
+
+	void condvar::wait()
+	{
+		pthread_mutex_lock(&mutex);
+		pthread_cond_wait(&cond, &mutex);
+		pthread_mutex_unlock(&mutex);
+	}
+
+	void condvar::signal()
+	{
+		pthread_mutex_lock(&mutex);
+		pthread_cond_signal(&cond);
+		pthread_mutex_unlock(&mutex);
+	}
+
+	void condvar::broadcast()
+	{
+		pthread_mutex_lock(&mutex);
+		pthread_cond_broadcast(&cond);
+		pthread_mutex_unlock(&mutex);
+	}
 }}
 

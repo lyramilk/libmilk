@@ -202,6 +202,25 @@ namespace lyramilk{namespace threading
 
 	/// 线程结束时调用。
 	void thread_cleanup_push(void (*routine)(void*),void* arg);
+
+
+	/**
+		@brief 条件变量
+		@details 
+	*/
+	class _lyramilk_api_ condvar
+	{
+		pthread_mutex_t mutex;
+		pthread_cond_t cond;
+	  public:
+		condvar();
+		~condvar();
+
+		void wait();
+		void signal();
+		void broadcast();
+	};
+
 }}
 
 #endif
