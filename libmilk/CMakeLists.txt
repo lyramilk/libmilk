@@ -1,38 +1,43 @@
 ﻿#定义工程名及版本
 project(milk)
-set(version 1.1.128)
+set(version 1.1.129)
 set(soversion 1.1)
 
 cmake_minimum_required (VERSION 3.0) 
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS ON)
 set(CMAKE_USE_RELATIVE_PATHS ON)
-#set(CMAKE_INCLUDE_DIRECTORIES_BEFORE ON)
 
 #导入一此需要用到的工具包
 include(CheckIncludeFileCXX)
 include(CheckLibraryExists)
 include(FindPkgConfig)
 
-
-
 #定义安装目录
 set(CMAKE_INSTALL_PREFIX $ENV{HOME}/.local)
 
-
 #定制编译选项
+set(CMAKE_BUILD_TYPE Release)
 SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -ggdb -D_DEBUG -fstack-protector")
 SET(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
-set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -Wall -fPIC")
+
+add_compile_options(-Wall)
 
 if(NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.9)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated -Wno-switch")
+	add_compile_options(-Wno-deprecated)
+	add_compile_options(-Wno-switch)
 endif()
 
 
 option(shared "build dynamic library" ON)
 option(static "build static library" OFF)
 option(minimal "without third party" OFF)
-option(pure-static "build pure static" OFF)
+option(alone "build without other dynamic library" OFF)
+
+message("optional:CMAKE_BUILD_TYPE=" ${CMAKE_BUILD_TYPE})
+message("optional:shared=" ${shared})
+message("optional:static=" ${static})
+message("optional:minimal=" ${minimal})
+message("optional:alone=" ${alone})
 
 #搜索源代码
 aux_source_directory(src src_cpps)
@@ -128,9 +133,6 @@ endif()
 
 
 
-
-
-
 # 根据外部依赖的存在与定义一些宏
 
 foreach(v ${BUILD_DEPENDS})
@@ -151,40 +153,39 @@ foreach(v ${CONFIG_MACROS})
 	set(CMAKE_CONFIG_MACROS "${CMAKE_CONFIG_MACROS}#define ${v}\n")
 endforeach()
 
-message(${CMAKE_CXX_FLAGS})
-
 #修改配置文件
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/config.h)
 
-#目标动态库
-##string(COMPARE EQUAL ${share_type} "BOTH" PROJECT_LIBRARY_BOTH)
 
-#拷贝文件
-##file(COPY ${src_hs} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/include/)
-
-
-
-if(static-glib)
-	target_link_libraries(${PROJECT_NAME} -static-libgcc -static-libstdc++)
-endif()
 
 if(shared)
 	add_library(${PROJECT_NAME} SHARED ${src_cpps} ${src_hs})
+	set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "${PROJECT_NAME}")
+	set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${version} SOVERSION ${soversion})
+	install(TARGETS ${PROJECT_NAME} DESTINATION lib64)
+	if(alone)
+		target_link_libraries(${PROJECT_NAME} -static-libstdc++ -static-libgcc)
+	endif()
 endif()
 
 if(static)
+	add_compile_options(-fPIC) 
 	add_library(${PROJECT_NAME}_static STATIC ${src_cpps} ${src_hs})
+	install(TARGETS ${PROJECT_NAME}_static DESTINATION lib64)
+	if(alone)
+		target_link_libraries(${PROJECT_NAME}_static -static)
+	endif()
 endif()
 
-set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "${PROJECT_NAME}")
-set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${version} SOVERSION ${soversion})
 
-target_link_libraries(${PROJECT_NAME} -lpthread  -lrt -ldl ${CMAKE_LIBS_DEPENDS})
+#target_link_libraries(${PROJECT_NAME} -lpthread)
+#target_link_libraries(${PROJECT_NAME} -lrt)
+#target_link_libraries(${PROJECT_NAME} -ldl)
+#target_link_libraries(${PROJECT_NAME} ${CMAKE_LIBS_DEPENDS})
 
 #定义安装目标
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/pkg/lib${PROJECT_NAME}.pc DESTINATION lib64/pkgconfig)
 #install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/pkg/lib${PROJECT_NAME}_gdb.py DESTINATION lib64/pkgconfig)
 install(FILES ${src_hs} DESTINATION include/libmilk)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/config.h DESTINATION include/libmilk)
-install(TARGETS ${PROJECT_NAME} DESTINATION lib64)
 
