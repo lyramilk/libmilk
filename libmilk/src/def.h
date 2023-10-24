@@ -282,12 +282,9 @@ namespace lyramilk{namespace data
 
 #ifdef HAVE_UNORDEREDMAP
 		typedef lyramilk::data::unordered_map<lyramilk::data::string,lyramilk::data::string> stringdict;
-#else
-		typedef std::map<lyramilk::data::string,lyramilk::data::string> stringdict;
-#endif
-#ifdef HAVE_UNORDEREDMAP
 		typedef lyramilk::data::unordered_map<lyramilk::data::wstring,lyramilk::data::wstring> wstringdict;
 #else
+		typedef std::map<lyramilk::data::string,lyramilk::data::string> stringdict;
 		typedef std::map<lyramilk::data::wstring,lyramilk::data::wstring> wstringdict;
 #endif
 
@@ -339,21 +336,6 @@ namespace lyramilk{namespace data
 
 }}
 
-#ifdef Z_HAVE_UNORDEREDMAP
-namespace std{
-#elif defined Z_HAVE_TR1_UNORDEREDMAP
-namespace std{namespace tr1{
-#endif
-
-#if (defined Z_HAVE_UNORDEREDMAP) || (defined Z_HAVE_TR1_UNORDEREDMAP)
-	template <>
-	size_t hash<const lyramilk::data::string&>::operator()(const lyramilk::data::string& ) const;
-#endif
-#ifdef Z_HAVE_UNORDEREDMAP
-}
-#elif defined Z_HAVE_TR1_UNORDEREDMAP
-}}
-#endif
 
 _lyramilk_api_ lyramilk::data::bostream& operator << (lyramilk::data::bostream& os, char c);
 _lyramilk_api_ lyramilk::data::bostream& operator << (lyramilk::data::bostream& os, signed char c);
