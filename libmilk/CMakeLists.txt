@@ -1,59 +1,55 @@
-﻿#定义工程名及版本
-project(milk)
-set(version 1.1.130)
+﻿cmake_minimum_required(VERSION 3.0)
+cmake_policy(SET CMP0048 NEW)
+#定义工程名及版本
+project(milk VERSION 1.1.130)
 set(soversion 1.1)
 
-cmake_minimum_required (VERSION 3.0) 
+# 设置环境变量*
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS ON)
 set(CMAKE_USE_RELATIVE_PATHS ON)
-
-#导入一此需要用到的工具包
-include(CheckIncludeFileCXX)
-include(CheckLibraryExists)
-include(FindPkgConfig)
-
-#定义安装目录
-set(CMAKE_INSTALL_PREFIX $ENV{HOME}/.local)
-
-#定制编译选项
-set(CMAKE_BUILD_TYPE Release)
-SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -ggdb -D_DEBUG -fstack-protector")
-SET(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
-
-add_compile_options(-Wall)
-
-if(NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.9)
-	add_compile_options(-Wno-deprecated)
-	add_compile_options(-Wno-switch)
-endif()
-
 
 option(shared "build dynamic library" ON)
 option(static "build static library" OFF)
 option(minimal "without third party" OFF)
 option(alone "build without other dynamic library" OFF)
 
-set(${PROJECT_NAME}-shared shared)
-set(${PROJECT_NAME}-static static)
-set(${PROJECT_NAME}-minimal minimal)
-set(${PROJECT_NAME}-alone alone)
+if(NOT DEFINED ${PROJECT_NAME}-shared)
+	set(${PROJECT_NAME}-shared ${shared})
+endif()
+if(NOT DEFINED ${PROJECT_NAME}-static)
+	set(${PROJECT_NAME}-static ${static})
+endif()
+if(NOT DEFINED ${PROJECT_NAME}-minimal)
+	set(${PROJECT_NAME}-minimal ${minimal})
+endif()
+if(NOT DEFINED ${PROJECT_NAME}-alone)
+	set(${PROJECT_NAME}-alone ${alone})
+endif()
+
+set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_INSTALL_PREFIX $ENV{HOME}/.local)
 
 message("optional:CMAKE_BUILD_TYPE=" ${CMAKE_BUILD_TYPE})
-message("optional:shared=" ${shared})
-message("optional:static=" ${static})
-message("optional:minimal=" ${minimal})
-message("optional:alone=" ${alone})
+message("optional:${PROJECT_NAME}-shared=" ${${PROJECT_NAME}-shared})
+message("optional:${PROJECT_NAME}-static=" ${${PROJECT_NAME}-static})
+message("optional:${PROJECT_NAME}-minimal=" ${${PROJECT_NAME}-minimal})
+message("optional:${PROJECT_NAME}-alone=" ${${PROJECT_NAME}-alone})
 
-#搜索源代码
-aux_source_directory(src src_cpps)
+# 搜索代码*
+unset(codes)
+unset(headers)
 
-#搜索头文件
-file(GLOB src_hs RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/libmilk/*.h)
+aux_source_directory(src codes)
+file(GLOB headers RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/libmilk/*.h)
 include_directories(include/libmilk)
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/include/libmilk)
+# 包含公共代码*
+include(libmilk.cmake)
 
-if(NOT minimal)
+
+
+#搜索依赖
+if(NOT ${PROJECT_NAME}-minimal)
 	pkg_check_modules(OPENSSL openssl)
 	pkg_check_modules(OPENSSL openssl)
 	pkg_check_modules(LZ4 liblz4)
@@ -85,8 +81,8 @@ if(LUAJIT_FOUND)
 	list(APPEND INCS_DEPENDS ${LUAJIT_CFLAGS})
 	list(APPEND CONFIG_MACROS LUAJIT_FOUND)
 else()
-	list(REMOVE_ITEM src_cpps src/script_lua.cpp)
-	list(REMOVE_ITEM src_hs include/libmilk/script_lua.h)
+	list(REMOVE_ITEM codes src/script_lua.cpp)
+	list(REMOVE_ITEM headers include/libmilk/script_lua.h)
 endif()
 
 if(YAML_FOUND)
@@ -94,19 +90,19 @@ if(YAML_FOUND)
 	list(APPEND INCS_DEPENDS ${YAML_CFLAGS})
 	list(APPEND CONFIG_MACROS YAML_FOUND)
 else()
-	list(REMOVE_ITEM src_cpps src/yaml.cpp)
-	list(REMOVE_ITEM src_hs include/libmilk/yam1.h)
+	list(REMOVE_ITEM codes src/yaml.cpp)
+	list(REMOVE_ITEM headers include/libmilk/yam1.h)
 endif()
 
 if(JS17_FOUND)
 	list(APPEND LIBS_DEPENDS ${JS17_LDFLAGS})
 	list(APPEND INCS_DEPENDS ${JS17_CFLAGS})
 	list(APPEND CONFIG_MACROS JS17_FOUND)
-	list(REMOVE_ITEM src_cpps src/script_js52.cpp)
+	list(REMOVE_ITEM codes src/script_js52.cpp)
 else()
-	list(REMOVE_ITEM src_hs include/libmilk/script_js.h)
-	list(REMOVE_ITEM src_cpps src/script_js17.cpp)
-	list(REMOVE_ITEM src_cpps src/script_js52.cpp)
+	list(REMOVE_ITEM headers include/libmilk/script_js.h)
+	list(REMOVE_ITEM codes src/script_js17.cpp)
+	list(REMOVE_ITEM codes src/script_js52.cpp)
 endif()
 
 if(Z_HAVE_UNORDEREDMAP)
@@ -118,77 +114,24 @@ endif()
 if(TINYXML2_FOUND)
 	list(APPEND LIBS_DEPENDS -ltinyxml2)
 	list(APPEND CONFIG_MACROS TINYXML2_FOUND)
-	list(REMOVE_ITEM src_cpps src/xml.cpp)
+	list(REMOVE_ITEM codes src/xml.cpp)
 elseif(TINYXML_FOUND)
 	list(APPEND LIBS_DEPENDS -ltinyxml)
 	list(APPEND CONFIG_MACROS TINYXML_FOUND)
-	list(REMOVE_ITEM src_cpps src/xml2.cpp)
+	list(REMOVE_ITEM codes src/xml2.cpp)
 else()
-	list(REMOVE_ITEM src_hs include/libmilk/xml.h)
-	list(REMOVE_ITEM src_cpps src/xml2.cpp)
-	list(REMOVE_ITEM src_cpps src/xml.cpp)
+	list(REMOVE_ITEM headers include/libmilk/xml.h)
+	list(REMOVE_ITEM codes src/xml2.cpp)
+	list(REMOVE_ITEM codes src/xml.cpp)
 endif()
 
 
 
-
-
-
-
-
-# 根据外部依赖的存在与定义一些宏
-
-foreach(v ${BUILD_DEPENDS})
-	set(CMAKE_BUILD_DEPENDS "${CMAKE_BUILD_DEPENDS} ${v}")
-endforeach()
-
-foreach(v ${RUN_DEPENDS})
-	set(CMAKE_RUN_DEPENDS "${CMAKE_RUN_DEPENDS} ${v}")
-endforeach()
-
-foreach(v ${INCS_DEPENDS})
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${v}")
-endforeach()
-
-set(CMAKE_LIBS_DEPENDS ${LIBS_DEPENDS})
-
-foreach(v ${CONFIG_MACROS})
-	set(CMAKE_CONFIG_MACROS "${CMAKE_CONFIG_MACROS}#define ${v}\n")
-endforeach()
-
-#修改配置文件
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/libmilk/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/libmilk/config.h)
-
-
-
-if(shared)
-	add_library(${PROJECT_NAME} SHARED ${src_cpps} ${src_hs})
-	set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "${PROJECT_NAME}")
-	set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${version} SOVERSION ${soversion})
-	install(TARGETS ${PROJECT_NAME} DESTINATION lib64)
-	if(alone)
-		target_link_libraries(${PROJECT_NAME} -static-libstdc++ -static-libgcc)
-	endif()
+#定义目标*
+if(${PROJECT_NAME}-shared)
+	libmilk_cmake_def_shared(${PROJECT_NAME} libmilk codes headers ${PROJECT_NAME}-alone)
 endif()
 
-if(static)
-	add_compile_options(-fPIC) 
-	add_library(${PROJECT_NAME}_static STATIC ${src_cpps} ${src_hs})
-	install(TARGETS ${PROJECT_NAME}_static DESTINATION lib64)
-	if(alone)
-		target_link_libraries(${PROJECT_NAME}_static -static)
-	endif()
+if(${PROJECT_NAME}-static)
+	libmilk_cmake_def_static(${PROJECT_NAME}_static libmilk codes headers ${PROJECT_NAME}-alone)
 endif()
-
-
-#target_link_libraries(${PROJECT_NAME} -lpthread)
-#target_link_libraries(${PROJECT_NAME} -lrt)
-#target_link_libraries(${PROJECT_NAME} -ldl)
-#target_link_libraries(${PROJECT_NAME} ${CMAKE_LIBS_DEPENDS})
-
-#定义安装目标
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/pkg/lib${PROJECT_NAME}.pc DESTINATION lib64/pkgconfig)
-#install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/pkg/lib${PROJECT_NAME}_gdb.py DESTINATION lib64/pkgconfig)
-install(FILES ${src_hs} DESTINATION include/libmilk)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/libmilk/config.h DESTINATION include/libmilk)
-
