@@ -41,7 +41,7 @@ namespace lyramilk{namespace data
 		//typedef class _lyramilk_api_ std::vector<lyramilk::data::var, allocator<lyramilk::data::var> > array;
 		using array = std::vector<lyramilk::data::var, allocator<lyramilk::data::var> >;
 		//typedef lyramilk::data::unordered_map<lyramilk::data::string,lyramilk::data::var,hash<lyramilk::data::string>, std::equal_to<lyramilk::data::string> ,lyramilk::data::allocator<std::pair<lyramilk::data::string,lyramilk::data::var> > > map;
-		using map = lyramilk::data::unordered_map<lyramilk::data::string,lyramilk::data::var,hash<lyramilk::data::string>, std::equal_to<lyramilk::data::string> ,lyramilk::data::allocator<std::pair<lyramilk::data::string,lyramilk::data::var> > >;
+		using map = lyramilk::data::unordered_map<lyramilk::data::string,lyramilk::data::var,hash<lyramilk::data::string>, std::equal_to<lyramilk::data::string> ,lyramilk::data::allocator<std::pair<const lyramilk::data::string,lyramilk::data::var> > >;
 
 
 		const static lyramilk::data::var nil;
@@ -330,7 +330,7 @@ namespace lyramilk{namespace data
 			char bs[sizeof(lyramilk::data::string)];
 			char bw[sizeof(lyramilk::data::wstring)];
 			char ba[sizeof(std::vector<int>)];
-			char bm[sizeof(lyramilk::data::unordered_map<lyramilk::data::string,int,hash<lyramilk::data::string>, std::equal_to<lyramilk::data::string> ,lyramilk::data::allocator<std::pair<lyramilk::data::string,int> > >)];
+			char bm[sizeof(lyramilk::data::unordered_map<lyramilk::data::string,int,hash<lyramilk::data::string>, std::equal_to<lyramilk::data::string> ,lyramilk::data::allocator<std::pair<const lyramilk::data::string,int> > >)];
 		}u;
 		bool _serialize(ostream& os) const;
 		bool _deserialize(istream& is);

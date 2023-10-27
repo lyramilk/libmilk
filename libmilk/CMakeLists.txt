@@ -41,7 +41,7 @@ unset(headers)
 
 aux_source_directory(src codes)
 file(GLOB headers RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/libmilk/*.h)
-include_directories(include/libmilk)
+include_directories(include/libmilk ${CMAKE_CURRENT_BINARY_DIR}/include/libmilk)
 
 # 包含公共代码*
 include(libmilk.cmake)
