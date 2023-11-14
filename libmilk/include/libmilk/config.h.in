@@ -1,4 +1,5 @@
 ﻿#ifndef _lyramilk_config_h_
+	#define _lyramilk_config_h_
 	#ifdef WIN32
 		#ifndef _lyramilk_api_
 			#ifdef milk_EXPORTS

@@ -116,7 +116,7 @@ macro(libmilk_cmake_def libname isdynamic projname src_cpps src_hs alone)
 		message(定义static目标${libname})
 		add_library(${libname} STATIC ${${src_cpps}} ${${src_hs}})
 	endif()
-	target_link_libraries(${libname} ${LIBS_DEPENDS})
+	target_link_libraries(${libname} PRIVATE ${LIBS_DEPENDS})
 	target_compile_options(${libname} PRIVATE -include ${SUBMODULE_INCLUDE}/${projname}/config_generated.h)
 	
 
