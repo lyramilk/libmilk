@@ -19,7 +19,6 @@ unset(headers)
 
 aux_source_directory(src codes)
 file(GLOB headers RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/libmilk/*.h)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR} include/libmilk)
 
 #搜索子模块
 
@@ -103,6 +102,7 @@ endif()
 
 #定义目标*
 libmilk_cmake_def(${PROJECT_NAME} ${PROJECT_NAME}-shared libmilk codes headers ${PROJECT_NAME}-alone)
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} include/libmilk)
 if(${PROJECT_NAME}-shared)
 else()
 endif()
