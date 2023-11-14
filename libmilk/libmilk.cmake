@@ -49,7 +49,7 @@ macro(libmilk_cmake_init_env)
 		set(${PROJECT_NAME}-alone ${alone})
 	endif()
 
-	if(NOT DEFINED CMAKE_BUILD_TYPE)
+	if(NOT CMAKE_BUILD_TYPE)
 		set(CMAKE_BUILD_TYPE Release)
 	endif()
 

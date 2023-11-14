@@ -1,9 +1,0 @@
-#!/bin/sh
-
-update_version_msg(){
-	tmp1=`awk 'match($0,"set\\\\s*\\\\(version\\\\s*(.*)\\\\)",mr) {print mr[1]}' $2`
-	tmp2=`cat $1`
-	echo $tmp1:$tmp2 > $1 
-}
-
-update_version_msg $1 libmilk/CMakeLists.txt
