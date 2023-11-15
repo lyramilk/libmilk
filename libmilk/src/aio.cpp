@@ -125,7 +125,7 @@ namespace lyramilk{namespace io
 	bool aiopoll_safe::remove(aioselector* r)
 	{
 		if(detach(r)){
-			r->ondestory();
+			//r->ondestory();
 			return true;
 		}
 		return false;

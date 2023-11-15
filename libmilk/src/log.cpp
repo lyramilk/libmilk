@@ -457,7 +457,10 @@ int logbuf::sync()
 	static lyramilk::data::string loginuser = "unknow_user";
 	if(uid != geteuid()){
 		uid = geteuid();
-		loginuser =  getlogin();;
+		const char* username = getlogin();
+		if(username){
+			loginuser =  username;
+		}
 	}
 	if(p.loger){
 		p.loger->log(time(nullptr),p.t,loginuser.c_str(),exename.c_str(),module,lyramilk::data::string(pstr,len));
