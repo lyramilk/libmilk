@@ -279,13 +279,13 @@ namespace lyramilk{namespace netio
 
 	bool aiolistener::notify_in()
 	{
-		for(int i=0;i<1000;++i){
+		for(int i=0;;++i){
 			sockaddr_in addr;
 			socklen_t addr_size = sizeof(addr);
 			native_socket_type acceptfd = ::accept(fd(),(sockaddr*)&addr,&addr_size);
 			if(acceptfd < 0){
 				if(i == 0){
-					lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiolistener.EPOLLIN") << lyramilk::kdict("%x接受链接时发生错误：%s",pthread_self(),strerror(errno)) << std::endl;
+					//lyramilk::klog(lyramilk::log::error,"lyramilk.netio.aiolistener.EPOLLIN") << lyramilk::kdict("%x接受链接时发生错误：%s",pthread_self(),strerror(errno)) << std::endl;
 				}
 				return true;
 			}
@@ -359,13 +359,16 @@ namespace lyramilk{namespace netio
 			}
 			s->fd(acceptfd);
 #ifdef OPENSSL_FOUND
-			s->sslobj = sslptr;
-			X509* x = SSL_get_peer_certificate(sslptr);
-			if(x && X509_V_OK == SSL_get_verify_result(sslptr)){
-				char buf[8192];
-				X509_NAME *name = X509_get_subject_name(x);
-				X509_NAME_oneline(name,buf,sizeof(buf)-1);
-				s->peer_cert_info = buf;
+	
+			if(use_ssl && sslctx){
+				s->sslobj = sslptr;
+				X509* x = SSL_get_peer_certificate(sslptr);
+				if(x && X509_V_OK == SSL_get_verify_result(sslptr)){
+					char buf[8192];
+					X509_NAME *name = X509_get_subject_name(x);
+					X509_NAME_oneline(name,buf,sizeof(buf)-1);
+					s->peer_cert_info = buf;
+				}
 			}
 #endif
 			s->pool = pool;

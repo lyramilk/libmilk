@@ -122,7 +122,7 @@ namespace lyramilk{namespace io
 	/**
 		@brief 异步文件句柄容器
 	*/
-	class _lyramilk_api_ aiopoll : protected aiopoll_safe
+	class _lyramilk_api_ aiopoll : public aiopoll_safe
 	{
 	  protected:
 		friend class aioselector;

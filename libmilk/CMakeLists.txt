@@ -5,10 +5,7 @@ project(milk VERSION 1.1.130)
 set(soversion 1.1)
 
 # 包含公共代码*
-if(NOT SUBMODULE)
-	set(SUBMODULE ${PROJECT_SOURCE_DIR}/3rd_party)
-endif()
-include(${SUBMODULE}/libmilk/libmilk/libmilk.cmake)
+include(${PROJECT_SOURCE_DIR}/libmilk.cmake)
 
 # 设置环境变量*
 libmilk_cmake_init_env()
