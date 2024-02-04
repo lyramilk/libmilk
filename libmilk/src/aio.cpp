@@ -115,7 +115,7 @@ namespace lyramilk{namespace io
 		r->mask = mask;
 
 		if (r->mlock.test() && epoll_ctl(getfd(), EPOLL_CTL_MOD, r->getfd(), &ee) == -1) {
-			lyramilk::klog(lyramilk::log::error,"lyramilk.aio.epoll.reset") << lyramilk::kdict("修改epoll[%d]中的套接字%d时发生错误%s",getfd(),r->getfd(),strerror(errno)) << std::endl;
+			lyramilk::klog(lyramilk::log::error,"lyramilk.aio.aiopoll_safe.reset") << lyramilk::kdict("修改epoll[%d]中的套接字%d时发生错误%s",getfd(),r->getfd(),strerror(errno)) << std::endl;
 			return false;
 		}
 		//r->mask = mask;

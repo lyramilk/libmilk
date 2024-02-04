@@ -127,7 +127,7 @@ namespace lyramilk{namespace netio
 	{
 		if(endpoint){
 			endpoint->endpoint = nullptr;
-			pool->remove(endpoint);
+			pool->destory_by_fd(endpoint->fd());
 		}
 	}
 	bool aioproxysession_connector::init()
@@ -324,6 +324,7 @@ namespace lyramilk{namespace netio
 			if(oninit(aos)){
 				aos.flush();
 				flag = EPOLLIN | flag_default;
+				if(!aos.good()) return false;
 				return pool->reset(this,flag);
 			}
 			return false;

@@ -142,7 +142,7 @@ namespace lyramilk{namespace io
 		*/
 		virtual bool reset(aioselector* r,lyramilk::data::int64 mask);
 
-		/// 把r从池中移除，会导致r被释放。
+		/// 把r从池中移除
 		virtual bool remove(aioselector* r);
 
 		/// 把r从池中移除，不会导致r被释放。
