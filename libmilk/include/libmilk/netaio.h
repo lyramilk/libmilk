@@ -107,13 +107,17 @@ namespace lyramilk{namespace netio
 		@brief 异步套接字会话
 		@details onrequest中向os写数据的时候，先被缓存起来，得到epoll的OUT消息的时候会把数据写出去。
 	*/
-	class _lyramilk_api_ aiosession_async : public lyramilk::netio::aiosession_sync
+	class _lyramilk_api_ aiosession_async : public lyramilk::netio::aiosession
 	{
-		lyramilk::data::stringstream scache;
-		lyramilk::data::string retransmitcache;
 	  protected:
+		lyramilk::data::stringstream scache;
 		virtual bool notify_in();
 		virtual bool notify_out();
+		virtual bool notify_hup();
+		virtual bool notify_err();
+		virtual bool notify_pri();
+		virtual void ondestory();
+
 		virtual int cache_read(char* buf,int bufsize);
 		virtual bool cache_empty();
 		virtual bool cache_ok();
@@ -121,6 +125,29 @@ namespace lyramilk{namespace netio
 	  public:
 		aiosession_async();
 		virtual ~aiosession_async();
+		
+		virtual bool init();
+		virtual void destory();
+
+	  public:
+		/**
+			@brief 连接时触发
+			@return 返回false会导致服务器主动断开链接。
+		*/
+		virtual bool oninit(lyramilk::data::ostream& os);
+
+		/**
+			@brief 断开时触发
+		*/
+		virtual void onfinally(lyramilk::data::ostream& os);
+
+		/**
+			@brief 收到数据时触发。
+			@param cache 这里面有新数据。
+			@param size 新数据的字节数。
+			@return 返回false会导致服务器主动断开链接。
+		*/
+		virtual bool onrequest(const char* cache, int size, lyramilk::data::ostream& os) = 0;
 	};
 
 

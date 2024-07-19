@@ -70,6 +70,7 @@ namespace lyramilk{namespace netio
 	// aiosession_sync
 	aiosession_sync::aiosession_sync()
 	{
+		flag = EPOLLIN | EPOLLPRI | EPOLLERR | EPOLLHUP | EPOLLRDHUP | EPOLLONESHOT;
 	}
 
 	aiosession_sync::~aiosession_sync()
@@ -152,18 +153,43 @@ namespace lyramilk{namespace netio
 
 	/******** aiosession_async ************/
 	aiosession_async::aiosession_async()
-	{}
+	{
+		flag = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLONESHOT;
+	}
 
 	aiosession_async::~aiosession_async()
 	{}
+
+	bool aiosession_async::init()
+	{
+		return oninit(scache);
+	}
+
+	void aiosession_async::destory()
+	{
+		aiosession::destory();
+	}
+
+	void aiosession_async::ondestory()
+	{
+		onfinally(scache);
+		aiosession::ondestory();
+	}
+
+
+	bool aiosession_async::oninit(lyramilk::data::ostream& os)
+	{
+		return true;
+	}
+	
+	void aiosession_async::onfinally(lyramilk::data::ostream& os)
+	{
+	}
 
 	bool aiosession_async::notify_in()
 	{
 		char buff[4096];
 		int i = 0;
-		if(cache_ok()){
-			cache_clear();
-		}
 		do{
 			i = read(buff,sizeof(buff));
 
@@ -179,7 +205,7 @@ namespace lyramilk{namespace netio
 				flag &= ~EPOLLIN;
 				return notify_out();
 			}
-		}while(i > 0);
+	}while(i > 0);
 
 		return notify_out();
 	}
@@ -188,49 +214,62 @@ namespace lyramilk{namespace netio
 	{
 		char buff[4096];
 		while(cache_ok()){
-			int sendcount = 0;
-			if(retransmitcache.empty()){
-				sendcount = cache_read(buff,4096);
-			}else{
-				sendcount = retransmitcache.size();
-				assert(sendcount < 4096);
-				retransmitcache.copy(buff,sendcount);
-			}
-			if(sendcount == 0){
-				break;
-			}
-			assert(sendcount > 0 && sendcount <= 4096);
-			int rt = write(buff,sendcount);
-
-			if(rt == 0) return false;
-			if(rt < 0){
+			int sendcount = cache_read(buff,4096);
+			int r = write(buff,sendcount);
+			if(r > 0){
+				if(r < sendcount){
+					//如果取出来的数据没有发送完，需要归还回去。
+					int pos = scache.tellg();
+					int posback = pos - sendcount + r;
+					scache.seekg(posback,scache.beg);
+					return pool->reset(this,EPOLLOUT | EPOLLPRI | EPOLLERR | EPOLLHUP | EPOLLRDHUP | EPOLLONESHOT);
+				}
+			}else if(r == -1){
 				if(errno == EAGAIN || errno == EINTR){
-					cache_clear();
-					retransmitcache.assign(buff,sendcount);
-					break;
+					int pos = scache.tellg();
+					int posback = pos - sendcount;
+					scache.seekg(posback,scache.beg);
+					if(ssl()){
+						usleep(1);
+						continue;
+					}else{
+						return pool->reset(this,EPOLLOUT | EPOLLOUT | EPOLLPRI | EPOLLERR | EPOLLHUP | EPOLLRDHUP | EPOLLONESHOT);
+					}
+
 				}
 				return false;
+			}else{
+				return false;
 			}
-			assert(rt > 0);
-			if(rt < sendcount){
-				cache_clear();
-				retransmitcache.assign(buff + rt,sendcount - rt);
-				break;
-			}
-			retransmitcache.clear();
 		}
 		if(!cache_empty()){
-			return pool->reset(this,EPOLLOUT | flag);
+			return pool->reset(this,EPOLLOUT | EPOLLERR | EPOLLHUP | EPOLLONESHOT);
 		}else{
 			cache_clear();
 		}
-
 		if(flag & EPOLLIN){
-			return pool->reset(this,flag);
+			return false;
 		}
+		return pool->reset(this,EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLONESHOT);
+	}
+
+	bool aiosession_async::notify_hup()
+	{
+		lyramilk::klog(lyramilk::log::debug,"lyramilk.netio.aiosession_async.notify_hup") << lyramilk::kdict("发生了HUP事件%s",strerror(errno)) << std::endl;
 		return false;
 	}
 
+	bool aiosession_async::notify_err()
+	{
+		lyramilk::klog(lyramilk::log::debug,"lyramilk.netio.aiosession_async.notify_err") << lyramilk::kdict("发生了ERR事件%s",strerror(errno)) << std::endl;
+		return false;
+	}
+
+	bool aiosession_async::notify_pri()
+	{
+		lyramilk::klog(lyramilk::log::debug,"lyramilk.netio.aiosession_async.notify_pri") << lyramilk::kdict("发生了PRI事件%s",strerror(errno)) << std::endl;
+		return false;
+	}
 	int aiosession_async::cache_read(char* buff,int bufsize)
 	{
 		scache.read(buff,4096);

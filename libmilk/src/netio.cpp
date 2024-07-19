@@ -36,7 +36,7 @@
 		{
 			SSL_library_init();
 			SSL_load_error_strings();
-			ERR_load_BIO_strings();
+			//ERR_load_BIO_strings();
 			OpenSSL_add_all_algorithms();
 			gethostbyname("127.0.0.1");
 		}
@@ -315,6 +315,12 @@ namespace lyramilk{namespace netio
 #ifdef OPENSSL_FOUND
 		if(ssl()){
 			rt = SSL_read((SSL*)get_ssl_obj(), buf, len);
+			if(rt <= 0){
+				int sslerr = SSL_get_error((SSL*)get_ssl_obj(),rt);
+				if(sslerr == SSL_ERROR_WANT_WRITE || sslerr == SSL_ERROR_WANT_READ){
+					errno = EAGAIN;
+				}
+			}
 		}else{
 			rt = ::recv(fd(),buf,len,0);
 		}
@@ -338,6 +344,12 @@ namespace lyramilk{namespace netio
 #ifdef OPENSSL_FOUND
 		if(ssl()){
 			rt = SSL_peek((SSL*)get_ssl_obj(), buf, len);
+			if(rt <= 0){
+				int sslerr = SSL_get_error((SSL*)get_ssl_obj(),rt);
+				if(sslerr == SSL_ERROR_WANT_WRITE || sslerr == SSL_ERROR_WANT_READ){
+					errno = EAGAIN;
+				}
+			}
 		}else{
 			rt = ::recv(fd(),buf,len,MSG_PEEK);
 		}
@@ -357,17 +369,25 @@ namespace lyramilk{namespace netio
 
 	lyramilk::data::int32 socket::write(const void* buf, lyramilk::data::int32 len)
 	{
-		int rt = 0;
 #ifdef OPENSSL_FOUND
 		if(ssl()){
-			rt = SSL_write((SSL*)get_ssl_obj(), buf, len);
-		}else{
-			rt = ::send(fd(),buf,len,0);
+			int rt = SSL_write((SSL*)get_ssl_obj(), buf, len);
+			if(rt <= 0){
+				int sslerr = SSL_get_error((SSL*)get_ssl_obj(),rt);
+				if(sslerr == SSL_ERROR_WANT_WRITE || sslerr == SSL_ERROR_WANT_READ){
+					errno = EAGAIN;
+				}else if(sslerr == SSL_ERROR_SYSCALL){
+					lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.socket.write") << lyramilk::kdict("向套接字%d(%s:%u)中写入数据时发生错误:%s",fd(),_dst.host().c_str(),_dst.port(),strerror(errno)) << std::endl;
+				}else{
+					char errmsg[4096] = {0};
+					ERR_error_string(sslerr,errmsg);
+					lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.socket.write") << lyramilk::kdict("向套接字%d(%s:%u)中写入数据时发生ssl错误:code=%d,msg=%s",fd(),_dst.host().c_str(),_dst.port(),sslerr,errmsg) << std::endl;
+				}
+			}
+			return rt;
 		}
-#else
-		rt = ::send(fd(),buf,len,0);
 #endif
-
+		int rt = ::send(fd(),buf,len,0);
 		if(rt < 0){
 			if(errno != EAGAIN){
 				lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.socket.write") << lyramilk::kdict("向套接字%d(%s:%u)中写入数据时发生错误:%s",fd(),_dst.host().c_str(),_dst.port(),strerror(errno)) << std::endl;
