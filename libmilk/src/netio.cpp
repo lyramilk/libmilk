@@ -382,6 +382,9 @@ namespace lyramilk{namespace netio
 					char errmsg[4096] = {0};
 					ERR_error_string(sslerr,errmsg);
 					lyramilk::klog(lyramilk::log::warning,"lyramilk.netio.socket.write") << lyramilk::kdict("向套接字%d(%s:%u)中写入数据时发生ssl错误:code=%d,msg=%s",fd(),_dst.host().c_str(),_dst.port(),sslerr,errmsg) << std::endl;
+					if(errno == EAGAIN){
+						errno = EIO;
+					}
 				}
 			}
 			return rt;
