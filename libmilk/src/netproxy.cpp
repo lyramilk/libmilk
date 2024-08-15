@@ -510,6 +510,7 @@ namespace lyramilk{namespace netio
 	{
 		directmode = sw;
 		flag = EPOLLIN | flag_default;
-		return pool->reset(this,flag);
+		//return pool->reset(this,flag);
+		return true;
 	}
 }}
