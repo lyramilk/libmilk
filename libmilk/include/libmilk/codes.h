@@ -103,7 +103,11 @@ namespace lyramilk{ namespace data
 		*/
 		lyramilk::data::array supports();
 	  protected:
+#if __GNUC__ < 5
+		typedef std::map<lyramilk::data::string,getter> builder_type;
+#else
 		using builder_type = std::map<lyramilk::data::string,getter>;
+#endif
 		builder_type builder;
 	};
 }}

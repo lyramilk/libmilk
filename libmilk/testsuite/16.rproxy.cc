@@ -15,6 +15,7 @@
 #include <netdb.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include <stdlib.h>
 
 
 namespace lyramilk{ namespace teapoy{ namespace native
@@ -494,13 +495,10 @@ int main(int argc,char* argv[])
 			return 0;
 		}
 	}
-	if(type == 1){
-		lyramilk::setproctitle("rproxy [guard]");
-	}
-
 	
 	if(setdaemon){
 		::daemon(1,0);
+		lyramilk::setproctitle("rproxy [guard]");
 		int pid = 0;
 		do{
 			pid = fork();

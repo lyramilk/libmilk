@@ -28,7 +28,11 @@ namespace lyramilk{ namespace data
 			bool operator~() const;
 			operator bool() const;
 		};
+#if __GNUC__ < 5
+		typedef std::vector<unsigned int> bytes_type;
+#else
 		using bytes_type = std::vector<unsigned int>;
+#endif
 		typedef std::size_t bindex_type;
 		bytes_type d;
 		bool minus() const;

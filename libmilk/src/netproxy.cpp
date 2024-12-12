@@ -161,6 +161,10 @@ namespace lyramilk{namespace netio
 				if(errno == EINTR) continue;
 				return false;
 			}
+
+			/*for(int u =0;u<i;++u){
+				buff[u] ^= 159;
+			}*/
 			int r = write(buff,i);
 
 			if(r == -1){
